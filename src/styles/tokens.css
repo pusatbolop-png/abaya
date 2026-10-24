@@ -1,0 +1,121 @@
+/*
+  Identitas visual PCC
+  Palet diambil dari lanskap Pasuruan: pasir lautan Bromo, abu vulkanik, lumut Kebun Raya Purwodadi,
+  hutan lereng Arjuno, dan satu aksen — tembaga fajar di kaldera. Rasio kontras dicatat di DECISIONS.md.
+*/
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/fonts/plus-jakarta-sans-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/fonts/newsreader-latin-opsz-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/fonts/newsreader-latin-ext-opsz-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/fonts/newsreader-latin-opsz-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F;
+}
+
+:root {
+  /* Palet inti */
+  --pasir: #f4f1ea;        /* Pasir Bromo — kanvas */
+  --kertas: #fbf9f5;       /* permukaan terangkat */
+  --pasir-tua: #ece7dc;    /* bidang sekunder */
+  --abu: #d9d2c4;          /* Abu vulkanik — garis */
+  --abu-tua: #b9b09f;
+  --lumut: #7d8a76;        /* Lumut Purwodadi — hanya dekoratif, bukan teks */
+  --hutan: #24372e;        /* Hutan Arjuno — permukaan gelap, tombol utama */
+  --hutan-terang: #2f4639;
+  --arang: #1d221f;        /* teks utama */
+  --redup: #5c6058;        /* teks sekunder, 5,7:1 di atas pasir */
+  --tembaga: #a4532b;      /* satu-satunya aksen: siaran langsung, fokus, penanda aktif */
+  --tembaga-tua: #8e4422;
+  --tembaga-muda: #e3a27c; /* aksen di atas permukaan gelap */
+  --tembaga-latar: #f3e3d8;
+
+  /* Warna fungsi, dipakai bersama ikon dan teks — tidak pernah sendirian */
+  --berhasil: #2f5d45;
+  --berhasil-latar: #e3ebe2;
+  --peringatan: #7a5b12;
+  --peringatan-latar: #f2e9cf;
+  --galat: #9a3324;
+  --galat-latar: #f5e1db;
+
+  /* Tipografi */
+  --huruf-teks: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --huruf-judul: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+
+  --t-mikro: 0.75rem;      /* 12 */
+  --t-kecil: 0.8125rem;    /* 13 */
+  --t-teks: 0.9375rem;     /* 15 */
+  --t-sedang: 1.0625rem;   /* 17 */
+  --t-h3: 1.25rem;         /* 20 */
+  --t-h2: 1.625rem;        /* 26 */
+  --t-h1: 2.25rem;         /* 36 */
+  --t-tampil: clamp(2.5rem, 2rem + 2.6vw, 4rem);
+
+  /* Ruang, berbasis 4 px */
+  --r-1: 4px;
+  --r-2: 8px;
+  --r-3: 12px;
+  --r-4: 16px;
+  --r-5: 24px;
+  --r-6: 32px;
+  --r-7: 48px;
+  --r-8: 64px;
+  --r-9: 96px;
+
+  --sudut: 6px;
+  --sudut-besar: 10px;
+  --garis: 1px solid var(--abu);
+  --garis-tegas: 1px solid var(--abu-tua);
+
+  /* Gerak: hanya untuk menjelaskan perubahan */
+  --gerak-cepat: 140ms;
+  --gerak-sedang: 240ms;
+  --gerak-lambat: 420ms;
+  --kurva: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --lebar-rel: 248px;
+  --lebar-isi: 1200px;
+  --tinggi-kendali: 40px;
+
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --gerak-cepat: 0ms;
+    --gerak-sedang: 0ms;
+    --gerak-lambat: 0ms;
+  }
+}

@@ -1,0 +1,151 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--pasir);
+  color: var(--arang);
+  font-family: var(--huruf-teks);
+  font-size: var(--t-teks);
+  line-height: 1.6;
+  font-feature-settings: 'calt' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin: 0;
+}
+
+h1,
+h2,
+.judul-serif {
+  font-family: var(--huruf-judul);
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  font-optical-sizing: auto;
+}
+h1 {
+  font-size: var(--t-h1);
+  line-height: 1.12;
+}
+h2 {
+  font-size: var(--t-h2);
+  line-height: 1.2;
+}
+h3 {
+  font-size: var(--t-sedang);
+  font-weight: 620;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--abu-tua);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--tembaga-latar);
+}
+
+:focus-visible {
+  outline: 2px solid var(--tembaga);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.angka,
+td.angka,
+th.angka {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.lompat-isi {
+  position: absolute;
+  left: var(--r-4);
+  top: -100px;
+  z-index: 100;
+  background: var(--hutan);
+  color: var(--kertas);
+  padding: var(--r-2) var(--r-4);
+  border-radius: var(--sudut);
+  text-decoration: none;
+}
+.lompat-isi:focus {
+  top: var(--r-4);
+}
+
+.redup {
+  color: var(--redup);
+}
+.kecil {
+  font-size: var(--t-kecil);
+  line-height: 1.5;
+}
+.mikro {
+  font-size: var(--t-mikro);
+  line-height: 1.4;
+}
+.tebal {
+  font-weight: 620;
+}
+.kanan {
+  text-align: right;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.mono {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}

@@ -1,0 +1,48 @@
+{
+  "name": "pcc-ruang-kreatif",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sistem kerja Pasuruan Creative Center: pendaftaran UMKM, seleksi, stok, sesi live, penjualan, retur, dana, dan denah 3D gedung.",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:demo": "node scripts/dev.mjs --demo",
+    "build": "tsc -p tsconfig.json --noEmit && vite build && node scripts/build-server.mjs",
+    "start": "NODE_ENV=production node dist/server/index.js",
+    "demo": "NODE_ENV=production tsx server/demo.ts",
+    "demo:ulang": "NODE_ENV=production tsx server/demo.ts --ulang",
+    "test": "node --import tsx --test server/*.test.ts",
+    "e2e": "node tests/e2e/alur.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@fontsource-variable/newsreader": "5.2.8",
+    "@fontsource-variable/plus-jakarta-sans": "5.2.8",
+    "@hono/node-server": "1.19.17",
+    "better-sqlite3": "12.4.1",
+    "exceljs": "4.4.0",
+    "hono": "4.13.13",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "react-router": "7.18.4",
+    "three": "0.180.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
+    "@types/node": "22.18.8",
+    "@types/react": "19.1.17",
+    "@types/react-dom": "19.1.11",
+    "@types/three": "0.180.0",
+    "@vitejs/plugin-react": "5.0.4",
+    "axe-core": "^4.10.3",
+    "esbuild": "0.25.10",
+    "playwright": "^1.63.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vite": "7.3.7"
+  }
+}
