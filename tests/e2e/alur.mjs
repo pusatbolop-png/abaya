@@ -245,7 +245,7 @@ try {
     const l = lembar(page);
     await l.getByLabel('Produk 1', { exact: true }).selectOption({ index: 1 });
     await l.getByLabel('Jumlah', { exact: true }).fill('3');
-    await l.getByLabel('Nomor pesanan di platform').fill('578800123');
+    await l.getByLabel(/^No\. pesanan platform/).fill('578800123');
     await l.getByRole('button', { name: 'Simpan penjualan' }).click();
     const t = page.locator('.toast', { hasText: 'Penjualan PJ-' });
     await t.waitFor();

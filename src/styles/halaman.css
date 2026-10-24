@@ -1614,3 +1614,7 @@ tr.nonaktif .tebal {
 .bilah-saring + .dua-kolom {
   margin-top: 0;
 }
+.dua-kolom > .bagian + .bagian,
+.dua-kolom > * + .bagian {
+  margin-top: 0;
+}

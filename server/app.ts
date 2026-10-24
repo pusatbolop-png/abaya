@@ -4,6 +4,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import type { DB } from './db';
 import { wajibMasuk, type Variabel } from './auth';
 import { GalatPengguna } from './util';
+import { HEADER_BERKAS } from './berkas';
 import { rutePublik, dataGedung } from './routes/publik';
 import { ruteAuth } from './routes/auth';
 import { ruteUmkm } from './routes/umkm';
@@ -16,6 +17,16 @@ import { rutePengaturan, rutePengguna, ruteRingkasan } from './routes/pengaturan
 
 export function buatApp(db: DB) {
   const app = new Hono<{ Variables: Variabel }>();
+
+  // Berkas unggahan (termasuk SVG) disajikan dalam sandbox. Middleware ini paling luar agar
+  // CSP-nya tidak ditimpa secureHeaders di bawah.
+  app.use('*', async (c, next) => {
+    await next();
+    if (c.res.headers.get('x-pcc-berkas')) {
+      c.res.headers.delete('x-pcc-berkas');
+      c.res.headers.set('Content-Security-Policy', HEADER_BERKAS['Content-Security-Policy']);
+    }
+  });
 
   app.use(
     '*',

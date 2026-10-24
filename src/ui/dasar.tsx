@@ -231,7 +231,11 @@ export function Lembar({ buka, tutup, judul, keterangan, children, kaki, onSubmi
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (buka && !d.open) d.showModal();
+    if (buka && !d.open) {
+      d.showModal();
+      // Fokus ke isian pertama, bukan tombol tutup, agar bisa langsung mengetik.
+      requestAnimationFrame(() => d.querySelector<HTMLElement>('.lembar-isi :is(input:not([type=hidden]):not(.sr-only), select, textarea)')?.focus());
+    }
     if (!buka && d.open) d.close();
   }, [buka]);
   const isi = (

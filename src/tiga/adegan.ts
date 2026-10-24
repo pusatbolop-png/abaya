@@ -209,7 +209,7 @@ export class AdeganGedung {
     const arah = (tegak ? new THREE.Vector3(-0.22, 0.95, 0.5) : new THREE.Vector3(-0.5, 0.62, 0.8)).normalize();
     const vfov = THREE.MathUtils.degToRad(this.kamera.fov);
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * this.kamera.aspect);
-    const radius = tegak ? 12.6 : 13.5;
+    const radius = tegak ? 13.4 : 13.5;
     const jarak = radius / Math.sin(Math.min(vfov, hfov) / 2);
     const target = new THREE.Vector3(0.6, dasarLantai(lantai) + 0.4, 0.8);
     return { posisi: target.clone().add(arah.multiplyScalar(THREE.MathUtils.clamp(jarak, 30, 74))), target };

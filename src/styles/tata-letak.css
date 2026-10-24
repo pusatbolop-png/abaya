@@ -359,7 +359,7 @@
     white-space: nowrap;
   }
 }
-@media (max-width: 420px) {
+@media (max-width: 359px) {
   .kepala-publik .merek .nama {
     display: none;
   }
@@ -367,4 +367,15 @@
 .rel-kaki .tombol {
   justify-self: start;
   margin-left: calc(-1 * var(--r-2));
+}
+.rel .merek .tanda {
+  width: 36px;
+  height: 36px;
+  font-size: 0.8125rem;
+}
+.rel .merek .nama strong {
+  font-size: 0.96875rem;
+}
+.rel .merek .nama span {
+  font-size: 0.6875rem;
 }

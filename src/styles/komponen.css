@@ -403,6 +403,7 @@
     display: none;
   }
   .tabel-susun td:first-child {
+    display: block;
     padding-bottom: var(--r-2);
   }
   .tabel-susun tfoot tr {
@@ -826,6 +827,9 @@
   }
   .metrik + .metrik {
     padding-left: var(--r-3);
+  }
+  .metrik:nth-child(odd) {
+    padding-left: 0;
   }
 }
 

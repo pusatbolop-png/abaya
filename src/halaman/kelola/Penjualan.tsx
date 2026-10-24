@@ -344,7 +344,7 @@ export function LembarPenjualan({
             </Pilihan>
           )}
         </Bidang>
-        <Bidang label="Nomor pesanan di platform" opsional>
+        <Bidang label="No. pesanan platform" opsional>
           {(a) => <Masukan {...a} value={nomorPesanan} onChange={(e) => setNomorPesanan(e.target.value)} className="mono" />}
         </Bidang>
         <Bidang label="Nama pembeli" opsional>

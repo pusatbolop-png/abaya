@@ -56,4 +56,5 @@ export const HEADER_BERKAS = {
   'X-Content-Type-Options': 'nosniff',
   'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
   'Cache-Control': 'private, max-age=300',
+  'x-pcc-berkas': '1',
 };

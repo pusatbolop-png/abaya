@@ -432,7 +432,7 @@ function LembarSesi({
 
   const simpan = async () => {
     const g: Record<string, string> = {};
-    if (!d.judul.trim()) g.judul = 'Beri judul sesi, misalnya Promo Kopi Lereng Arjuno.';
+    if (!d.judul.trim()) g.judul = 'Beri judul sesi, misalnya Promo Akhir Pekan.';
     if (!d.ruangan_id) g.ruangan_id = 'Pilih studio.';
     if (!d.platform) g.platform = 'Pilih platform siaran.';
     if (!d.host.trim()) g.host = 'Isi nama host.';

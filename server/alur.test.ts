@@ -72,6 +72,12 @@ test('alur lengkap: daftar → seleksi → stok → live → jual → retur → 
   const daftar = (await minta('GET', '/api/umkm')).data as { daftar: { id: number }[] };
   const umkmId = daftar.daftar[0].id;
 
+  // Berkas unggahan disajikan dalam sandbox CSP.
+  const berkas = await app.request(`/api/umkm/${umkmId}/izin/izin_1/berkas`, { headers: { cookie } });
+  assert.equal(berkas.status, 200);
+  assert.match(berkas.headers.get('content-security-policy') ?? '', /sandbox/);
+  assert.equal(berkas.headers.get('x-pcc-berkas'), null);
+
   // Menerima sebelum izin wajib terverifikasi harus ditolak dengan arahan.
   const skor = { mutu: 4, kemasan: 4, kapasitas: 3, pasar: 5 };
   r = await minta('POST', `/api/umkm/${umkmId}/seleksi`, { keputusan: 'diterima', skor });
