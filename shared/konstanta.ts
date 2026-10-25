@@ -119,4 +119,62 @@ export interface StafRuang {
 export const BATAS_STAF_RUANG = 8;
 
 export const STOK_MENIPIS = 5;
+
+// ——— Program PCC (Blueprint Pasuruan Creative Center) ———
+
+/** Kanal penjualan luring; kanal lain dianggap marketplace daring berjangkauan nasional. */
+export const KANAL_LURING = 'Penjualan langsung di galeri';
+
+/** Daftar periksa inkubasi UMKM (Pilar 3): legalitas, standar produk, dan kesiapan pasar. */
+export const LANGKAH_INKUBASI = [
+  { kunci: 'nib', label: 'NIB terbit' },
+  { kunci: 'pirt', label: 'SPP-IRT (PIRT)' },
+  { kunci: 'halal', label: 'Sertifikat halal' },
+  { kunci: 'haki', label: 'Merek terdaftar (HAKI)' },
+  { kunci: 'kemasan', label: 'Kemasan terstandar' },
+  { kunci: 'marketplace', label: 'Toko marketplace dikelola' },
+  { kunci: 'produksi', label: 'Siap produksi massal' },
+] as const;
+export type KunciInkubasi = (typeof LANGKAH_INKUBASI)[number]['kunci'];
+export type StatusInkubasi = 'belum' | 'selesai' | 'tidak_berlaku';
+export const STATUS_INKUBASI: Record<StatusInkubasi, string> = { belum: 'Belum', selesai: 'Selesai', tidak_berlaku: 'Tidak berlaku' };
+
+/** Keluaran Content Factory (Pilar 4). */
+export const JENIS_KONTEN = {
+  video: 'Video pendek',
+  foto: 'Foto produk',
+  ugc: 'Konten UGC',
+  materi: 'Materi affiliate dan host',
+} as const;
+export type JenisKonten = keyof typeof JENIS_KONTEN;
+export const PLATFORM_KONTEN = ['TikTok', 'Shopee', 'Instagram', 'Tokopedia', 'YouTube', 'Lainnya'] as const;
+
+export const STATUS_AFFILIATE = { aktif: 'Aktif', jeda: 'Jeda', berhenti: 'Berhenti' } as const;
+export type StatusAffiliate = keyof typeof STATUS_AFFILIATE;
+
+/** Target kinerja tahun pertama (Blueprint PCC). Dapat disesuaikan admin di Pengaturan. */
+export interface TargetProgram {
+  terinkubasi: number;
+  produkNasional: number;
+  studioAktif: number;
+  affiliate: number;
+  kontenPerTahun: number;
+  kenaikanOmzet: number;
+}
+export const TARGET_BAWAAN: TargetProgram = {
+  terinkubasi: 100,
+  produkNasional: 30,
+  studioAktif: 5,
+  affiliate: 100,
+  kontenPerTahun: 3000,
+  kenaikanOmzet: 20,
+};
+
+/** Roadmap akselerasi 100 hari pertama. */
+export const ROADMAP_100 = [
+  { dari: 1, sampai: 30, judul: 'Konsolidasi internal', isi: 'Pembentukan tim inti dan penyusunan SOP operasional PCC.' },
+  { dari: 31, sampai: 60, judul: 'Akuisisi', isi: 'PCC Call UMKM dan kurasi produk unggulan.' },
+  { dari: 61, sampai: 80, judul: 'Infrastruktur digital', isi: 'Digitalisasi produk, standardisasi, dan optimasi toko marketplace.' },
+  { dari: 81, sampai: 100, judul: 'Go live dan scale', isi: 'Aktivasi Content Factory, Live Commerce Center, dan jaringan affiliate.' },
+] as const;
 export const BATAS_BERKAS_BYTE = 5 * 1024 * 1024;

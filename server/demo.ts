@@ -137,6 +137,132 @@ if (!sudahAda) {
   const cair = await minta('POST', '/api/dana/pencairan', { umkm_id: id[2], catatan: 'Pencairan pekan lalu' });
   await minta('POST', `/api/dana/pencairan/${cair.id}/bayar`, { referensi_transfer: 'TRF2610190045' });
 
+  // ——— Program PCC: dasbor kinerja terisi seperti hari ke-46 operasional ———
+  const tanggalLalu = (h: number) => new Date(Date.now() - h * 86_400_000 + 7 * 3600_000).toISOString().slice(0, 10);
+  const kunciInkubasi = ['nib', 'pirt', 'halal', 'haki', 'kemasan', 'marketplace', 'produksi'];
+  await minta('PUT', '/api/pengaturan/program', {
+    mulai: tanggalLalu(45),
+    target: { terinkubasi: 100, produkNasional: 30, studioAktif: 5, affiliate: 100, kontenPerTahun: 3000, kenaikanOmzet: 20 },
+  });
+
+  // Inkubasi: dua UMKM tuntas, dua masih berjalan.
+  const inkubasi: [number, string[], string[]][] = [
+    [0, kunciInkubasi, []],
+    [2, ['nib', 'pirt', 'halal', 'kemasan', 'marketplace', 'produksi'], ['haki']],
+    [1, ['nib', 'kemasan', 'marketplace'], ['pirt', 'halal']],
+    [3, ['nib', 'pirt'], []],
+  ];
+  for (const [ke, selesai, tidakBerlaku] of inkubasi) {
+    for (const kunci of selesai) await minta('PUT', `/api/umkm/${id[ke]}/inkubasi/${kunci}`, { status: 'selesai' });
+    for (const kunci of tidakBerlaku) await minta('PUT', `/api/umkm/${id[ke]}/inkubasi/${kunci}`, { status: 'tidak_berlaku' });
+  }
+
+  // Produk prioritas hasil riset tren, lengkap dengan etalase marketplace.
+  const prioritas: [string, number, string, string][] = [
+    ['Kopi Robusta Arjuno 200 g', 45_000, 'pcs', 'https://shop.tiktok.com/view/product/kopi-robusta-arjuno'],
+    ['Kerudung Bordir Melati', 185_000, 'pcs', 'https://shopee.co.id/kerudung-bordir-melati-sekar-bangil'],
+    ['Keripik Apel Manalagi 100 g', 22_000, 'bungkus', 'https://shopee.co.id/keripik-apel-manalagi-tutur'],
+    ['Susu Etawa Bubuk 200 g', 75_000, 'kaleng', 'https://shop.tiktok.com/view/product/susu-etawa-nongkojajar'],
+  ];
+  for (const [namaProduk, harga, satuan, tautan] of prioritas)
+    await minta('PATCH', `/api/produk/${produk[namaProduk]}`, { nama: namaProduk, harga, satuan, aktif: true, prioritas: true, tautan_toko: tautan });
+
+  // Penjualan delapan pekan terakhir agar tren mingguan terbaca. Stok diisi ulang lebih dulu.
+  for (const namaProduk of ['Kopi Robusta Arjuno 200 g', 'Keripik Apel Manalagi 100 g', 'Susu Etawa Bubuk 200 g', 'Kerudung Bordir Melati'])
+    await minta('POST', '/api/stok/mutasi', { produk_id: produk[namaProduk], jenis: 'masuk', jumlah: 60, catatan: 'Titipan tambahan' });
+  const lama = ['Kopi Robusta Arjuno 200 g', 'Keripik Apel Manalagi 100 g', 'Susu Etawa Bubuk 200 g', 'Kerudung Bordir Melati'];
+  for (let minggu = 8; minggu >= 1; minggu--) {
+    for (let j = 0; j < 2 + (8 - minggu); j++) {
+      const waktu = new Date(Date.now() - (minggu * 7 + (j % 6) + 1) * 86_400_000 - (4 + j) * 3600_000).toISOString();
+      const namaProduk = lama[(minggu + j) % lama.length];
+      await minta('POST', '/api/penjualan', {
+        kanal: ['TikTok Shop', 'Shopee Live', 'Tokopedia Play', 'Penjualan langsung di galeri'][(minggu + j) % 4],
+        tanggal: waktu,
+        item: [{ produk_id: produk[namaProduk], jumlah: 1 + ((minggu + j) % 3) }],
+        nomor_pesanan: `58${String(410000 + minggu * 31 + j)}`,
+      });
+    }
+  }
+
+  // Sesi live selesai pada hari-hari sebelumnya di studio lain dan ruang podcast.
+  const siaran = db.prepare("SELECT id FROM ruangan WHERE jenis IN ('studio','podcast') ORDER BY lantai, urutan").all() as { id: number }[];
+  for (const [ke, hariLalu, judul, produkSesi] of [
+    [3, 3, 'Bordir Sore Bangil', 'Kerudung Bordir Melati'],
+    [2, 6, 'Camilan Apel Tutur', 'Keripik Apel Manalagi 100 g'],
+    [4, 9, 'Ngobrol UMKM: Susu Etawa', 'Susu Etawa Bubuk 200 g'],
+  ] as [number, number, string, string][]) {
+    const awal = new Date(Date.now() - hariLalu * 86_400_000);
+    awal.setUTCHours(6, 0, 0, 0);
+    const akhir = new Date(awal.getTime() + 90 * 60_000);
+    const s = await minta('POST', '/api/live', { ruangan_id: siaran[ke].id, judul, platform: 'TikTok Shop', host: 'Fajar', jadwal_mulai: awal.toISOString(), jadwal_selesai: akhir.toISOString(), produk_ids: [produk[produkSesi]] });
+    await minta('POST', `/api/live/${s.id}/mulai`);
+    await minta('POST', '/api/penjualan', { kanal: 'TikTok Shop', sesi_id: s.id, tanggal: new Date(awal.getTime() + 40 * 60_000).toISOString(), item: [{ produk_id: produk[produkSesi], jumlah: 2 }] });
+    await minta('POST', `/api/live/${s.id}/selesai`);
+    db.prepare('UPDATE sesi_live SET mulai = ?, selesai = ? WHERE id = ?').run(awal.toISOString(), akhir.toISOString(), s.id);
+  }
+
+  // Content Factory: konten enam pekan terakhir.
+  const jenisKonten = ['video', 'video', 'foto', 'ugc', 'video', 'materi'];
+  const platformKonten = ['TikTok', 'Shopee', 'Instagram', 'TikTok'];
+  for (let h = 42, i = 0; h >= 0; h -= 1, i++) {
+    if (h % 3 === 1) continue;
+    const ke = i % 4;
+    const namaProduk = Object.keys(produk).filter((p) => db.prepare('SELECT 1 FROM produk WHERE id = ? AND umkm_id = ?').get(produk[p], id[ke]))[0];
+    await minta('POST', '/api/konten', {
+      jenis: jenisKonten[h % jenisKonten.length],
+      judul: `${namaProduk}: ${['racikan pagi', 'unboxing', 'tips penyajian', 'di balik produksi', 'ulasan pembeli', 'promo akhir pekan'][i % 6]}`,
+      umkm_id: id[ke],
+      produk_id: produk[namaProduk],
+      platform: platformKonten[i % platformKonten.length],
+      tanggal: tanggalLalu(h),
+      jumlah: 1 + (i % 3),
+    });
+  }
+
+  // Affiliate Community.
+  const affiliate = [
+    ['Dimas Saputra', 'Bangil', 'TikTok', '@dimasreview'],
+    ['Ayu Lestari', 'Pandaan', 'Shopee', 'ayulestari.id'],
+    ['Rizky Maulana', 'Beji', 'TikTok', '@rizkyjajan'],
+    ['Nadia Putri', 'Gempol', 'Instagram', '@nadiaputri.daily'],
+    ['Bagas Pratama', 'Purwosari', 'TikTok', '@bagascuan'],
+    ['Salsabila Rahma', 'Prigen', 'Shopee', 'salsarahma'],
+    ['Yoga Firmansyah', 'Sukorejo', 'TikTok', '@yogaf'],
+    ['Intan Permata', 'Kraton', 'Instagram', '@intanpermata'],
+    ['Farhan Akbar', 'Pohjentrek', 'TikTok', '@farhanakbar'],
+    ['Melati Anggraini', 'Gondangwetan', 'Shopee', 'melatiang'],
+    ['Reza Kurniawan', 'Wonorejo', 'TikTok', '@rezakurnia'],
+    ['Putri Wulandari', 'Rembang', 'Tokopedia', 'putriwulan'],
+  ];
+  for (const [i, [namaAff, kec, platform, akun]] of affiliate.entries())
+    await minta('POST', '/api/affiliate', {
+      nama: namaAff,
+      whatsapp: `08573300${String(1000 + i)}`,
+      kecamatan: kec,
+      platform,
+      akun,
+      status: i === 11 ? 'jeda' : 'aktif',
+      bergabung: tanggalLalu(40 - i * 3),
+    });
+
+  // Evaluasi omzet: omzet awal saat bergabung dan laporan bulanan.
+  const bulanLalu = (b: number) => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCMonth(d.getUTCMonth() - b);
+    return d.toISOString().slice(0, 7);
+  };
+  const omzet: [number, number, number[]][] = [
+    [0, 8_000_000, [9_200_000, 10_400_000]],
+    [1, 12_000_000, [12_900_000, 13_600_000]],
+    [2, 5_000_000, [6_100_000, 6_700_000]],
+    [3, 6_500_000, []],
+  ];
+  for (const [ke, awal, laporan] of omzet) {
+    await minta('PUT', `/api/umkm/${id[ke]}/omzet-awal`, { omzet_awal: awal });
+    for (const [b, nilai] of laporan.entries()) await minta('POST', `/api/umkm/${id[ke]}/omzet`, { bulan: bulanLalu(laporan.length - b), omzet: nilai });
+  }
+
   console.log('Data contoh dibuat di', process.env.DATA_DIR);
   console.log('Masuk sebagai admin@demo.pcc atau petugas@demo.pcc, sandi demo-pcc-2026');
 }

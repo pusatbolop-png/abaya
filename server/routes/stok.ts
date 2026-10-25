@@ -54,6 +54,12 @@ export function ruteProduk(db: DB) {
         harga: bilBulat('Harga', 0),
         satuan: z.string().trim().max(20).optional().transform((v) => v || 'pcs'),
         stok_awal: bilBulat('Stok awal', 0).optional().default(0),
+        prioritas: z.boolean().optional().default(false),
+        tautan_toko: z
+          .union([z.literal(''), z.string().trim().url('Tautan toko harus diawali https://').max(300)])
+          .nullable()
+          .optional()
+          .transform((v) => v || null),
       }),
       await bacaJson(c),
     );
@@ -64,8 +70,8 @@ export function ruteProduk(db: DB) {
     const penggunaId = c.get('pengguna').id;
     const id = db.transaction(() => {
       const r = db
-        .prepare('INSERT INTO produk (umkm_id, nama, sku, harga, satuan, dibuat) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(u.id, d.nama, skuBaru(db, u.id), d.harga, d.satuan, sekarang());
+        .prepare('INSERT INTO produk (umkm_id, nama, sku, harga, satuan, prioritas, tautan_toko, dibuat) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(u.id, d.nama, skuBaru(db, u.id), d.harga, d.satuan, d.prioritas ? 1 : 0, d.tautan_toko, sekarang());
       const id = Number(r.lastInsertRowid);
       if (d.stok_awal > 0) catatMutasi(db, { produkId: id, jenis: 'masuk', jumlah: d.stok_awal, catatan: 'Stok awal', penggunaId });
       catatAktivitas(db, penggunaId, 'tambah', 'produk', id, `Produk ${d.nama} dari ${u.nama_usaha} ditambahkan`);
@@ -83,10 +89,25 @@ export function ruteProduk(db: DB) {
         harga: bilBulat('Harga', 0),
         satuan: z.string().trim().max(20).optional().transform((v) => v || 'pcs'),
         aktif: z.boolean(),
+        // Hasil riset Product Intelligence (Pilar 1) dan etalase marketplace produk.
+        prioritas: z.boolean().optional().default(false),
+        tautan_toko: z
+          .union([z.literal(''), z.string().trim().url('Tautan toko harus diawali https://').max(300)])
+          .nullable()
+          .optional()
+          .transform((v) => v || null),
       }),
       await bacaJson(c),
     );
-    db.prepare('UPDATE produk SET nama = ?, harga = ?, satuan = ?, aktif = ? WHERE id = ?').run(d.nama, d.harga, d.satuan, d.aktif ? 1 : 0, id);
+    db.prepare('UPDATE produk SET nama = ?, harga = ?, satuan = ?, aktif = ?, prioritas = ?, tautan_toko = ? WHERE id = ?').run(
+      d.nama,
+      d.harga,
+      d.satuan,
+      d.aktif ? 1 : 0,
+      d.prioritas ? 1 : 0,
+      d.tautan_toko,
+      id,
+    );
     catatAktivitas(db, c.get('pengguna').id, 'ubah', 'produk', id, `Produk ${d.nama} diperbarui`);
     return c.json({ ok: true });
   });

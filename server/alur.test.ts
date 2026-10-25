@@ -163,7 +163,83 @@ test('staf ruangan tampil di data gedung dan bisa diubah admin', async () => {
   ]);
 });
 
+test('program Blueprint: inkubasi, omzet, konten, affiliate, dan dasbor kinerja', async () => {
+  const u = db.prepare("SELECT id FROM umkm WHERE status = 'diterima' LIMIT 1").get() as { id: number };
+  const p = db.prepare('SELECT id, nama, harga, satuan FROM produk WHERE umkm_id = ? LIMIT 1').get(u.id) as { id: number; nama: string; harga: number; satuan: string };
+
+  // Program belum punya tanggal mulai: roadmap belum berjalan, target bawaan dari Blueprint.
+  let d = (await minta('GET', '/api/dasbor')).data as {
+    program: { hariKe: number | null; target: Record<string, number> };
+    target: { kunci: string; nilai: number | null; target: number }[];
+    alur: { kunci: string; nilai: number }[];
+  };
+  assert.equal(d.program.hariKe, null);
+  assert.deepEqual(d.target.map((t) => t.target), [100, 30, 5, 100, 3000, 20]);
+  const nilai = (k: string) => d.target.find((t) => t.kunci === k)!.nilai;
+  assert.equal(nilai('terinkubasi'), 0);
+  assert.equal(nilai('produkNasional'), 0);
+  assert.equal(nilai('studioAktif'), 1);
+  assert.equal(nilai('omzet'), null);
+
+  let r = await minta('PUT', '/api/pengaturan/program', { mulai: '2099-01-01', target: { terinkubasi: 0, produkNasional: 30, studioAktif: 5, affiliate: 100, kontenPerTahun: 3000, kenaikanOmzet: 20 } });
+  assert.equal(r.status, 400);
+  const mulai = new Date(Date.now() + 7 * 3600_000 - 9 * 86_400_000).toISOString().slice(0, 10);
+  r = await minta('PUT', '/api/pengaturan/program', { mulai, target: { terinkubasi: 50, produkNasional: 30, studioAktif: 5, affiliate: 100, kontenPerTahun: 3000, kenaikanOmzet: 20 } });
+  assert.equal(r.status, 200, JSON.stringify(r.data));
+
+  // Inkubasi: semua langkah tuntas (HAKI tidak berlaku) → terhitung terinkubasi.
+  assert.equal((await minta('PUT', `/api/umkm/${u.id}/inkubasi/bukan-langkah`, { status: 'selesai' })).status, 404);
+  for (const k of ['nib', 'pirt', 'halal', 'haki', 'kemasan', 'marketplace', 'produksi']) {
+    r = await minta('PUT', `/api/umkm/${u.id}/inkubasi/${k}`, { status: k === 'haki' ? 'tidak_berlaku' : 'selesai' });
+    assert.equal(r.status, 200, JSON.stringify(r.data));
+  }
+
+  // Produk prioritas yang terjual lewat TikTok Shop menembus pasar nasional.
+  r = await minta('PATCH', `/api/produk/${p.id}`, { nama: p.nama, harga: p.harga, satuan: p.satuan, aktif: true, prioritas: true, tautan_toko: 'bukan tautan' });
+  assert.equal(r.status, 400);
+  r = await minta('PATCH', `/api/produk/${p.id}`, { nama: p.nama, harga: p.harga, satuan: p.satuan, aktif: true, prioritas: true, tautan_toko: 'https://shop.tiktok.com/view/product/kopi' });
+  assert.equal(r.status, 200, JSON.stringify(r.data));
+
+  // Omzet: awal 8 juta, laporan bulan ini 10,4 juta → +30%.
+  assert.equal((await minta('PUT', `/api/umkm/${u.id}/omzet-awal`, { omzet_awal: 8_000_000 })).status, 200);
+  const bulan = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 7);
+  assert.equal((await minta('POST', `/api/umkm/${u.id}/omzet`, { bulan: '2099-01', omzet: 1 })).status, 400);
+  assert.equal((await minta('POST', `/api/umkm/${u.id}/omzet`, { bulan, omzet: 9_000_000 })).status, 201);
+  // Laporan bulan yang sama menimpa, bukan menggandakan.
+  assert.equal((await minta('POST', `/api/umkm/${u.id}/omzet`, { bulan, omzet: 10_400_000 })).status, 201);
+  const detail = (await minta('GET', `/api/umkm/${u.id}`)).data as { laporanOmzet: { omzet: number }[]; inkubasi: { status: string }[] };
+  assert.deepEqual(detail.laporanOmzet.map((l) => l.omzet), [10_400_000]);
+  assert.equal(detail.inkubasi.filter((i) => i.status === 'belum').length, 0);
+
+  // Content Factory: tiga konten sekaligus; produk harus milik UMKM yang dipilih.
+  const hariIni = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+  r = await minta('POST', '/api/konten', { jenis: 'video', judul: 'Seduh kopi', produk_id: p.id, tanggal: hariIni });
+  assert.equal(r.status, 400);
+  r = await minta('POST', '/api/konten', { jenis: 'video', judul: 'Seduh kopi', umkm_id: u.id, produk_id: p.id, platform: 'TikTok', tautan: '', tanggal: hariIni, jumlah: 3 });
+  assert.equal(r.status, 201, JSON.stringify(r.data));
+  const konten = (await minta('GET', `/api/konten?bulan=${hariIni.slice(0, 7)}`)).data as { daftar: { id: number; judul: string }[]; hitung: Record<string, number> };
+  assert.equal(konten.hitung.video, 3);
+  assert.equal((await minta('DELETE', `/api/konten/${konten.daftar[0].id}`)).status, 200);
+
+  // Affiliate: nomor WhatsApp unik; status jeda tidak dihitung aktif.
+  const af = { nama: 'Bayu Prakoso', whatsapp: '0857 1234 9876', platform: 'TikTok', akun: '@bayu', bergabung: hariIni };
+  r = await minta('POST', '/api/affiliate', af);
+  assert.equal(r.status, 201, JSON.stringify(r.data));
+  assert.equal((await minta('POST', '/api/affiliate', { ...af, nama: 'Bayu Lain', whatsapp: '6285712349876' })).status, 409);
+  r = await minta('POST', '/api/affiliate', { ...af, nama: 'Citra', whatsapp: '0812 0000 1111', status: 'jeda' });
+  assert.equal(r.status, 201);
+
+  d = (await minta('GET', '/api/dasbor')).data as typeof d;
+  assert.equal(d.program.hariKe, 10);
+  assert.equal(nilai('terinkubasi'), 1);
+  assert.equal(d.target.find((t) => t.kunci === 'terinkubasi')!.target, 50);
+  assert.equal(nilai('produkNasional'), 1);
+  assert.equal(nilai('affiliate'), 1);
+  assert.equal(nilai('konten'), 2);
+  assert.equal(nilai('omzet'), 30);
+  assert.equal(d.alur.find((a) => a.kunci === 'evaluasi')!.nilai, 1);
+});
+
 test('pengguna tanpa sesi tidak bisa membaca data pengelolaan', async () => {
-  const res = await app.request('/api/umkm');
-  assert.equal(res.status, 401);
+  for (const url of ['/api/umkm', '/api/dasbor', '/api/konten', '/api/affiliate']) assert.equal((await app.request(url)).status, 401, url);
 });

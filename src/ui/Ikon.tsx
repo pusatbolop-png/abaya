@@ -35,6 +35,9 @@ const JALUR = {
   kunci: 'M6 11h12v10H6zM8.5 11V7.5a3.5 3.5 0 017 0V11',
   arah: 'M9 18l6-6-6-6',
   sasaran: 'M12 3v3M12 18v3M3 12h3M18 12h3M12 16a4 4 0 100-8 4 4 0 000 8z',
+  kinerja: 'M4 20h16M6 16l4-5 3 3 5-7M15 7h3v3',
+  konten: 'M4 5h16v14H4zM10 9.5v5l4.5-2.5L10 9.5z',
+  affiliate: 'M12 8a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM5.5 20a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM18.5 20a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM12 8v4M12 12l-4.5 3.2M12 12l4.5 3.2',
 } as const;
 
 export type NamaIkon = keyof typeof JALUR;

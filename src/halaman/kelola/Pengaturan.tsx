@@ -6,7 +6,7 @@ import { useInfo, useSesi, useToast } from '../../lib/konteks';
 import { Bidang, GalatMuat, KepalaHalaman, Lembar, Masukan, Memuat, Pemberitahuan, Pilihan, Status, Tombol, useKirim } from '../../ui/dasar';
 import { Ikon } from '../../ui/Ikon';
 import { tanggal } from '../../../shared/format';
-import { BATAS_STAF_RUANG, JENIS_RUANGAN, PERAN, RUANG_SIARAN, SISI_PINTU, type JenisRuangan, type Peran, type StafRuang } from '../../../shared/konstanta';
+import { BATAS_STAF_RUANG, JENIS_RUANGAN, PERAN, RUANG_SIARAN, SISI_PINTU, type JenisRuangan, type Peran, type StafRuang, type TargetProgram } from '../../../shared/konstanta';
 
 interface Ruang {
   id: number;
@@ -30,10 +30,12 @@ interface DataPengaturan {
   denahTerkonfirmasi: boolean;
   ruangan: Ruang[];
   pelat: { lebar: number; panjang: number; pintuMasuk: { x: number; lebar: number } };
+  program: { mulai: string; target: TargetProgram };
 }
 
 const BAGIAN = [
   ['lembaga', 'Lembaga'],
+  ['program', 'Program dan target'],
   ['perizinan', 'Instansi perizinan'],
   ['ruangan', 'Ruangan'],
   ['pengguna', 'Pengguna'],
@@ -63,6 +65,7 @@ export function Pengaturan() {
         d.instansi.some((i) => !i.instansi) && { label: `Nama instansi perizinan (${d.instansi.filter((i) => !i.instansi).length} belum diisi)`, ke: 'perizinan' },
         !d.denahTerkonfirmasi && { label: 'Ukuran ruangan sesuai gambar kerja gedung', ke: 'ruangan' },
         !d.organisasi.alamat && { label: 'Alamat gedung', ke: 'lembaga' },
+        !d.program.mulai && { label: 'Tanggal mulai operasional (untuk roadmap 100 hari)', ke: 'program' },
       ].filter(Boolean)
     : [];
 
@@ -99,12 +102,80 @@ export function Pengaturan() {
       {!d && !r.galat && bagian !== 'akun' && bagian !== 'pengguna' && <Memuat />}
       <div className="isi-pengaturan">
         {d && bagian === 'lembaga' && <Lembaga d={d} selesai={r.muatUlang} />}
+        {d && bagian === 'program' && <Program d={d} selesai={r.muatUlang} />}
         {d && bagian === 'perizinan' && <Perizinan d={d} selesai={r.muatUlang} />}
         {d && bagian === 'ruangan' && <Ruangan d={d} selesai={r.muatUlang} />}
         {bagian === 'pengguna' && <Pengguna />}
         {bagian === 'akun' && <AkunSaya />}
       </div>
     </>
+  );
+}
+
+const ISIAN_TARGET: { k: keyof TargetProgram; label: string; satuan: string }[] = [
+  { k: 'terinkubasi', label: 'UMKM binaan terinkubasi', satuan: 'UMKM' },
+  { k: 'produkNasional', label: 'Produk prioritas tembus pasar nasional', satuan: 'produk' },
+  { k: 'studioAktif', label: 'Studio live commerce aktif', satuan: 'studio' },
+  { k: 'affiliate', label: 'Pasukan affiliate lokal', satuan: 'orang' },
+  { k: 'kontenPerTahun', label: 'Konten digital per tahun', satuan: 'konten' },
+  { k: 'kenaikanOmzet', label: 'Kenaikan omzet minimal UMKM binaan', satuan: '%' },
+];
+
+/** Tanggal mulai operasional dan target tahun pertama sesuai Blueprint PCC. */
+function Program({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<void> }) {
+  const toast = useToast();
+  const [mulai, setMulai] = useState(d.program.mulai);
+  const [target, setTarget] = useState<Record<keyof TargetProgram, string>>(
+    Object.fromEntries(Object.entries(d.program.target).map(([k, v]) => [k, String(v)])) as Record<keyof TargetProgram, string>,
+  );
+  const { sibuk, galat, bidang, kirim } = useKirim();
+  const simpan = async () => {
+    const ok = await kirim(() =>
+      api('PUT', '/api/pengaturan/program', { mulai, target: Object.fromEntries(Object.entries(target).map(([k, v]) => [k, Number(v)])) }),
+    );
+    if (ok) {
+      toast('Program dan target tersimpan. Dasbor kinerja ikut diperbarui.');
+      await selesai();
+    }
+  };
+  return (
+    <form
+      className="bagian sempit-lebar"
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        void simpan();
+      }}
+    >
+      <h2>Program dan target</h2>
+      <p className="redup kecil">
+        Target bawaan diambil dari Blueprint PCC (target kinerja tahun pertama). Tanggal mulai menentukan hari ke berapa roadmap 100 hari dan tahun program sedang berjalan.
+      </p>
+      {galat && <Pemberitahuan nada="galat">{galat}</Pemberitahuan>}
+      <Bidang label="Tanggal mulai operasional" galat={bidang.mulai} opsional>
+        {(a) => <Masukan {...a} type="date" value={mulai} onChange={(e) => setMulai(e.target.value)} />}
+      </Bidang>
+      <div className="kisi-isian">
+        {ISIAN_TARGET.map((t) => (
+          <Bidang key={t.k} label={`${t.label} (${t.satuan})`} galat={bidang[`target.${t.k}`]}>
+            {(a) => (
+              <Masukan
+                {...a}
+                value={target[t.k]}
+                inputMode="numeric"
+                className="angka"
+                onChange={(e) => setTarget((x) => ({ ...x, [t.k]: e.target.value.replace(/\D/g, '').slice(0, 7) }))}
+              />
+            )}
+          </Bidang>
+        ))}
+      </div>
+      <div>
+        <Tombol type="submit" ragam="utama" sibuk={sibuk}>
+          Simpan program dan target
+        </Tombol>
+      </div>
+    </form>
   );
 }
 

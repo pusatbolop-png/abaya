@@ -1,5 +1,6 @@
 // Uji ujung ke ujung di peramban sungguhan atas build produksi dengan basis data kosong:
-// siapkan admin → daftar UMKM → seleksi → stok → live → penjualan → retur → dana → ekspor.
+// siapkan admin → daftar UMKM → seleksi → inkubasi dan omzet → stok → live → penjualan → retur → dana → ekspor
+// → program dan target → konten → affiliate → dasbor kinerja.
 // Setiap halaman diperiksa axe-core (WCAG 2.1 A/AA) dan galat konsol dicatat.
 // Jalankan: npm run build && npm run e2e
 import { spawn } from 'node:child_process';
@@ -188,8 +189,31 @@ try {
     await l.getByLabel('Nama produk').fill('Dodol Mangga 250 g');
     await l.getByLabel('Harga jual').fill('35000');
     await l.getByLabel('Stok awal yang dititipkan').fill('10');
+    await l.getByLabel(/^Tautan toko marketplace/).fill('https://shop.tiktok.com/view/product/dodol-mangga-bangil');
+    await l.getByRole('checkbox', { name: /Produk prioritas/ }).check();
     await l.getByRole('button', { name: 'Simpan produk' }).click();
     await toast(page, 'Produk Dodol Mangga 250 g ditambahkan');
+    await page.locator('.dsb-tanda', { hasText: 'Prioritas' }).first().waitFor();
+  });
+
+  await jalan('Inkubasi dan omzet UMKM binaan dicatat', async () => {
+    const pilihan = page.locator('.daftar-inkubasi select');
+    if ((await pilihan.count()) !== 7) throw new Error(`Langkah inkubasi bukan tujuh: ${await pilihan.count()}`);
+    for (let i = 0; i < 7; i++) {
+      // HAKI tidak relevan untuk dodol: ditandai tidak berlaku, tetap dihitung tuntas.
+      const status = i === 3 ? 'tidak_berlaku' : 'selesai';
+      await pilihan.nth(i).selectOption(status);
+      await page.locator(`.daftar-inkubasi li:nth-child(${i + 1})[data-status="${status}"]`).waitFor();
+    }
+    await page.getByText('Tuntas. UMKM ini dihitung sebagai terinkubasi.').waitFor();
+    await page.getByRole('button', { name: 'Catat omzet' }).click();
+    const l = lembar(page);
+    await l.getByLabel('Omzet awal per bulan').fill('5000000');
+    await l.getByLabel(/^Omzet bulan itu/).fill('6500000');
+    await l.getByRole('button', { name: 'Simpan omzet' }).click();
+    await toast(page, 'Data omzet tersimpan');
+    await page.locator('.keterangan dd', { hasText: '+30%' }).waitFor();
+    await periksaAksesibilitas(page, 'detail umkm (inkubasi dan omzet)');
   });
 
   await jalan('Barang masuk dicatat di stok', async () => {
@@ -236,7 +260,8 @@ try {
     await page.locator('canvas[aria-label*="1 studio sedang siaran"]').waitFor({ timeout: 15000 });
     await page.locator('.g3-daftar .on-air').waitFor();
     await page.waitForTimeout(2500);
-    await page.screenshot({ path: path.join(ARTEFAK, 'gedung-siaran.png') });
+    // Peramban uji merender WebGL dengan perangkat lunak (SwiftShader), jadi satu bingkai bisa lambat.
+    await page.screenshot({ path: path.join(ARTEFAK, 'gedung-siaran.png'), timeout: 120_000 });
     await periksaAksesibilitas(page, 'gedung');
   });
 
@@ -302,6 +327,70 @@ try {
     const [csv] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: 'Unduh CSV' }).nth(1).click()]);
     const isi = fs.readFileSync(await csv.path(), 'utf8');
     if (!isi.includes('Dodol Mangga Bangil')) throw new Error('CSV dana tidak memuat UMKM');
+  });
+
+  await jalan('Tanggal mulai program dan target tahun pertama disimpan', async () => {
+    await page.goto(`${BASE}/kelola/pengaturan?bagian=program`);
+    await periksaAksesibilitas(page, 'pengaturan program');
+    const mulai = await page.evaluate(() => new Date(Date.now() + 7 * 3600_000 - 10 * 86_400_000).toISOString().slice(0, 10));
+    await page.getByLabel(/^Tanggal mulai operasional/).fill(mulai);
+    await page.getByLabel('Pasukan affiliate lokal (orang)').fill('50');
+    await page.getByRole('button', { name: 'Simpan program dan target' }).click();
+    await toast(page, 'Program dan target tersimpan');
+  });
+
+  await jalan('Konten Content Factory dicatat', async () => {
+    await page.goto(`${BASE}/kelola/konten`);
+    await page.getByText(/Belum ada konten tercatat/).waitFor();
+    await periksaAksesibilitas(page, 'konten kosong');
+    await page.getByRole('button', { name: 'Catat konten' }).first().click();
+    const l = lembar(page);
+    await l.getByLabel('Judul atau topik').fill('Dodol mangga untuk oleh-oleh');
+    await l.getByLabel(/^UMKM/).selectOption({ label: 'Dodol Mangga Bangil' });
+    await l.getByLabel(/^Produk/).selectOption({ label: 'Dodol Mangga 250 g' });
+    await l.getByLabel('Jumlah konten').fill('3');
+    await l.getByRole('button', { name: 'Simpan konten' }).click();
+    await toast(page, '3 konten tercatat');
+    await page.getByText('Dodol mangga untuk oleh-oleh (3)').waitFor();
+    await periksaAksesibilitas(page, 'konten');
+  });
+
+  await jalan('Affiliate lokal didaftarkan', async () => {
+    await page.goto(`${BASE}/kelola/affiliate`);
+    await page.getByText('Belum ada affiliate terdaftar.').waitFor();
+    await page.getByRole('button', { name: 'Daftarkan affiliate' }).first().click();
+    const l = lembar(page);
+    await l.getByLabel('Nama lengkap').fill('Bayu Prakoso');
+    await l.getByLabel('Nomor WhatsApp').fill('0857 1234 9876');
+    await l.getByLabel(/^Nama akun/).fill('@bayu.pasuruan');
+    await l.getByRole('button', { name: 'Daftarkan', exact: true }).click();
+    await toast(page, 'Bayu Prakoso terdaftar sebagai affiliate');
+    await page.locator('td .tebal', { hasText: 'Bayu Prakoso' }).waitFor();
+    await periksaAksesibilitas(page, 'affiliate');
+  });
+
+  await jalan('Dasbor kinerja membaca capaian nyata', async () => {
+    await page.goto(`${BASE}/kelola/dasbor`);
+    for (const nama of [
+      'UMKM binaan terinkubasi: 1 dari target 100',
+      'Produk prioritas tembus pasar nasional: 1 dari target 30',
+      'Studio live commerce aktif: 1 dari target 5',
+      'Pasukan affiliate lokal: 1 dari target 50',
+      'Konten digital tahun ini: 3 dari target 3.000',
+      'Kenaikan omzet UMKM binaan (median): 30% dari target +20%',
+    ])
+      await page.getByRole('meter', { name: nama }).waitFor({ timeout: 8000 });
+    await page.getByText('Hari ke-11 dari 100').waitFor();
+    await periksaAksesibilitas(page, 'dasbor');
+    const hp = await konteksBaru(true);
+    await hp.ctx.addCookies(await page.context().cookies());
+    await hp.page.goto(`${BASE}/kelola/dasbor`);
+    await hp.page.getByRole('heading', { name: 'Rincian pilar' }).waitFor();
+    const lebar = await hp.page.evaluate(() => document.documentElement.scrollWidth);
+    if (lebar > 390) throw new Error(`Dasbor ponsel menggulir ke samping: ${lebar}px`);
+    await hp.page.screenshot({ path: path.join(ARTEFAK, 'dasbor-ponsel.png'), fullPage: true });
+    await periksaAksesibilitas(hp.page, 'dasbor (ponsel)');
+    await hp.ctx.close();
   });
 
   await jalan('Pendaftar melihat status diterima', async () => {

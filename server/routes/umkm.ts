@@ -3,9 +3,9 @@ import { z } from 'zod';
 import type { DB } from '../db';
 import { sekarang } from '../db';
 import { hanyaAdmin, type Variabel } from '../auth';
-import { KATEGORI_USAHA, KRITERIA_SELEKSI, STATUS_UMKM, type StatusUmkm } from '../../shared/konstanta';
-import { normalisasiWa } from '../../shared/format';
-import { ambilPengaturan, periksa, wajib, teksOpsional, GalatPengguna, tidakDitemukan, catatAktivitas, bacaJson } from '../util';
+import { KATEGORI_USAHA, KRITERIA_SELEKSI, LANGKAH_INKUBASI, STATUS_UMKM, type StatusUmkm } from '../../shared/konstanta';
+import { normalisasiWa, tanggalWib } from '../../shared/format';
+import { ambilPengaturan, periksa, wajib, teksOpsional, bilBulat, GalatPengguna, tidakDitemukan, catatAktivitas, bacaJson } from '../util';
 import { simpanBerkas, bacaBerkas, hapusBerkas, HEADER_BERKAS } from '../berkas';
 import { posisiDana } from '../domain/dana';
 
@@ -24,6 +24,7 @@ interface BarisUmkm {
   bank: string | null;
   no_rekening: string | null;
   atas_nama: string | null;
+  omzet_awal: number | null;
   status: StatusUmkm;
   skor: string | null;
   catatan_seleksi: string | null;
@@ -97,12 +98,19 @@ export function ruteUmkm(db: DB) {
     });
     const produk = db
       .prepare(
-        `SELECT p.id, p.nama, p.sku, p.harga, p.satuan, p.aktif,
+        `SELECT p.id, p.nama, p.sku, p.harga, p.satuan, p.aktif, p.prioritas, p.tautan_toko AS tautanToko,
            COALESCE((SELECT SUM(jumlah) FROM mutasi_stok m WHERE m.produk_id = p.id), 0) AS stok,
            COALESCE((SELECT SUM(i.jumlah) FROM item_penjualan i JOIN penjualan j ON j.id = i.penjualan_id WHERE i.produk_id = p.id AND j.status = 'selesai'), 0) AS terjual
          FROM produk p WHERE p.umkm_id = ? ORDER BY p.aktif DESC, p.nama`,
       )
-      .all(u.id);
+      .all(u.id)
+      .map((p) => ({ ...(p as object), prioritas: !!(p as { prioritas: number }).prioritas }));
+    const inkubasiDb = db.prepare('SELECT kunci, status, diperbarui FROM inkubasi WHERE umkm_id = ?').all(u.id) as { kunci: string; status: string; diperbarui: string }[];
+    const inkubasi = LANGKAH_INKUBASI.map((l) => {
+      const r = inkubasiDb.find((x) => x.kunci === l.kunci);
+      return { kunci: l.kunci, label: l.label, status: r?.status ?? 'belum', diperbarui: r?.diperbarui ?? null };
+    });
+    const laporanOmzet = db.prepare('SELECT id, bulan, omzet, catatan FROM laporan_omzet WHERE umkm_id = ? ORDER BY bulan DESC').all(u.id);
     const pemutus = u.diputuskan_oleh ? (db.prepare('SELECT nama FROM pengguna WHERE id = ?').get(u.diputuskan_oleh) as { nama: string }) : null;
     return c.json({
       id: u.id,
@@ -127,6 +135,9 @@ export function ruteUmkm(db: DB) {
       dibuat: u.dibuat,
       izin,
       produk,
+      inkubasi,
+      omzetAwal: u.omzet_awal,
+      laporanOmzet,
       dana: posisiDana(db, u.id),
     });
   });
@@ -207,6 +218,59 @@ export function ruteUmkm(db: DB) {
     if (!f) throw tidakDitemukan('Berkas');
     const nama = (r!.berkas_nama ?? 'berkas').replace(/[^\w.\- ]/g, '_');
     return c.body(new Uint8Array(f.isi), 200, { 'Content-Type': f.mime, 'Content-Disposition': `inline; filename="${nama}"`, ...HEADER_BERKAS });
+  });
+
+  // ——— Inkubasi (Pilar 3) ———
+  app.put('/:id/inkubasi/:kunci', async (c) => {
+    const u = ambilUmkm(db, Number(c.req.param('id')));
+    const langkah = LANGKAH_INKUBASI.find((l) => l.kunci === c.req.param('kunci'));
+    if (!langkah) throw tidakDitemukan('Langkah inkubasi');
+    if (u.status !== 'diterima') throw new GalatPengguna(409, `${u.nama_usaha} belum lolos seleksi. Inkubasi dimulai setelah UMKM diterima.`);
+    const d = periksa(z.object({ status: z.enum(['belum', 'selesai', 'tidak_berlaku'], { error: 'Pilih status langkah inkubasi.' }) }), await bacaJson(c));
+    db.prepare(
+      `INSERT INTO inkubasi (umkm_id, kunci, status, diperbarui) VALUES (?, ?, ?, ?)
+       ON CONFLICT(umkm_id, kunci) DO UPDATE SET status = excluded.status, diperbarui = excluded.diperbarui`,
+    ).run(u.id, langkah.kunci, d.status, sekarang());
+    catatAktivitas(db, c.get('pengguna').id, 'inkubasi', 'umkm', u.id, `${langkah.label} ${u.nama_usaha}: ${d.status.replace('_', ' ')}`);
+    return c.json({ ok: true });
+  });
+
+  // ——— Evaluasi omzet (Monitoring & Evaluation) ———
+  app.put('/:id/omzet-awal', async (c) => {
+    const u = ambilUmkm(db, Number(c.req.param('id')));
+    const d = periksa(z.object({ omzet_awal: bilBulat('Omzet awal', 0).nullable() }), await bacaJson(c));
+    db.prepare('UPDATE umkm SET omzet_awal = ? WHERE id = ?').run(d.omzet_awal, u.id);
+    catatAktivitas(db, c.get('pengguna').id, 'ubah', 'umkm', u.id, `Omzet awal ${u.nama_usaha} diperbarui`);
+    return c.json({ ok: true });
+  });
+
+  app.post('/:id/omzet', async (c) => {
+    const u = ambilUmkm(db, Number(c.req.param('id')));
+    const d = periksa(
+      z.object({
+        bulan: z
+          .string()
+          .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Pilih bulan laporan.')
+          .refine((v) => v <= tanggalWib().slice(0, 7), 'Bulan laporan tidak boleh di masa depan.'),
+        omzet: bilBulat('Omzet', 0),
+        catatan: teksOpsional,
+      }),
+      await bacaJson(c),
+    );
+    if (u.status !== 'diterima') throw new GalatPengguna(409, `${u.nama_usaha} belum lolos seleksi. Evaluasi omzet dimulai setelah UMKM diterima.`);
+    db.prepare(
+      `INSERT INTO laporan_omzet (umkm_id, bulan, omzet, catatan, dibuat_oleh, dibuat) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(umkm_id, bulan) DO UPDATE SET omzet = excluded.omzet, catatan = excluded.catatan`,
+    ).run(u.id, d.bulan, d.omzet, d.catatan, c.get('pengguna').id, sekarang());
+    catatAktivitas(db, c.get('pengguna').id, 'evaluasi', 'umkm', u.id, `Omzet ${d.bulan} ${u.nama_usaha} dicatat`);
+    return c.json({ ok: true }, 201);
+  });
+
+  app.delete('/:id/omzet/:laporan', (c) => {
+    const u = ambilUmkm(db, Number(c.req.param('id')));
+    const r = db.prepare('DELETE FROM laporan_omzet WHERE id = ? AND umkm_id = ?').run(Number(c.req.param('laporan')), u.id);
+    if (!r.changes) throw tidakDitemukan('Laporan omzet');
+    return c.json({ ok: true });
   });
 
   app.post('/:id/seleksi', async (c) => {

@@ -5,8 +5,8 @@ import { useData } from '../../lib/data';
 import { useInfo, useSesi, useToast } from '../../lib/konteks';
 import { Area, Bidang, GalatMuat, KepalaHalaman, Kosong, Lembar, Masukan, MasukanRupiah, Memuat, Pemberitahuan, PilihBerkas, Pilihan, Status, Tombol, Uang, useKirim } from '../../ui/dasar';
 import { Ikon } from '../../ui/Ikon';
-import { angka, tanggal, tanggalJam, tautanWa, tampilWa } from '../../../shared/format';
-import { KRITERIA_SELEKSI, STATUS_IZIN, STATUS_UMKM, STOK_MENIPIS, type StatusIzin, type StatusUmkm } from '../../../shared/konstanta';
+import { angka, rupiah, tanggal, tanggalJam, tanggalWib, tautanWa, tampilWa } from '../../../shared/format';
+import { KRITERIA_SELEKSI, STATUS_INKUBASI, STATUS_IZIN, STATUS_UMKM, STOK_MENIPIS, type StatusInkubasi, type StatusIzin, type StatusUmkm } from '../../../shared/konstanta';
 import { nadaUmkm } from './DaftarUmkm';
 
 interface Izin {
@@ -30,6 +30,8 @@ interface Produk {
   aktif: number;
   stok: number;
   terjual: number;
+  prioritas: boolean;
+  tautanToko: string | null;
 }
 export interface DetailUmkmData {
   id: number;
@@ -54,6 +56,9 @@ export interface DetailUmkmData {
   dibuat: string;
   izin: Izin[];
   produk: Produk[];
+  inkubasi: { kunci: string; label: string; status: StatusInkubasi; diperbarui: string | null }[];
+  omzetAwal: number | null;
+  laporanOmzet: { id: number; bulan: string; omzet: number; catatan: string | null }[];
   dana: { siapCair: number; sudahDibayar: number; menungguTransfer: number; neto: number };
 }
 
@@ -219,9 +224,18 @@ export function DetailUmkm() {
                       <tr key={p.id} className={p.aktif ? undefined : 'nonaktif'}>
                         <td data-label="">
                           <span className="tebal">{p.nama}</span>
+                          {p.prioritas && <span className="dsb-tanda">Prioritas</span>}
                           <span className="sub">
                             <span className="mono">{p.sku}</span>
                             {!p.aktif && ' · tidak dijual'}
+                            {p.tautanToko && (
+                              <>
+                                {' · '}
+                                <a href={p.tautanToko} target="_blank" rel="noopener noreferrer">
+                                  Toko marketplace
+                                </a>
+                              </>
+                            )}
                           </span>
                         </td>
                         <td data-label="Harga" className="angka">
@@ -245,6 +259,9 @@ export function DetailUmkm() {
               </div>
             )}
           </section>
+
+          {u.status === 'diterima' && <PanelInkubasi u={u} selesai={r.muatUlang} />}
+          {u.status === 'diterima' && <PanelOmzet u={u} selesai={r.muatUlang} />}
         </div>
 
         <aside className="kolom-samping">
@@ -562,6 +579,8 @@ function LembarProduk({ umkmId, produk, tutup, selesai }: { umkmId: number; prod
   const [satuan, setSatuan] = useState('pcs');
   const [stokAwal, setStokAwal] = useState('');
   const [aktif, setAktif] = useState(true);
+  const [prioritas, setPrioritas] = useState(false);
+  const [tautanToko, setTautanToko] = useState('');
   const { sibuk, galat, bidang, kirim, atur } = useKirim();
 
   useEffect(() => {
@@ -573,11 +592,15 @@ function LembarProduk({ umkmId, produk, tutup, selesai }: { umkmId: number; prod
       setSatuan('pcs');
       setStokAwal('');
       setAktif(true);
+      setPrioritas(false);
+      setTautanToko('');
     } else {
       setNama(produk.nama);
       setHarga(produk.harga);
       setSatuan(produk.satuan);
       setAktif(!!produk.aktif);
+      setPrioritas(produk.prioritas);
+      setTautanToko(produk.tautanToko ?? '');
     }
   }, [produk, atur]);
 
@@ -589,8 +612,8 @@ function LembarProduk({ umkmId, produk, tutup, selesai }: { umkmId: number; prod
     if (Object.keys(g).length) return atur('Ada isian yang perlu diperbaiki.', g);
     const ok = await kirim(() =>
       baru
-        ? api('POST', '/api/produk', { umkm_id: umkmId, nama, harga, satuan, stok_awal: Number(stokAwal || 0) })
-        : api('PATCH', `/api/produk/${(produk as Produk).id}`, { nama, harga, satuan, aktif }),
+        ? api('POST', '/api/produk', { umkm_id: umkmId, nama, harga, satuan, stok_awal: Number(stokAwal || 0), prioritas, tautan_toko: tautanToko })
+        : api('PATCH', `/api/produk/${(produk as Produk).id}`, { nama, harga, satuan, aktif, prioritas, tautan_toko: tautanToko }),
     );
     if (ok) {
       toast(baru ? `Produk ${nama} ditambahkan.` : `Produk ${nama} diperbarui.`);
@@ -642,7 +665,166 @@ function LembarProduk({ umkmId, produk, tutup, selesai }: { umkmId: number; prod
           </span>
         </label>
       )}
+      <Bidang label="Tautan toko marketplace" opsional galat={bidang.tautan_toko} petunjuk="Halaman produk di TikTok Shop, Shopee, atau Tokopedia.">
+        {(a) => <Masukan {...a} type="url" value={tautanToko} onChange={(e) => setTautanToko(e.target.value)} placeholder="https://" />}
+      </Bidang>
+      <label className="centang">
+        <input type="checkbox" checked={prioritas} onChange={(e) => setPrioritas(e.target.checked)} />
+        <span>
+          Produk prioritas
+          <span className="petunjuk" style={{ display: 'block' }}>
+            Ditetapkan dari riset tren TikTok Shop dan Shopee (Product Intelligence). Dihitung ke target produk yang menembus pasar nasional.
+          </span>
+        </span>
+      </label>
     </Lembar>
+  );
+}
+
+/** Daftar periksa inkubasi (Pilar 3): legalitas, standar produk, dan kesiapan pasar. */
+function PanelInkubasi({ u, selesai }: { u: DetailUmkmData; selesai: () => Promise<void> }) {
+  const toast = useToast();
+  const { kirim } = useKirim();
+  const [sibuk, setSibuk] = useState<string | null>(null);
+  const tuntas = u.inkubasi.filter((i) => i.status !== 'belum').length;
+  const ubah = async (kunci: string, label: string, status: StatusInkubasi) => {
+    setSibuk(kunci);
+    const ok = await kirim(() => api('PUT', `/api/umkm/${u.id}/inkubasi/${kunci}`, { status }));
+    setSibuk(null);
+    if (ok) {
+      toast(`${label}: ${STATUS_INKUBASI[status].toLowerCase()}.`);
+      await selesai();
+    } else toast(`${label} belum tersimpan. Periksa koneksi, lalu coba lagi.`, 'galat');
+  };
+  return (
+    <section className="bagian" aria-labelledby="judul-inkubasi">
+      <div className="kepala-bagian">
+        <h2 id="judul-inkubasi">Inkubasi</h2>
+        <p>
+          {tuntas === u.inkubasi.length
+            ? 'Tuntas. UMKM ini dihitung sebagai terinkubasi.'
+            : `${tuntas} dari ${u.inkubasi.length} langkah tuntas. Tandai "Tidak berlaku" untuk langkah yang tidak relevan dengan produknya.`}
+        </p>
+      </div>
+      <ul className="daftar-inkubasi">
+        {u.inkubasi.map((i) => (
+          <li key={i.kunci} data-status={i.status}>
+            <span className="tanda-inkubasi" aria-hidden="true">
+              {i.status === 'selesai' && <Ikon nama="centang" />}
+            </span>
+            <span>
+              {i.label}
+              {i.diperbarui && <span className="sub">Diperbarui {tanggal(i.diperbarui)}</span>}
+            </span>
+            <Pilihan
+              aria-label={`Status ${i.label}`}
+              value={i.status}
+              disabled={sibuk === i.kunci}
+              onChange={(e) => void ubah(i.kunci, i.label, e.target.value as StatusInkubasi)}
+            >
+              {Object.entries(STATUS_INKUBASI).map(([k, l]) => (
+                <option key={k} value={k}>
+                  {l}
+                </option>
+              ))}
+            </Pilihan>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Monitoring dan evaluasi: omzet awal dibandingkan laporan omzet bulanan. */
+function PanelOmzet({ u, selesai }: { u: DetailUmkmData; selesai: () => Promise<void> }) {
+  const toast = useToast();
+  const [buka, setBuka] = useState(false);
+  const [awal, setAwal] = useState<number | ''>(u.omzetAwal ?? '');
+  const [bulan, setBulan] = useState(tanggalWib().slice(0, 7));
+  const [omzet, setOmzet] = useState<number | ''>('');
+  const { sibuk, galat, bidang, kirim, atur } = useKirim();
+  const terakhir = u.laporanOmzet[0];
+  const kenaikan = u.omzetAwal && terakhir ? ((terakhir.omzet - u.omzetAwal) / u.omzetAwal) * 100 : null;
+  const namaBulan = (b: string) => new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(b + '-01T00:00:00Z'));
+
+  useEffect(() => {
+    if (!buka) return;
+    atur(null);
+    setAwal(u.omzetAwal ?? '');
+    setOmzet('');
+  }, [buka, u.omzetAwal, atur]);
+
+  const simpan = async () => {
+    if (awal === '' && omzet === '') return atur('Isi omzet awal atau omzet bulan yang dilaporkan.');
+    const ok = await kirim(async () => {
+      if (awal !== (u.omzetAwal ?? '')) await api('PUT', `/api/umkm/${u.id}/omzet-awal`, { omzet_awal: awal === '' ? null : awal });
+      if (omzet !== '') await api('POST', `/api/umkm/${u.id}/omzet`, { bulan, omzet });
+      return true;
+    });
+    if (ok) {
+      toast('Data omzet tersimpan.');
+      setBuka(false);
+      await selesai();
+    }
+  };
+
+  return (
+    <section className="bagian" aria-labelledby="judul-omzet-umkm">
+      <div className="kepala-bagian">
+        <h2 id="judul-omzet-umkm">Evaluasi omzet</h2>
+        <Tombol kecil ikon="tambah" onClick={() => setBuka(true)}>
+          Catat omzet
+        </Tombol>
+      </div>
+      <dl className="keterangan">
+        <dt>Omzet awal per bulan</dt>
+        <dd className="angka">{u.omzetAwal ? rupiah(u.omzetAwal) : <span className="redup">Belum diisi</span>}</dd>
+        <dt>Laporan terakhir</dt>
+        <dd className="angka">{terakhir ? `${rupiah(terakhir.omzet)} (${namaBulan(terakhir.bulan)})` : <span className="redup">Belum ada laporan</span>}</dd>
+        <dt>Kenaikan</dt>
+        <dd className={['angka', 'tebal', kenaikan !== null && (kenaikan >= 20 ? 'teks-ok' : kenaikan < 0 ? 'teks-galat' : '')].filter(Boolean).join(' ')}>
+          {kenaikan === null ? <span className="redup">Belum bisa dihitung</span> : `${kenaikan >= 0 ? '+' : ''}${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(kenaikan)}%`}
+        </dd>
+      </dl>
+      {u.laporanOmzet.length > 0 && (
+        <ul className="daftar-ringkas">
+          {u.laporanOmzet.map((l) => (
+            <li key={l.id}>
+              <span>{namaBulan(l.bulan)}</span>
+              <span className="angka">{rupiah(l.omzet)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Lembar
+        buka={buka}
+        tutup={() => setBuka(false)}
+        judul="Catat omzet"
+        keterangan="Omzet seluruh penjualan UMKM per bulan, termasuk di luar PCC, sesuai laporan pemilik usaha."
+        onSubmit={simpan}
+        kaki={
+          <>
+            <Tombol onClick={() => setBuka(false)}>Batal</Tombol>
+            <Tombol type="submit" ragam="utama" sibuk={sibuk}>
+              Simpan omzet
+            </Tombol>
+          </>
+        }
+      >
+        {galat && <Pemberitahuan nada="galat">{galat}</Pemberitahuan>}
+        <Bidang label="Omzet awal per bulan" galat={bidang.omzet_awal} petunjuk="Rata-rata omzet sebulan sebelum bergabung dengan PCC. Menjadi pembanding kenaikan.">
+          {(a) => <MasukanRupiah {...a} nilai={awal} ubah={setAwal} />}
+        </Bidang>
+        <div className="kisi-isian">
+          <Bidang label="Bulan laporan" galat={bidang.bulan}>
+            {(a) => <Masukan {...a} type="month" value={bulan} max={tanggalWib().slice(0, 7)} onChange={(e) => setBulan(e.target.value)} />}
+          </Bidang>
+          <Bidang label="Omzet bulan itu" opsional galat={bidang.omzet}>
+            {(a) => <MasukanRupiah {...a} nilai={omzet} ubah={setOmzet} />}
+          </Bidang>
+        </div>
+      </Lembar>
+    </section>
   );
 }
 

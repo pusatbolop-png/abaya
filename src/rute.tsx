@@ -17,6 +17,9 @@ import { Retur } from './halaman/kelola/Retur';
 import { Dana } from './halaman/kelola/Dana';
 import { Laporan } from './halaman/kelola/Laporan';
 import { Pengaturan } from './halaman/kelola/Pengaturan';
+import { Dasbor } from './halaman/kelola/Dasbor';
+import { Konten } from './halaman/kelola/Konten';
+import { Affiliate } from './halaman/kelola/Affiliate';
 import { TidakDitemukan } from './halaman/TidakDitemukan';
 
 const rute: RouteObject[] = [
@@ -36,7 +39,10 @@ const rute: RouteObject[] = [
     element: <KerangkaKelola />,
     children: [
       { index: true, element: <Ringkasan /> },
+      { path: 'dasbor', element: <Dasbor /> },
       { path: 'gedung', element: <HalamanGedung /> },
+      { path: 'konten', element: <Konten /> },
+      { path: 'affiliate', element: <Affiliate /> },
       { path: 'umkm', element: <DaftarUmkm /> },
       { path: 'umkm/:id', element: <DetailUmkm /> },
       { path: 'stok', element: <Stok /> },

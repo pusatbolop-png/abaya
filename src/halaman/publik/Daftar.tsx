@@ -14,6 +14,7 @@ const AWAL: Isian = {
   kategori: '',
   deskripsi: '',
   media_sosial: '',
+  omzet_awal: '',
   pemilik: '',
   whatsapp: '',
   email: '',
@@ -142,6 +143,20 @@ export function Daftar() {
             </Bidang>
             <Bidang label="Akun media sosial atau toko daring" opsional petunjuk="Misalnya @kopilereng atau tautan toko.">
               {(a) => <Masukan {...a} {...p('media_sosial')} />}
+            </Bidang>
+            <Bidang label="Omzet rata-rata per bulan saat ini" opsional galat={bidang.omzet_awal} petunjuk="Perkiraan dalam rupiah. Dipakai untuk mengukur kenaikan omzet setelah bergabung.">
+              {(a) => (
+                <div className="dengan-awalan">
+                  <span aria-hidden="true">Rp</span>
+                  <input
+                    {...a}
+                    className="masukan angka"
+                    inputMode="numeric"
+                    value={d.omzet_awal ? new Intl.NumberFormat('id-ID').format(Number(d.omzet_awal)) : ''}
+                    onChange={(e) => setD((x) => ({ ...x, omzet_awal: e.target.value.replace(/\D/g, '').slice(0, 11) }))}
+                  />
+                </div>
+              )}
             </Bidang>
             <Bidang
               label="Ceritakan produk Anda"

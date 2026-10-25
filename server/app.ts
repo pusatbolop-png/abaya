@@ -14,6 +14,7 @@ import { rutePenjualan, ruteRetur } from './routes/penjualan';
 import { ruteDana } from './routes/dana';
 import { ruteEkspor } from './routes/ekspor';
 import { rutePengaturan, rutePengguna, ruteRingkasan } from './routes/pengaturan';
+import { ruteAffiliate, ruteDasbor, ruteKonten } from './routes/program';
 
 export function buatApp(db: DB) {
   const app = new Hono<{ Variables: Variabel }>();
@@ -80,6 +81,9 @@ export function buatApp(db: DB) {
   kelola.route('/pengaturan', rutePengaturan(db));
   kelola.route('/pengguna', rutePengguna(db));
   kelola.route('/ringkasan', ruteRingkasan(db));
+  kelola.route('/dasbor', ruteDasbor(db));
+  kelola.route('/konten', ruteKonten(db));
+  kelola.route('/affiliate', ruteAffiliate(db));
   kelola.get('/gedung', (c) => c.json(dataGedung(db)));
   app.route('/api', kelola);
 

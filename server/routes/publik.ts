@@ -32,6 +32,13 @@ const skemaDaftar = z.object({
   bank: teksOpsional,
   no_rekening: z.string().trim().max(40).optional().transform((v) => (v ? v.replace(/[^\d]/g, '') : null)),
   atas_nama: teksOpsional,
+  // Omzet rata-rata per bulan sebelum bergabung: pembanding evaluasi kenaikan omzet.
+  omzet_awal: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v ? Number(v.replace(/[^\d]/g, '')) : null))
+    .refine((v) => v === null || (Number.isSafeInteger(v) && v <= 100_000_000_000), 'Omzet per bulan tidak valid.'),
   persetujuan: z.literal('ya', { error: 'Centang pernyataan kebenaran data untuk melanjutkan.' }),
 });
 
@@ -105,8 +112,8 @@ export function rutePublik(db: DB) {
       const kode = nomorBaru(db, 'UMKM', false);
       const r = db
         .prepare(
-          `INSERT INTO umkm (kode, nama_usaha, pemilik, whatsapp, email, alamat, kecamatan, kategori, deskripsi, media_sosial, bank, no_rekening, atas_nama, dibuat)
-           VALUES (@kode, @nama_usaha, @pemilik, @whatsapp, @email, @alamat, @kecamatan, @kategori, @deskripsi, @media_sosial, @bank, @no_rekening, @atas_nama, @dibuat)`,
+          `INSERT INTO umkm (kode, nama_usaha, pemilik, whatsapp, email, alamat, kecamatan, kategori, deskripsi, media_sosial, bank, no_rekening, atas_nama, omzet_awal, dibuat)
+           VALUES (@kode, @nama_usaha, @pemilik, @whatsapp, @email, @alamat, @kecamatan, @kategori, @deskripsi, @media_sosial, @bank, @no_rekening, @atas_nama, @omzet_awal, @dibuat)`,
         )
         .run({ ...data, kode, dibuat: sekarang() });
       const id = Number(r.lastInsertRowid);

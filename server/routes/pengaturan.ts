@@ -51,6 +51,29 @@ export function rutePengaturan(db: DB) {
     return c.json({ ok: true });
   });
 
+  // Tanggal mulai operasional dan target tahun pertama (Blueprint PCC).
+  app.put('/program', async (c) => {
+    hanyaAdmin(c);
+    const target = (label: string, maks: number) => z.coerce.number({ error: `Isi ${label}.` }).int(`${label} harus bilangan bulat.`).min(1, `${label} minimal 1.`).max(maks);
+    const d = periksa(
+      z.object({
+        mulai: z.union([z.literal(''), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Tanggal mulai tidak valid.')]),
+        target: z.object({
+          terinkubasi: target('Target UMKM terinkubasi', 100_000),
+          produkNasional: target('Target produk nasional', 100_000),
+          studioAktif: target('Target studio aktif', 100),
+          affiliate: target('Target affiliate', 100_000),
+          kontenPerTahun: target('Target konten per tahun', 1_000_000),
+          kenaikanOmzet: target('Target kenaikan omzet', 1000),
+        }),
+      }),
+      await bacaJson(c),
+    );
+    simpanPengaturan(db, 'program', d);
+    catatAktivitas(db, c.get('pengguna').id, 'atur', 'pengaturan', null, 'Target program diperbarui');
+    return c.json({ ok: true });
+  });
+
   app.put('/instansi', async (c) => {
     hanyaAdmin(c);
     const lama = ambilPengaturan(db).instansi;

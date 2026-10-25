@@ -16,6 +16,7 @@ interface Lencana {
 
 const NAV: ({ ke: string; label: string; ikon: NamaIkon; akhir?: boolean; lencana?: keyof Lencana; admin?: boolean } | 'garis')[] = [
   { ke: '/kelola', label: 'Ringkasan', ikon: 'ringkasan', akhir: true },
+  { ke: '/kelola/dasbor', label: 'Dasbor kinerja', ikon: 'kinerja' },
   { ke: '/kelola/gedung', label: 'Gedung', ikon: 'gedung' },
   'garis',
   { ke: '/kelola/umkm', label: 'UMKM dan seleksi', ikon: 'umkm', lencana: 'menunggu' },
@@ -23,6 +24,8 @@ const NAV: ({ ke: string; label: string; ikon: NamaIkon; akhir?: boolean; lencan
   { ke: '/kelola/live', label: 'Sesi live', ikon: 'siaran', lencana: 'siaran' },
   { ke: '/kelola/penjualan', label: 'Penjualan', ikon: 'penjualan' },
   { ke: '/kelola/retur', label: 'Retur', ikon: 'retur' },
+  { ke: '/kelola/konten', label: 'Content Factory', ikon: 'konten' },
+  { ke: '/kelola/affiliate', label: 'Affiliate', ikon: 'affiliate' },
   'garis',
   { ke: '/kelola/dana', label: 'Dana UMKM', ikon: 'dana' },
   { ke: '/kelola/laporan', label: 'Laporan dan ekspor', ikon: 'laporan' },

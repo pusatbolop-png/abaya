@@ -1,4 +1,4 @@
-import type { JenisRuangan, StafRuang } from '../shared/konstanta';
+import { TARGET_BAWAAN, type JenisRuangan, type StafRuang, type TargetProgram } from '../shared/konstanta';
 
 export interface Organisasi {
   nama: string;
@@ -27,6 +27,8 @@ export interface Pengaturan {
   denahTerkonfirmasi: boolean;
   /** Diisi 'demo' hanya oleh skrip data contoh. */
   mode: 'produksi' | 'demo';
+  /** Tanggal mulai operasional (YYYY-MM-DD, WIB) dan target tahun pertama. */
+  program: { mulai: string; target: TargetProgram };
 }
 
 export const INSTANSI_AWAL: Instansi[] = [
@@ -49,6 +51,7 @@ export const PENGATURAN_AWAL: Pengaturan = {
   logo: null,
   denahTerkonfirmasi: false,
   mode: 'produksi',
+  program: { mulai: '', target: TARGET_BAWAAN },
 };
 
 export type SisiPintu = 'depan' | 'belakang' | 'kiri' | 'kanan';

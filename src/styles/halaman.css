@@ -1625,3 +1625,398 @@ tr.nonaktif .tebal {
 .dua-kolom > * + .bagian {
   margin-top: 0;
 }
+
+/* ——————————————————— Dasbor kinerja ——————————————————— */
+.dsb {
+  display: grid;
+  gap: var(--r-7);
+}
+.dsb > .bagian + .bagian {
+  margin-top: 0;
+}
+.dsb .dua-kolom {
+  margin-top: 0;
+}
+.dsb h3 {
+  font-size: var(--t-sedang);
+}
+.dsb-pilar {
+  margin: 0;
+  font-size: var(--t-mikro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--tembaga);
+}
+.dsb-subjudul {
+  margin: var(--r-3) 0 0;
+}
+
+/* Roadmap 100 hari */
+.dsb-roadmap {
+  display: grid;
+  gap: var(--r-4);
+}
+.dsb-tahap {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 30fr 30fr 20fr 20fr;
+  gap: var(--r-3);
+}
+.dsb-tahap li {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+.dsb-tahap-garis {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--pasir-tua);
+  overflow: hidden;
+}
+.dsb-tahap-garis span {
+  display: block;
+  height: 100%;
+  background: var(--lumut);
+}
+.dsb-tahap li[data-status='kini'] .dsb-tahap-garis span {
+  background: var(--tembaga);
+}
+.dsb-tahap li[data-status='nanti'] strong {
+  color: var(--redup);
+}
+.dsb-tahap li[data-status='kini'] strong::after {
+  content: ' · sedang berjalan';
+  font-weight: 500;
+  font-size: var(--t-mikro);
+  color: var(--tembaga);
+}
+@media (max-width: 760px) {
+  .dsb-tahap {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Enam target tahun pertama */
+.dsb-target-kisi {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--r-4);
+}
+.dsb-target {
+  display: grid;
+  gap: var(--r-2);
+  align-content: start;
+  padding: var(--r-4) var(--r-5);
+  background: var(--kertas);
+  border: var(--garis);
+  border-radius: var(--sudut-besar);
+}
+.dsb-target h3 {
+  margin: 0;
+  font-family: var(--huruf-teks);
+  font-size: var(--t-teks);
+  font-weight: 600;
+  text-wrap: balance;
+}
+.dsb-angka {
+  margin: 0;
+  font-family: var(--huruf-judul);
+  font-size: 2rem;
+  line-height: 1.1;
+}
+.dsb-angka .redup {
+  font-family: var(--huruf-teks);
+  font-size: var(--t-teks);
+}
+.dsb-meter {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--pasir-tua);
+  overflow: hidden;
+}
+.dsb-meter span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--hutan);
+  transition: width var(--gerak-sedang) var(--kurva);
+}
+.dsb-meter span[data-nada='tunggu'] {
+  background: var(--peringatan);
+}
+.dsb-laju {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--r-2) var(--r-3);
+}
+@media (max-width: 1100px) {
+  .dsb-target-kisi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .dsb-target-kisi {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Alur kerja */
+.dsb-alur {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--garis);
+}
+.dsb-alur li {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 15rem) minmax(0, 1fr) 3rem minmax(0, 12rem);
+  gap: var(--r-3);
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: var(--garis);
+  font-size: 0.875rem;
+}
+.dsb-alur-tahap {
+  color: var(--redup);
+}
+.dsb-alur-batang {
+  display: block;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--pasir-tua);
+  overflow: hidden;
+}
+.dsb-alur-batang span {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: var(--lumut);
+}
+@media (max-width: 760px) {
+  .dsb-alur li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px var(--r-3);
+  }
+  .dsb-alur-tahap,
+  .dsb-alur li > .redup {
+    grid-column: 1 / -1;
+  }
+  .dsb-alur-tahap {
+    order: -1;
+  }
+  .dsb-alur-batang {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}
+
+/* Angka ringkas, grafik, dan daftar berbatang */
+.dsb-angka-deret {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--r-4) var(--r-6);
+  margin: 0;
+}
+.dsb-angka-deret div {
+  display: grid;
+  gap: 2px;
+}
+.dsb-angka-deret dt {
+  font-size: var(--t-kecil);
+  color: var(--redup);
+}
+.dsb-angka-deret dd {
+  margin: 0;
+  font-family: var(--huruf-judul);
+  font-size: 1.5rem;
+}
+.dsb-grafik {
+  display: grid;
+  gap: var(--r-2);
+  margin: 0;
+}
+.dsb-grafik .batang {
+  margin-bottom: 22px;
+}
+.dsb-batang-12 {
+  grid-template-columns: repeat(12, 1fr);
+}
+.dsb-batang-6 {
+  grid-template-columns: repeat(6, 1fr);
+  height: 80px;
+  margin-bottom: 22px;
+}
+.dsb-batang-daftar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--r-3);
+}
+.dsb-batang-daftar li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px var(--r-3);
+  font-size: 0.875rem;
+}
+.dsb-batang-daftar .sub {
+  display: block;
+  color: var(--redup);
+  font-size: var(--t-mikro);
+}
+.dsb-batang-daftar .dsb-alur-batang {
+  grid-column: 1 / -1;
+  height: 6px;
+}
+.dsb-sorot {
+  margin: 0;
+  font-size: var(--t-sedang);
+}
+.dsb-sorot .angka {
+  font-family: var(--huruf-judul);
+  font-size: 2rem;
+}
+
+/* Rincian pilar */
+.dsb-pilar-kisi {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--r-4);
+}
+.dsb-kartu {
+  display: grid;
+  gap: var(--r-3);
+  align-content: start;
+  padding: var(--r-5);
+  border: var(--garis);
+  border-radius: var(--sudut-besar);
+  background: var(--kertas);
+  min-width: 0;
+}
+.dsb-kartu h3 {
+  margin: 0;
+}
+.dsb-kartu > p {
+  margin: 0;
+}
+.dsb-laris h3 {
+  margin: var(--r-2) 0;
+  font-family: var(--huruf-teks);
+  font-size: var(--t-kecil);
+  font-weight: 600;
+}
+.dsb-laris ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--garis);
+}
+.dsb-laris li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--r-3);
+  padding: 8px 0;
+  border-bottom: var(--garis);
+  font-size: 0.875rem;
+}
+.dsb-laris .sub {
+  display: block;
+  color: var(--redup);
+  font-size: var(--t-mikro);
+}
+.dsb-laris .kanan {
+  display: grid;
+  justify-items: end;
+  text-align: right;
+}
+.dsb-tanda {
+  display: inline-block;
+  margin-left: var(--r-2);
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--tembaga-latar);
+  color: var(--tembaga-tua);
+  font-size: var(--t-mikro);
+  font-weight: 600;
+  vertical-align: 1px;
+}
+@media (max-width: 900px) {
+  .dsb-pilar-kisi {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Inkubasi di halaman UMKM */
+.daftar-inkubasi {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--garis);
+}
+.daftar-inkubasi li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 10rem;
+  gap: var(--r-3);
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: var(--garis);
+  font-size: 0.875rem;
+}
+.daftar-inkubasi .sub {
+  display: block;
+  color: var(--redup);
+  font-size: var(--t-mikro);
+}
+.tanda-inkubasi {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--abu-tua);
+}
+.daftar-inkubasi li[data-status='selesai'] .tanda-inkubasi {
+  border-color: var(--berhasil);
+  background: var(--berhasil);
+  color: var(--kertas);
+}
+.daftar-inkubasi li[data-status='selesai'] .tanda-inkubasi svg {
+  width: 14px;
+  height: 14px;
+}
+.daftar-inkubasi li[data-status='tidak_berlaku'] > span:nth-child(2) {
+  color: var(--redup);
+  text-decoration: line-through;
+}
+@media (max-width: 480px) {
+  .daftar-inkubasi li {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+  .daftar-inkubasi .pilihan {
+    grid-column: 2;
+  }
+}
+
+/* Saringan bulan dan formulir lebar sedang */
+.label-sebaris {
+  display: flex;
+  align-items: center;
+  gap: var(--r-3);
+  font-size: var(--t-kecil);
+  color: var(--redup);
+}
+.label-sebaris .masukan {
+  width: auto;
+}
+.sempit-lebar {
+  max-width: 760px;
+}

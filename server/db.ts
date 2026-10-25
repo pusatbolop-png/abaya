@@ -213,6 +213,58 @@ const MIGRASI: string[] = [
   `,
   /* 3 */ `SELECT 1;`,
   /* 4 */ `ALTER TABLE ruangan ADD COLUMN staf TEXT NOT NULL DEFAULT '[]';`,
+  /* 5 */ `
+  -- Program PCC: inkubasi, produk prioritas, Content Factory, affiliate, dan evaluasi omzet.
+  ALTER TABLE umkm ADD COLUMN omzet_awal INTEGER CHECK (omzet_awal IS NULL OR omzet_awal >= 0);
+  ALTER TABLE produk ADD COLUMN prioritas INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE produk ADD COLUMN tautan_toko TEXT;
+
+  CREATE TABLE inkubasi (
+    umkm_id INTEGER NOT NULL REFERENCES umkm(id) ON DELETE CASCADE,
+    kunci TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('belum','selesai','tidak_berlaku')),
+    diperbarui TEXT NOT NULL,
+    PRIMARY KEY (umkm_id, kunci)
+  );
+
+  CREATE TABLE laporan_omzet (
+    id INTEGER PRIMARY KEY,
+    umkm_id INTEGER NOT NULL REFERENCES umkm(id) ON DELETE CASCADE,
+    bulan TEXT NOT NULL,
+    omzet INTEGER NOT NULL CHECK (omzet >= 0),
+    catatan TEXT,
+    dibuat_oleh INTEGER REFERENCES pengguna(id),
+    dibuat TEXT NOT NULL,
+    UNIQUE (umkm_id, bulan)
+  );
+
+  CREATE TABLE konten (
+    id INTEGER PRIMARY KEY,
+    jenis TEXT NOT NULL,
+    judul TEXT NOT NULL,
+    umkm_id INTEGER REFERENCES umkm(id),
+    produk_id INTEGER REFERENCES produk(id),
+    platform TEXT,
+    tautan TEXT,
+    tanggal TEXT NOT NULL,
+    dibuat_oleh INTEGER REFERENCES pengguna(id),
+    dibuat TEXT NOT NULL
+  );
+  CREATE INDEX konten_tanggal ON konten(tanggal);
+
+  CREATE TABLE affiliate (
+    id INTEGER PRIMARY KEY,
+    nama TEXT NOT NULL,
+    whatsapp TEXT NOT NULL,
+    kecamatan TEXT,
+    platform TEXT NOT NULL,
+    akun TEXT,
+    status TEXT NOT NULL DEFAULT 'aktif' CHECK (status IN ('aktif','jeda','berhenti')),
+    bergabung TEXT NOT NULL,
+    catatan TEXT,
+    dibuat TEXT NOT NULL
+  );
+  `,
 ];
 
 export function bukaDb(file = path.join(config.dataDir, 'pcc.sqlite')): DB {
