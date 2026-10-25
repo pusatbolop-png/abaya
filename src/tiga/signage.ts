@@ -205,16 +205,29 @@ export function teksturDirektori(judul: string, lantai: { nomor: number; ruang: 
 }
 
 /** Papan petunjuk lantai di dekat tangga. */
-export function teksturPetunjukLantai(lantai: number) {
+export function teksturPetunjukLantai(lantai: number, keAtas = false) {
   const { c, g } = kanvas(512, 512);
   g.fillStyle = '#24372e';
   g.fillRect(0, 0, 512, 512);
   g.fillStyle = JINGGA_MUDA;
   g.font = `600 44px ${SANS}`;
-  g.fillText('Lantai', 64, 140);
+  g.fillText(keAtas ? 'Tangga ke lantai' : 'Lantai', 64, 140);
   g.fillStyle = '#f4f1ea';
   g.font = `450 260px ${SERIF}`;
   g.fillText(String(lantai), 56, 410);
+  if (keAtas) {
+    // Panah naik di sisi kanan, digambar sebagai bentuk agar tidak bergantung pada fon.
+    g.beginPath();
+    g.moveTo(370, 200);
+    g.lineTo(450, 290);
+    g.lineTo(400, 290);
+    g.lineTo(400, 400);
+    g.lineTo(340, 400);
+    g.lineTo(340, 290);
+    g.lineTo(290, 290);
+    g.closePath();
+    g.fill();
+  }
   return tekstur(c);
 }
 

@@ -48,8 +48,12 @@ export interface DataDenah {
   panjang: number;
   tinggi: number;
   pintuMasuk: { x: number; lebar: number };
-  /** Tangga ke lantai atas; `naik` = arah anak tangga naik (bawaan: ke belakang). */
-  tangga: { x: number; z: number; lebar: number; panjang: number; naik?: 'depan' | 'belakang' };
+  /**
+   * Tangga luar ke lantai 2, menempel fasad depan: kaki di `x`, anak tangga naik searah sumbu x denah
+   * sepanjang `panjang`, lalu bordes sepanjang `bordes` di depan pintu lantai 2. Lebar tangga `lebar`,
+   * berjarak `jarak` dari kaca fasad.
+   */
+  tangga: { x: number; panjang: number; lebar: number; jarak: number; bordes: number };
 }
 
 export interface Identitas {
@@ -186,7 +190,7 @@ export class AdeganGedung {
   private logo: HTMLImageElement | null = null;
   private siaran = new Set<number>();
   private grupLuar = new THREE.Group();
-  private denah: DataDenah = { lebar: 18, panjang: 20, tinggi: 3.6, pintuMasuk: { x: 6.5, lebar: 3 }, tangga: { x: 7, z: 7.5, lebar: 2, panjang: 6, naik: 'depan' } };
+  private denah: DataDenah = { lebar: 18, panjang: 20, tinggi: 3.6, pintuMasuk: { x: 6.5, lebar: 3 }, tangga: { x: 10.7, panjang: 5.4, lebar: 1.2, jarak: 0.3, bordes: 1.9 } };
   private semuaRuang: DataRuang[] = [];
   private matOrang = new Map<string, THREE.MeshStandardMaterial>();
   /** Tempat model Meshy: berisi versi prosedural sampai modelnya selesai dimuat. */
@@ -1012,8 +1016,9 @@ export class AdeganGedung {
     this.kotak(W + 0.5, 0.3, D + 0.5, p.beton, 0, -0.15 - 0.02, 0, g);
     const pm = this.denah.pintuMasuk;
     const pintu = this.dunia(pm.x + pm.lebar / 2, 0);
-    this.kotak(pm.lebar + 2.4, 0.16, 0.8, p.terrazzo, pintu.x, -0.08, depan + 0.65, g);
-    this.kotak(pm.lebar + 3.2, 0.16, 1.6, p.terrazzo, pintu.x, -0.24, depan + 1.05, g);
+    // Teras pintu cukup dalam untuk menjadi kaki tangga luar di sebelahnya.
+    this.kotak(pm.lebar + 2.4, 0.16, 1.3, p.terrazzo, pintu.x, -0.08, depan + 0.9, g);
+    this.kotak(pm.lebar + 3.2, 0.16, 2.0, p.terrazzo, pintu.x, -0.24, depan + 1.25, g);
 
     // Monumen nama gedung di pelataran.
     const tMon = teksturMonumen(this.identitas.nama, this.identitas.singkat, this.identitas.naungan, this.logo);
@@ -1122,41 +1127,14 @@ export class AdeganGedung {
     const lampu: THREE.PointLight[] = [];
     const luar: DataLantai['luar'] = [];
 
-    // Pelat lantai: inti beton dan permukaan terrazzo. Lantai atas berlubang di atas tangga.
-    const pelat: [number, number, number, number][] =
-      n === 1
-        ? [[0, W, 0, D]]
-        : [
-            [0, t.x, 0, D],
-            [t.x + t.lebar, W, 0, D],
-            [t.x, t.x + t.lebar, 0, t.z],
-            [t.x, t.x + t.lebar, t.z + t.panjang, D],
-          ];
-    for (const [x1, x2, z1, z2] of pelat) {
-      if (x2 - x1 < 0.01 || z2 - z1 < 0.01) continue;
-      this.kotakDenah(x1, x2, z1, z2, y0 - 0.3, 0.29, p.beton, statis);
-      const c = this.dunia((x1 + x2) / 2, (z1 + z2) / 2);
-      this.bidangLantai(x2 - x1, z2 - z1, p.terrazzo, c.x, y0 - 0.005, c.z, statis);
-    }
-    if (n > 1) {
-      // Pagar kaca mengelilingi void tangga, terbuka di sisi kedatangan.
-      const yb = y0 + 0.55;
-      const zTutup = t.naik === 'depan' ? t.z + t.panjang : t.z;
-      this.kotakDenah(t.x - 0.02, t.x + 0.02, t.z, t.z + t.panjang, yb - 0.55, 1.05, p.kacaBening, statis, false);
-      this.kotakDenah(t.x + t.lebar - 0.02, t.x + t.lebar + 0.02, t.z, t.z + t.panjang, yb - 0.55, 1.05, p.kacaBening, statis, false);
-      this.kotakDenah(t.x, t.x + t.lebar, zTutup - 0.02, zTutup + 0.02, yb - 0.55, 1.05, p.kacaBening, statis, false);
-      for (const [x1, x2, z1, z2] of [
-        [t.x - 0.03, t.x + 0.03, t.z, t.z + t.panjang],
-        [t.x + t.lebar - 0.03, t.x + t.lebar + 0.03, t.z, t.z + t.panjang],
-        [t.x, t.x + t.lebar, zTutup - 0.03, zTutup + 0.03],
-      ])
-        this.kotakDenah(x1, x2, z1, z2, y0 + 1.04, 0.05, p.logam, statis);
-    }
+    // Pelat lantai: inti beton dan permukaan terrazzo. Tangga berada di luar, jadi pelat utuh.
+    this.kotakDenah(0, W, 0, D, y0 - 0.3, 0.29, p.beton, statis);
+    const cPelat = this.dunia(W / 2, D / 2);
+    this.bidangLantai(W, D, p.terrazzo, cPelat.x, y0 - 0.005, cPelat.z, statis);
 
-    // Peta jalan kaki: ruangan dan tangga terhalang; perabot aula ditambahkan saat dipasang.
+    // Peta jalan kaki: ruangan terhalang; perabot aula ditambahkan saat dipasang.
     this.petaJalan.set(n, new PetaJalan(W, D));
     for (const r of daftar) this.halangiAula(r.x, r.x + r.lebar, r.z, r.z + r.panjang);
-    this.halangiAula(t.x, t.x + t.lebar, t.z, t.z + t.panjang);
     const tujuan: [number, number][] =
       n === 1
         ? [
@@ -1171,6 +1149,7 @@ export class AdeganGedung {
             [9.8, 15.2],
             [13, 14.6],
             [8.2, 14.6],
+            [15.6, 2.4],
           ];
     this.tujuanJalan.set(
       n,
@@ -1180,18 +1159,20 @@ export class AdeganGedung {
     this.bangunDindingLuar(n, daftar, p, grup, statis, luar);
     for (const r of daftar) this.bangunRuang(r, statis, grup, p, y0, lampu, tambahan);
     this.dekorasiHall(n, daftar, p, statis, y0, tambahan);
-    if (n === 1 && this.semuaRuang.some((r) => r.lantai > 1)) this.bangunTangga(p, statis, y0);
+    const adaAtas = this.semuaRuang.some((r) => r.lantai > 1);
+    if (n === 1 && adaAtas) this.bangunTangga(p, statis);
 
-    // Petunjuk lantai di dinding dekat tangga.
-    const tPet = teksturPetunjukLantai(n);
-    this.teksturDibuat.push(tPet);
-    const mPet = new THREE.MeshStandardMaterial({ map: tPet, roughness: 0.5 });
-    tambahan.push(mPet);
-    // Tiang petunjuk lantai di kaki tangga, menghadap aula.
-    const posPet = this.dunia(t.x - 0.35, t.naik === 'depan' ? t.z + t.panjang - 0.3 : t.z + 0.3, y0);
-    this.kotak(0.05, 1.9, 0.05, p.logamGelap, posPet.x, y0 + 0.95, posPet.z, statis);
-    this.kotak(0.46, 0.46, 0.03, p.logamGelap, posPet.x, y0 + 1.65, posPet.z + 0.03, statis, false);
-    this.mesh(this.catat(new THREE.PlaneGeometry(0.42, 0.42)), mPet, posPet.x, y0 + 1.65, posPet.z + 0.046, statis, false);
+    // Tiang petunjuk: di kaki tangga luar (menuju lantai 2) dan di bordes, di samping pintu lantai 2.
+    if (adaAtas && n <= 2) {
+      const tPet = teksturPetunjukLantai(2, n === 1);
+      this.teksturDibuat.push(tPet);
+      const mPet = new THREE.MeshStandardMaterial({ map: tPet, roughness: 0.5 });
+      tambahan.push(mPet);
+      const posPet = n === 1 ? this.dunia(t.x - 0.3, -t.jarak - t.lebar + 0.15, y0) : this.dunia(t.x + t.panjang + t.bordes - 0.18, -0.3, y0);
+      this.kotak(0.05, 1.9, 0.05, p.logamGelap, posPet.x, y0 + 0.95, posPet.z, statis);
+      this.kotak(0.46, 0.46, 0.03, p.logamGelap, posPet.x, y0 + 1.65, posPet.z + 0.03, statis, false);
+      this.mesh(this.catat(new THREE.PlaneGeometry(0.42, 0.42)), mPet, posPet.x, y0 + 1.65, posPet.z + 0.046, statis, false);
+    }
 
     this.gabung(statis);
     for (const l of luar) this.gabung(l.grup);
@@ -1242,8 +1223,8 @@ export class AdeganGedung {
       };
 
       if (sd.s === 'depan') {
-        // Fasad kaca: modul 1,5 m, pintu kaca ganda di lantai dasar.
-        const pintu = n === 1 ? [pm.x, pm.x + pm.lebar] : null;
+        // Fasad kaca: modul 1,5 m, pintu kaca ganda di lantai dasar dan pintu tunggal ke bordes tangga di lantai 2.
+        const pintu = n === 1 ? [pm.x, pm.x + pm.lebar] : n === 2 ? this.pintuAtas() : null;
         segmen(0, W, 0, 0.12, p.aluminium, statis, 0.16, 0.08);
         for (let u = 0; u <= W + 0.001; u += 1.5) {
           if (pintu && u > pintu[0] + 0.05 && u < pintu[1] - 0.05) continue;
@@ -1266,8 +1247,18 @@ export class AdeganGedung {
           segmen(pintu[0], pintu[1], 2.36, 2.44, p.aluminium, atas, 0.18, 0.08);
           segmen(pintu[0], pintu[1], 2.44, H - 0.1, p.kacaFasad, atas, 0.03, 0.08);
           const tengah = (pintu[0] + pintu[1]) / 2;
-          segmen(tengah - 0.02, tengah + 0.02, 0.05, 2.36, p.aluminium, atas, 0.06, 0.06);
           segmen(pintu[0] + 0.05, pintu[1] - 0.05, 0.05, 2.36, p.kacaBening, atas, 0.02, 0.06);
+          if (n > 1) {
+            // Pintu tunggal ke bordes, dengan kanopi kaca kecil di atasnya.
+            segmen(pintu[1] - 0.2, pintu[1] - 0.17, 0.9, 1.5, p.logam, atas, 0.08, 0.02);
+            const kp = this.dunia(tengah, -0.55);
+            this.kotak(pintu[1] - pintu[0] + 0.7, 0.06, 1.1, p.aluminium, kp.x, 2.6 - AMBANG, kp.z, atas);
+            this.kotak(pintu[1] - pintu[0] + 0.6, 0.02, 1.0, p.kacaBening, kp.x, 2.64 - AMBANG, kp.z, atas, false);
+          }
+        }
+        if (pintu && n === 1) {
+          const tengah = (pintu[0] + pintu[1]) / 2;
+          segmen(tengah - 0.02, tengah + 0.02, 0.05, 2.36, p.aluminium, atas, 0.06, 0.06);
           for (const x of [tengah - 0.18, tengah + 0.18]) segmen(x - 0.015, x + 0.015, 0.9, 1.5, p.logam, atas, 0.08, 0.02);
           // Kanopi beton tipis di atas pintu masuk.
           const kanopi = this.dunia(tengah, -1.1);
@@ -1307,44 +1298,81 @@ export class AdeganGedung {
     }
   }
 
-  private bangunTangga(p: Pustaka, statis: THREE.Group, y0: number) {
+  /** Bentang pintu kaca lantai 2 (sumbu x denah) yang membuka ke bordes tangga luar. */
+  private pintuAtas(): [number, number] {
     const t = this.denah.tangga;
-    const anak = 20;
-    const naik = this.denah.tinggi / anak;
-    const injak = (t.panjang - 0.3) / anak;
-    // Arah naik: +1 bila anak tangga naik ke belakang gedung, −1 bila ke depan.
-    const arah = t.naik === 'depan' ? -1 : 1;
-    const kaki = arah > 0 ? t.z + 0.15 : t.z + t.panjang - 0.15;
-    const lebar = t.lebar - 0.16;
-    // Badan tangga pejal berplester dengan profil bertangga, sehingga terbaca jelas dari sudut mana pun.
-    const wz = (z: number) => this.denah.panjang / 2 - z;
-    const profil = new THREE.Shape();
-    profil.moveTo(wz(kaki), 0);
-    for (let i = 0; i < anak; i++) {
-      const h = naik * (i + 1) - 0.05;
-      profil.lineTo(wz(kaki + arah * i * injak), h);
-      profil.lineTo(wz(kaki + arah * (i + 1) * injak), h);
+    const awal = t.x + t.panjang + 0.35;
+    return [awal, Math.min(awal + 1.2, this.denah.lebar - 0.2)];
+  }
+
+  /**
+   * Tangga luar baja di kiri pintu masuk: injakan beton pracetak tanpa tegakan di atas dua balok
+   * ibu baja, pagar kaca berpegangan baja di kedua sisi, dan bordes bertiang di depan pintu lantai 2.
+   * Kaki tangga di teras pintu masuk (setinggi lantai 1), jadi seluruh ukuran relatif lantai 1.
+   */
+  private bangunTangga(p: Pustaka, statis: THREE.Group) {
+    const t = this.denah.tangga;
+    const H = this.denah.tinggi;
+    const anak = Math.round(H / 0.18);
+    const naik = H / anak;
+    const injak = t.panjang / anak;
+    const zDalam = -t.jarak;
+    const zLuar = -t.jarak - t.lebar;
+    const zTengah = (zDalam + zLuar) / 2;
+    const xBordes = t.x + t.panjang;
+    const xUjung = xBordes + t.bordes;
+    const yTanah = -0.32;
+    const miring = Math.atan2(H, t.panjang);
+    const panjangMiring = Math.hypot(t.panjang, H);
+    const xTengah = t.x + t.panjang / 2;
+
+    // Injakan: anak tangga terakhir sudah berupa bordes.
+    for (let i = 0; i < anak - 1; i++) {
+      const c = this.dunia(t.x + (i + 0.5) * injak, zTengah);
+      this.kotak(injak + 0.03, 0.06, t.lebar, p.terrazzo, c.x, naik * (i + 1) - 0.03, c.z, statis);
+      // Lis antislip gelap di hidung injakan.
+      const hidung = this.dunia(t.x + i * injak + 0.04, zTengah);
+      this.kotak(0.04, 0.005, t.lebar - 0.1, p.logamGelap, hidung.x, naik * (i + 1) + 0.003, hidung.z, statis, false);
     }
-    profil.lineTo(wz(kaki + arah * anak * injak), 0);
-    profil.closePath();
-    const badan = this.catat(new THREE.ExtrudeGeometry(profil, { depth: lebar, bevelEnabled: false }));
-    badan.rotateY(-Math.PI / 2);
-    const xTengah = this.dunia(t.x + t.lebar / 2, 0).x;
-    this.mesh(badan, p.plester, xTengah + lebar / 2, y0, 0, statis);
-    // Injakan walnut dengan bibir sedikit menonjol.
-    for (let i = 0; i < anak; i++) {
-      const c = this.dunia(t.x + t.lebar / 2, kaki + arah * (i + 0.5) * injak);
-      this.kotak(lebar + 0.02, 0.05, injak + 0.03, p.walnut, c.x, y0 + naik * (i + 1) - 0.025, c.z - (arah * 0.015), statis);
+    // Dua balok ibu baja miring di bawah injakan. Sumbu panjang kotak = x dunia, yang naik ke arah −x.
+    for (const z of [zDalam - 0.04, zLuar + 0.04]) {
+      const c = this.dunia(xTengah, z);
+      const balok = this.kotak(panjangMiring, 0.3, 0.06, p.logamGelap, c.x, H / 2 - 0.12, c.z, statis);
+      balok.rotation.z = -miring;
     }
-    // Pagar kaca dengan pegangan baja di kedua sisi.
-    const panjang = Math.hypot(t.panjang - 0.3, this.denah.tinggi);
-    const sudut = Math.atan2(this.denah.tinggi, t.panjang - 0.3);
-    for (const dx of [0.05, t.lebar - 0.05]) {
-      const c = this.dunia(t.x + dx, t.z + t.panjang / 2);
-      const kaca = this.kotak(0.02, 0.9, panjang, p.kacaBening, c.x, y0 + this.denah.tinggi / 2 + 0.5, c.z, statis, false);
-      kaca.rotation.x = arah * sudut;
-      const pegangan = this.kotak(0.05, 0.05, panjang, p.logam, c.x, y0 + this.denah.tinggi / 2 + 0.97, c.z, statis);
-      pegangan.rotation.x = arah * sudut;
+    // Bordes: pelat beton menempel fasad, ditopang tiang baja bundar.
+    const cb = this.dunia((xBordes - injak + xUjung) / 2, zLuar / 2);
+    this.kotak(xUjung - xBordes + injak, 0.22, -zLuar, p.beton, cb.x, H - 0.11, cb.z, statis);
+    this.bidangLantai(xUjung - xBordes + injak, -zLuar, p.terrazzo, cb.x, H + 0.003, cb.z, statis);
+    const tiang: [number, number, number][] = [
+      [xBordes + 0.2, zLuar + 0.15, H - 0.22],
+      [xUjung - 0.2, zLuar + 0.15, H - 0.22],
+      // Tiang tengah bentang di bawah balok ibu sisi luar.
+      [t.x + t.panjang * 0.5, zLuar + 0.04, (t.panjang * 0.5 * H) / t.panjang - 0.3],
+    ];
+    for (const [x, z, atas] of tiang) {
+      const c = this.dunia(x, z);
+      this.silinder(0.07, 0.07, atas - yTanah, p.logamGelap, c.x, (atas + yTanah) / 2, c.z, statis, 14);
+      this.kotak(0.32, 0.04, 0.32, p.beton, c.x, yTanah + 0.02, c.z, statis);
+    }
+    // Pagar kaca berpegangan baja: miring di kedua sisi tangga, lurus mengelilingi bordes.
+    for (const z of [zDalam - 0.02, zLuar + 0.02]) {
+      const c = this.dunia(xTengah, z);
+      const kaca = this.kotak(panjangMiring - 0.1, 0.9, 0.02, p.kacaBening, c.x, H / 2 + 0.5, c.z, statis, false);
+      kaca.rotation.z = -miring;
+      const pegangan = this.kotak(panjangMiring + 0.1, 0.05, 0.05, p.logam, c.x, H / 2 + 0.97, c.z, statis);
+      pegangan.rotation.z = -miring;
+    }
+    const pagarBordes: [number, number, number, number][] = [
+      [xBordes, xUjung, zLuar + 0.02, zLuar + 0.02],
+      [xUjung - 0.02, xUjung - 0.02, zLuar, -0.05],
+    ];
+    for (const [x1, x2, z1, z2] of pagarBordes) {
+      const c = this.dunia((x1 + x2) / 2, (z1 + z2) / 2);
+      const w = Math.max(0.02, x2 - x1);
+      const d = Math.max(0.02, z2 - z1);
+      this.kotak(w, 0.9, d, p.kacaBening, c.x, H + 0.5, c.z, statis, false);
+      this.kotak(w + (x2 > x1 ? 0.05 : 0), 0.05, d + (z2 > z1 ? 0.05 : 0), p.logam, c.x, H + 0.97, c.z, statis);
     }
   }
 
@@ -2113,12 +2141,12 @@ export class AdeganGedung {
   // ——— Ruang bersama (hall) ———
 
   private bebas(n: number, x1: number, x2: number, z1: number, z2: number) {
-    const t = this.denah.tangga;
     const tabrak = (a: number[], b: number[]) => a[0] < b[1] && b[0] < a[1] && a[2] < b[3] && b[2] < a[3];
     const area = [x1, x2, z1, z2];
     if (x1 < 0.3 || z1 < 0.3 || x2 > this.denah.lebar - 0.3 || z2 > this.denah.panjang - 0.3) return false;
-    const kakiDepan = t.naik === 'depan';
-    if (tabrak(area, [t.x - 0.3, t.x + t.lebar + 0.3, t.z - (kakiDepan ? 0.3 : 0.9), t.z + t.panjang + (kakiDepan ? 0.9 : 0.3)])) return false;
+    // Jalur masuk dari pintu tangga luar di lantai 2 dibiarkan lapang.
+    const [a, b] = this.pintuAtas();
+    if (n === 2 && tabrak(area, [a - 0.5, b + 0.5, 0, 1.8])) return false;
     return !this.semuaRuang.some((r) => r.lantai === n && tabrak(area, [r.x - 0.6, r.x + r.lebar + 0.6, r.z - 0.6, r.z + r.panjang + 0.6]));
   }
 
@@ -2158,9 +2186,9 @@ export class AdeganGedung {
       }
       // Ruang tunggu: sofa, kursi, meja rendah, dan karpet di tengah aula.
       for (const [cx, cz] of [
-        [W / 2, 5],
         [W / 2, D / 2 - 1],
         [W / 2, D / 2 + 1.5],
+        [W / 2, 5],
         [W / 2, 6],
       ]) {
         if (!this.bebas(1, cx - 2, cx + 2, cz - 1.6, cz + 1.6)) continue;

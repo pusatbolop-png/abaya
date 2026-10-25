@@ -104,8 +104,9 @@ export const PELAT_LANTAI = {
   panjang: 20,
   tinggi: 3.6,
   pintuMasuk: { x: 6.5, lebar: 3 },
-  // Tangga di tengah aula, naik ke arah depan, agar layanan perizinan di belakang tetap terlihat.
-  tangga: { x: 7, z: 7.5, lebar: 2, panjang: 6, naik: 'depan' as const },
+  // Tangga luar di kiri pintu masuk (dilihat dari halaman): naik sejajar fasad dari teras pintu
+  // ke bordes dan pintu kaca lantai 2, sehingga aula lantai 1 lapang tanpa void tangga.
+  tangga: { x: 10.7, panjang: 5.4, lebar: 1.2, jarak: 0.3, bordes: 1.9 },
 };
 
 /** Denah lantai 1 versi 2 (sebelum layanan perizinan ditambahkan), untuk mengenali ruangan yang belum diubah admin. */
