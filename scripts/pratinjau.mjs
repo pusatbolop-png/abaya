@@ -134,7 +134,7 @@ function satukan(dir, tujuan) {
   const deskripsi = html.match(/<meta name="description"[^>]*>/)[0];
   const skrip = fs.readFileSync(path.join(dir, js), 'utf8').replaceAll('</script', '<\\/script');
   const gaya = fs.readFileSync(path.join(dir, css), 'utf8').replaceAll('</style', '<\\/style');
-  const isi = `${judul}\n${deskripsi}\n<style>${gaya}</style>\n<div id="akar"></div>\n<script type="module">${skrip}</script>\n`;
+  const isi = `<meta charset="utf-8">\n${judul}\n${deskripsi}\n<style>${gaya}</style>\n<div id="akar"></div>\n<script type="module">${skrip}</script>\n`;
   fs.writeFileSync(tujuan, isi);
   console.log(`Pratinjau: ${path.relative(process.cwd(), tujuan)} (${(isi.length / 1e6).toFixed(1)} MB)`);
 }
