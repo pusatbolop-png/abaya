@@ -4,6 +4,8 @@ Aplikasi web untuk ruang kreatif milik daerah. Isinya:
 
 - **Halaman publik**: beranda dengan maket 3D gedung, formulir pendaftaran UMKM (dengan unggah dokumen izin), dan cek status pendaftaran.
 - **Ruang kerja petugas** (`/kelola`): seleksi UMKM, produk dan stok konsinyasi, jadwal sesi live per studio (lampu ON AIR di maket 3D), penjualan, retur, dana dan pencairan UMKM, laporan Excel/CSV, serta pengaturan.
+- **Dasbor kinerja** (`/kelola/dasbor`): capaian terhadap target tahun pertama Blueprint PCC (inkubasi, produk tembus pasar nasional, studio aktif, affiliate, konten, kenaikan omzet), roadmap 100 hari, alur kerja dari kurasi sampai evaluasi, dan rincian enam pilar. Data pendukungnya dicatat di halaman UMKM (inkubasi dan omzet), Content Factory, dan Affiliate.
+- **Maket 3D** gedung dua lantai dengan tangga luar di kiri pintu masuk, staf yang bekerja dan berjalan, serta GARUDA Coffee Shop di halaman depan.
 
 Keputusan desain dan teknis dicatat di [DECISIONS.md](DECISIONS.md).
 
@@ -68,6 +70,7 @@ src/           antarmuka React
   styles/      token desain, komponen, tata letak
 public/fonts/  Plus Jakarta Sans dan Newsreader (OFL), di-host lokal
 public/merek/  lambang resmi PCC (PNG transparan)
-public/model/  model 3D perabot hasil Meshy AI (GLB teroptimasi); staf/ berisi karakter berkerangka dan gerakannya
+public/model/  model 3D perabot hasil Meshy AI (GLB teroptimasi); staf/ berisi karakter berkerangka dan gerakannya,
+               staf/varian/ tekstur busana barista, pramusaji, dan tamu kedai kopi
 tests/e2e/     uji peramban ujung ke ujung
 ```

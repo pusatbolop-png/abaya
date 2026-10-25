@@ -245,3 +245,91 @@ export function teksturNamaMeja(nama: string) {
   g.fillText(nama, c.width / 2, c.height / 2 - 4);
   return tekstur(c);
 }
+
+const EMAS = '#d6a54a';
+const ARANG = '#1d1b19';
+
+/** Sayap bergaya garis: tiga bulu bertingkat, bukan lambang negara, sebagai tanda merek kedai. */
+function gambarSayap(g: CanvasRenderingContext2D, x: number, y: number, s: number, cermin: boolean) {
+  g.save();
+  g.translate(x, y);
+  g.scale(cermin ? -s : s, s);
+  for (let i = 0; i < 4; i++) {
+    g.beginPath();
+    g.moveTo(0, i * 14);
+    g.quadraticCurveTo(60 - i * 6, -18 + i * 10, 120 - i * 22, -30 + i * 16);
+    g.quadraticCurveTo(70 - i * 8, i * 10 + 4, 0, i * 14 + 10);
+    g.closePath();
+    g.fill();
+  }
+  g.restore();
+}
+
+/** Papan nama GARUDA Coffee Shop: huruf emas di pelat arang, rasio 8 : 3. */
+export function teksturMerekKafe() {
+  const { c, g } = kanvas(1024, 384);
+  g.fillStyle = ARANG;
+  g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = EMAS;
+  gambarSayap(g, 300, 112, 0.95, true);
+  gambarSayap(g, 724, 112, 0.95, false);
+  g.beginPath();
+  g.arc(512, 96, 26, 0, Math.PI * 2);
+  g.fill();
+  g.textAlign = 'center';
+  g.textBaseline = 'alphabetic';
+  g.font = `600 136px ${SERIF}`;
+  g.fillText('GARUDA', 512, 270);
+  g.font = `600 40px ${SANS}`;
+  if ('letterSpacing' in g) (g as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = '14px';
+  g.fillText('COFFEE SHOP', 519, 336);
+  return tekstur(c);
+}
+
+/** Papan menu kapur di atas meja bar. Rasio 2 : 1. */
+export function teksturMenuKafe() {
+  const { c, g } = kanvas(1024, 512);
+  g.fillStyle = '#22251f';
+  g.fillRect(0, 0, c.width, c.height);
+  g.strokeStyle = EMAS;
+  g.lineWidth = 6;
+  g.strokeRect(18, 18, c.width - 36, c.height - 36);
+  g.fillStyle = EMAS;
+  g.font = `600 52px ${SERIF}`;
+  g.fillText('Menu', 60, 100);
+  const menu: [string, string][] = [
+    ['Kopi Susu Garuda', '22K'],
+    ['Es Kopi Aren', '24K'],
+    ['Americano Arjuno', '20K'],
+    ['Cappuccino', '26K'],
+    ['Matcha Latte', '27K'],
+    ['Cokelat Bromo', '23K'],
+    ['Teh Tarik', '18K'],
+    ['Roti Bakar Srikaya', '20K'],
+  ];
+  g.font = `500 34px ${SANS}`;
+  menu.forEach(([nama, harga], i) => {
+    const x = i < 4 ? 60 : 540;
+    const y = 180 + (i % 4) * 78;
+    g.fillStyle = '#f2ede2';
+    g.textAlign = 'left';
+    g.fillText(nama, x, y);
+    g.fillStyle = EMAS;
+    g.textAlign = 'right';
+    g.fillText(harga, x + 420, y);
+  });
+  return tekstur(c);
+}
+
+/** Tulisan neon hangat di dinding bata; latar transparan, dipakai juga sebagai peta pancaran. */
+export function teksturNeonKafe() {
+  const { c, g } = kanvas(1024, 256);
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.font = `italic 500 120px ${SERIF}`;
+  g.shadowColor = '#ff9f45';
+  g.shadowBlur = 28;
+  g.fillStyle = '#ffd9a8';
+  for (let i = 0; i < 2; i++) g.fillText('ngopi dulu, berkarya kemudian', 512, 128, 980);
+  return tekstur(c);
+}

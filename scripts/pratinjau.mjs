@@ -1,7 +1,8 @@
 // Membuat pratinjau statis: satu berkas HTML mandiri yang bisa dibuka di ponsel atau PC tanpa server.
 // Langkahnya: jalankan server demo sementara, rekam semua respons yang dibaca antarmuka, lalu bangun
 // aplikasi dengan tiruan API (src/pratinjau) dan sematkan skrip, gaya, huruf, serta logo ke satu berkas.
-// Hasil: dist/pratinjau/pcc-pratinjau.html, ditambah dist/pratinjau/model/*.json yang diterbitkan di sampingnya.
+// Hasil: dist/pratinjau/pcc-pratinjau.html, ditambah dist/pratinjau/model/**/*.json dan tekstur
+// model/staf/varian/*.webp yang diterbitkan di sampingnya.
 import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -49,6 +50,8 @@ for (const f of fs.readdirSync('public/model', { recursive: true }).filter((f) =
   fs.mkdirSync(path.dirname(tujuan), { recursive: true });
   fs.writeFileSync(tujuan, JSON.stringify({ glb: fs.readFileSync(path.join('public/model', String(f))).toString('base64') }));
 }
+// Tekstur pakaian karakter kedai kopi (WebP) bisa diterbitkan apa adanya.
+fs.cpSync('public/model/staf/varian', path.join(KELUAR, 'model/staf/varian'), { recursive: true });
 fs.rmSync(dataDir, { recursive: true, force: true });
 
 async function rekam(berkas) {
@@ -81,12 +84,33 @@ async function rekam(berkas) {
   await page.click('button[type=submit]');
   await page.waitForURL(/kelola/);
   const admin = await ambil('/api/auth/saya');
-  for (const p of ['/kelola', '/kelola/gedung', '/kelola/umkm', '/kelola/stok', '/kelola/live', '/kelola/penjualan', '/kelola/retur', '/kelola/dana', '/kelola/laporan', '/kelola/pengaturan'])
+  for (const p of [
+    '/kelola',
+    '/kelola/dasbor',
+    '/kelola/gedung',
+    '/kelola/umkm',
+    '/kelola/stok',
+    '/kelola/live',
+    '/kelola/penjualan',
+    '/kelola/retur',
+    '/kelola/konten',
+    '/kelola/affiliate',
+    '/kelola/dana',
+    '/kelola/laporan',
+    '/kelola/pengaturan',
+  ])
     await kunjungi(p);
-  for (const p of ['/api/stok/mutasi', '/api/pengguna']) await ambil(p);
+  for (const p of ['/api/stok/mutasi', '/api/pengguna', '/api/affiliate']) await ambil(p);
+  // Catatan konten enam bulan terakhir, sesuai grafik Content Factory di dasbor.
+  const kini = new Date(Date.now() + 7 * 3600_000);
+  for (let i = 0; i < 6; i++) {
+    const b = new Date(Date.UTC(kini.getUTCFullYear(), kini.getUTCMonth() - i, 1)).toISOString().slice(0, 7);
+    await ambil('/api/konten?bulan=' + b);
+  }
   const umkm = await ambil('/api/umkm?');
   for (const s of Object.keys(umkm.hitung)) await ambil('/api/umkm?' + new URLSearchParams({ status: s }));
   for (const u of umkm.daftar) await kunjungi('/kelola/umkm/' + u.id);
+  for (const u of daftarDari('/api/umkm?status=diterima')) await ambil('/api/produk?umkm_id=' + u.id);
   for (const s of daftarDari('/api/live?')) await kunjungi('/kelola/live/' + s.id);
   for (const s of daftarDari('/api/penjualan?')) await ambil('/api/penjualan/' + s.id);
 

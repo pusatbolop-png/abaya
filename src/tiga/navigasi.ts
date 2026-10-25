@@ -1,6 +1,6 @@
-// Peta jalan kaki per lantai: kisi 25 cm di atas pelat, sel terhalang oleh ruangan berdinding, tangga,
-// dan perabot aula. Jalur dicari dengan A* delapan arah lalu dirapikan dengan garis pandang, sehingga
-// staf berjalan lurus di aula dan berbelok hanya di sudut.
+// Peta jalan kaki per lantai (dan kedai kopi di halaman): kisi 25 cm di atas pelat, sel terhalang oleh
+// ruangan berdinding dan perabot. Jalur dicari dengan A* delapan arah lalu dirapikan dengan garis
+// pandang, sehingga staf berjalan lurus di aula dan berbelok hanya di sudut.
 import * as THREE from 'three';
 
 const SEL = 0.25;
@@ -10,19 +10,25 @@ export class PetaJalan {
   private baris: number;
   private blok: Uint8Array;
 
-  /** Lebar dan panjang pelat dalam meter; koordinat dunia berpusat di tengah pelat (x, z). */
+  /**
+   * Lebar dan panjang pelat dalam meter, berpusat di (pusatX, pusatZ) koordinat dunia: tengah gedung
+   * untuk lantai, atau tengah bangunan lain di halaman seperti kedai kopi.
+   */
   constructor(
     private lebar: number,
     private panjang: number,
+    private pusatX = 0,
+    private pusatZ = 0,
   ) {
     this.kolom = Math.ceil(lebar / SEL);
     this.baris = Math.ceil(panjang / SEL);
     this.blok = new Uint8Array(this.kolom * this.baris);
     // Tepi pelat (dinding luar) selalu terhalang.
-    this.halangi(-lebar / 2, -lebar / 2 + 0.35, -panjang / 2, panjang / 2);
-    this.halangi(lebar / 2 - 0.35, lebar / 2, -panjang / 2, panjang / 2);
-    this.halangi(-lebar / 2, lebar / 2, -panjang / 2, -panjang / 2 + 0.35);
-    this.halangi(-lebar / 2, lebar / 2, panjang / 2 - 0.35, panjang / 2);
+    const [x1, x2, z1, z2] = [pusatX - lebar / 2, pusatX + lebar / 2, pusatZ - panjang / 2, pusatZ + panjang / 2];
+    this.halangi(x1, x1 + 0.35, z1, z2);
+    this.halangi(x2 - 0.35, x2, z1, z2);
+    this.halangi(x1, x2, z1, z1 + 0.35);
+    this.halangi(x1, x2, z2 - 0.35, z2);
   }
 
   /** Tandai persegi panjang dunia (x1..x2, z1..z2) sebagai tidak bisa dilewati. */
@@ -117,13 +123,17 @@ export class PetaJalan {
   }
 
   private sel(x: number, z: number): [number, number] {
-    const c = THREE.MathUtils.clamp(Math.floor((x + this.lebar / 2) / SEL), 0, this.kolom - 1);
-    const r = THREE.MathUtils.clamp(Math.floor((z + this.panjang / 2) / SEL), 0, this.baris - 1);
+    const c = THREE.MathUtils.clamp(Math.floor((x - this.pusatX + this.lebar / 2) / SEL), 0, this.kolom - 1);
+    const r = THREE.MathUtils.clamp(Math.floor((z - this.pusatZ + this.panjang / 2) / SEL), 0, this.baris - 1);
     return [c, r];
   }
 
   private pusat(i: number, y: number) {
-    return new THREE.Vector3(((i % this.kolom) + 0.5) * SEL - this.lebar / 2, y, (Math.floor(i / this.kolom) + 0.5) * SEL - this.panjang / 2);
+    return new THREE.Vector3(
+      this.pusatX + ((i % this.kolom) + 0.5) * SEL - this.lebar / 2,
+      y,
+      this.pusatZ + (Math.floor(i / this.kolom) + 0.5) * SEL - this.panjang / 2,
+    );
   }
 
   /** Sel bebas terdekat (pencarian melebar), agar titik di ambang pintu tetap tersambung. */

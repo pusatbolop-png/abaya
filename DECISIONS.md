@@ -56,6 +56,28 @@ CSV memakai titik koma dan UTF-8 dengan BOM agar langsung terbaca Excel berlokal
 
 **D-15. Riwayat aktivitas.** Setiap perubahan penting dicatat beserta pelakunya, demi akuntabilitas instansi pemerintah.
 
+**D-15a. Dasbor kinerja mengikuti Blueprint pertumbuhan PCC.**
+Tujuan program adalah penjualan nyata UMKM, jadi dasbor (`/kelola/dasbor`) mengukur hasil, bukan kegiatan:
+- Target tahun pertama: 100 UMKM terinkubasi, 30 produk prioritas tembus pasar nasional, 5 studio live aktif, 100 affiliate, 3.000 konten per tahun, dan kenaikan omzet UMKM binaan minimal 20%.
+- Setiap target diberi status laju terhadap waktu: *Tercapai*; *Sesuai jalur* bila sudah ≥ 90% dari laju merata sepanjang tahun (target × hari berjalan ÷ 365); selain itu *Di bawah laju*.
+- Roadmap 100 hari: konsolidasi internal, akuisisi, infrastruktur digital, serta go live dan scale. Tahap berjalan ditandai dari tanggal mulai operasional.
+- Alur kerja Blueprint dihitung per UMKM: mendaftar (PCC Call UMKM), lolos kurasi, inkubasi, toko marketplace, konten, siaran live, penjualan, dan evaluasi omzet.
+- Rincian enam pilar: produk terlaris 7 dan 30 hari (Product Intelligence), studio live (Live Commerce Center), konten per bulan (Content Factory), dan affiliate per platform.
+
+Definisi yang dipakai:
+- *Terinkubasi*: semua langkah inkubasi tuntas, yaitu NIB, PIRT, Halal, HAKI, kemasan, toko marketplace, dan kesiapan produksi massal. Langkah yang tidak relevan boleh ditandai *Tidak berlaku*.
+- *Tembus pasar nasional*: produk prioritas yang pernah terjual lewat kanal daring, yaitu selain penjualan langsung di galeri.
+- *Studio aktif*: studio dengan minimal satu sesi live (selesai atau sedang berlangsung) dalam 30 hari terakhir.
+- *Kenaikan omzet*: median kenaikan laporan omzet bulanan terakhir terhadap omzet awal yang diisi saat mendaftar atau oleh petugas.
+
+**D-15b. Data program dicatat di tempat kerjanya.**
+- Inkubasi dan evaluasi omzet di halaman UMKM binaan.
+- Penanda produk prioritas dan tautan toko marketplace di formulir produk.
+- Catatan Content Factory dan komunitas Affiliate di halamannya sendiri.
+- Tanggal mulai dan target di Pengaturan → Program dan target. Hanya admin yang bisa mengubahnya; target bawaan diambil dari Blueprint.
+
+Migrasi 5 menambah kolom dan tabel tanpa mengubah data lama.
+
 ## Teknologi dan data
 
 **D-16. React + TypeScript + Vite untuk antarmuka, Hono di Node.js untuk server, SQLite (better-sqlite3) untuk data.**
@@ -130,11 +152,19 @@ Hasilnya ringan (sekitar 140 kB gzip, dimuat terpisah hanya saat 3D tampil) dan 
 
 Koordinat memakai orientasi sketsa: x dari dinding kiri, z dari dinding depan (pintu masuk). Pratinjau di Pengaturan tampil persis seperti sketsa. Maket 3D memutarnya 180° supaya fasad depan menghadap kamera.
 Ukuran meter (pelat 18 × 20 m, tinggi lantai 3,6 m) diperkirakan dari proporsi sketsa dan ditandai "belum sesuai gambar kerja" sampai dikonfirmasi.
-Setiap ruangan menyimpan sisi pintunya. Tangga tidak ada di sketsa. Penempatan pertama di belakang tengah ternyata menutupi loket Disperindag dan Dinkes. Tangga lalu dipindah ke tengah aula (x 7–9 m, z 7,5–13,5 m) dan naik ke arah depan, sehingga kakinya menghadap loket layanan dan ujung atasnya tiba di koridor lantai 2 dekat Ruang Podcast. Badannya pejal berplester dengan injakan walnut agar terbaca jelas dari sudut kamera mana pun.
+Setiap ruangan menyimpan sisi pintunya. Tangga tidak ada di sketsa. Penempatan di dalam gedung (mula-mula di belakang tengah, lalu di tengah aula) menutupi loket Disperindag dan Dinkes. Atas arahan pemilik program, tangga kini berada di luar gedung, di kiri pintu masuk bila dilihat dari halaman (lihat D-33a).
 Studio live berupa bilik terbuka sesuai arahan pemilik program: tanpa dinding di sisi pintu dan di sisi yang menghadap pintu masuk gedung. Dinding latar walnut dan panel akustik tetap ada di sisi yang tertutup. Loket layanan perizinan terbuka di sisi depannya.
 Basis data versi 2 dimutakhirkan otomatis: ukuran ruangan lantai 1 yang belum diubah admin disesuaikan, dan dua loket layanan ditambahkan.
 Gudang konsinyasi tidak ada di sketsa, jadi tidak digambar. Pencatatan stok tetap berjalan tanpa bergantung pada ruangan.
 Ruang Podcast bisa dijadwalkan seperti studio dan punya lampu ON AIR sendiri.
+
+**D-33a. Tangga luar di kiri pintu masuk.**
+- Bentuknya tangga baja menempel fasad depan, dengan injakan beton pracetak tanpa tegakan dan dua balok ibu baja. Pagar kaca berpegangan baja dipasang di kedua sisi, ditopang tiang bundar di tengah bentang.
+- Kakinya berada di teras pintu masuk (x 10,7 m). Tangga naik sejajar fasad sejauh 5,4 m (20 anak tangga × 18 cm) ke bordes 1,9 m di depan pintu kaca lantai 2 (x 16,45–17,65 m), yang membuka ke ruang depan di samping Ruang Podcast.
+- Tangga dibuat terbuka (bukan badan pejal) agar kaca fasad lantai 1 dan Studio Live 3 di baliknya tetap terlihat dari halaman.
+- Aula lantai 1 kini lapang, sehingga ruang tunggu pindah ke tengah aula. Pelat lantai 2 utuh tanpa void.
+- Tiang petunjuk lantai dipasang di kaki tangga ("Tangga ke lantai 2") dan di bordes.
+- Tiang bendera pindah ke sudut kiri halaman agar tidak menutupi tangga dari sudut kamera awal.
 
 **D-34. Maket realistis di siang hari.**
 Pemilik program meminta hasil yang bagus dan realistis, jadi suasana senja yang gelap diganti dengan siang hari:
@@ -166,6 +196,27 @@ Atas permintaan pemilik program, semua staf di maket bergerak seperti manusia.
 - Performa: karakter tidak ikut peta bayangan (memakai bayangan bundar lembut di kaki), dan animasi berjalan sekitar 30 bingkai per detik hanya di lantai yang tampak. Dengan `prefers-reduced-motion`, staf diam dalam satu pose kerja.
 - Figur prosedural tampil sampai karakternya termuat, dan tetap dipakai bila pemuatan gagal.
 
+**D-34c. GARUDA Coffee Shop di halaman depan.**
+Atas permintaan pemilik program, halaman depan sebelah kanan pintu masuk diisi kedai kopi. Kedai ini bagian dari maket, bukan modul aplikasi.
+- Bangunannya paviliun 10,4 × 11 m, lantainya 15 cm di atas pelataran.
+  - Sisi yang menghadap jalan dan pelataran berupa kaca berangka baja hitam, dengan pintu kaca ganda bergagang kuningan.
+  - Sisi bar dan sisi samping berdinding bata ekspos.
+  - Lantainya papan kayu, dan atapnya berupa balok pergola terbuka tempat lampu gantung.
+  - Seperti gedung, dinding atas yang menghadap kamera dipotong.
+- Interiornya:
+  - Meja bar bermuka bilah kayu dengan puncak terrazzo, dilengkapi kasir, etalase kue, dan gelas bawa pulang.
+  - Meja belakang memuat mesin espreso dua grup, dua penggiling, lemari pendingin kaca, rak biji kopi, dan papan menu kapur.
+  - Ada neon "ngopi dulu, berkarya kemudian" dan rak barang dagangan.
+  - Di teras ada tanaman, papan menu lipat, dan papan nama berdiri.
+- Tempat duduk mengikuti konsep yang diminta: empat meja bundar yang sama, masing-masing dikelilingi lima kursi kayu. Celah antarkursi selalu menghadap lorong tempat pramusaji melayani.
+- Orangnya 17:
+  - 2 barista bekerja dan berpindah di balik bar.
+  - 3 pramusaji menunggu di depan bar, lalu berjalan mengantar ke meja dan menghadap tamunya.
+  - 12 tamu muda (tiga per meja) duduk dan bercakap, dengan kopi, es kopi, ponsel, dan laptop di meja.
+- Busana Gen Z yang berbeda-beda dibuat dengan retekstur Meshy pada karakter berkerangka yang sudah ada, dengan UV asli. Hasilnya 17 tekstur WebP (`public/model/staf/varian`, 2,2 MB seluruhnya) yang ditukar ke peta warna saat dimuat. Kerangka dan gerakannya dipakai ulang. Biayanya 180 kredit (17 tekstur, satu uji, dan satu ulang karena celemek barista pertama terbaca seperti jas).
+- Navigasi memakai peta jalan kaki sendiri yang berpusat di kedai. Tamu tidak berjalan, pramusaji melewati lorong antar-meja, dan barista hanya bergerak di balik bar.
+- Kamera awal dibingkai ulang agar gedung dan kedai tampak bersama. Bingkainya dihitung dari proyeksi sudut-sudut keduanya ke bidang layar.
+
 **D-35. Signage dirancang seperti signage gedung.**
 - Papan nama hijau hutan dengan kode ruangan berwarna jingga di samping pintu.
 - Huruf kuningan tertanam di lantai ambang pintu, terbaca dari arah datang.
@@ -183,4 +234,4 @@ Bila WebGL tidak tersedia, maket diganti denah datar SVG. Di ponsel kualitas bay
 
 **D-38. Uji otomatis.**
 `npm test` menguji alur server (termasuk aturan bisnis dan perhitungan dana).
-`npm run e2e` menjalankan build produksi dengan basis data kosong di peramban sungguhan dan menelusuri 17 langkah dari pembuatan akun administrator sampai ekspor. Setiap halaman diperiksa dengan axe-core (WCAG 2.1 A/AA), dan uji gagal bila ada galat di konsol.
+`npm run e2e` menjalankan build produksi dengan basis data kosong di peramban sungguhan dan menelusuri 22 langkah dari pembuatan akun administrator sampai ekspor, lalu program dan target, Content Factory, affiliate, dan dasbor kinerja (termasuk tampilan ponsel tanpa gulir samping). Setiap halaman diperiksa dengan axe-core (WCAG 2.1 A/AA), dan uji gagal bila ada galat di konsol.

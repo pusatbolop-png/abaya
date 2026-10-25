@@ -8,7 +8,7 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { buatMaterialLuar, buatPustaka, semuaMaterial, type Pustaka } from './material';
-import { muatModel, type NamaModel } from './model';
+import { muatModel, muatTekstur, type NamaModel } from './model';
 import { PetaJalan } from './navigasi';
 import { muatStaf, Penghuni, teksturBayangan, type Aksi, type NamaStaf, type RencanaStaf } from './penghuni';
 import {
@@ -17,7 +17,10 @@ import {
   teksturDirektori,
   teksturInlay,
   teksturLogoDinding,
+  teksturMenuKafe,
+  teksturMerekKafe,
   teksturMonumen,
+  teksturNeonKafe,
   teksturNamaMeja,
   teksturOnAir,
   teksturPapanNama,
@@ -198,7 +201,9 @@ export class AdeganGedung {
   private lantaiBangun = 0;
   private versiBangun = 0;
   /** Staf yang menunggu karakternya dimuat, dan staf yang sudah bergerak. */
-  private rencanaStaf: { rencana: RencanaStaf; lantai: number; cadangan: THREE.Group }[] = [];
+  private rencanaStaf: { rencana: RencanaStaf; lantai: number; cadangan: THREE.Group; varian?: string }[] = [];
+  /** Dinding atas bangunan di halaman (kedai kopi) yang ikut dipotong saat menghadap kamera. */
+  private potonganLuar: DataLantai['luar'] = [];
   private penghuni: { p: Penghuni; lantai: number }[] = [];
   private petaJalan = new Map<number, PetaJalan>();
   private tujuanJalan = new Map<number, THREE.Vector3[]>();
@@ -490,9 +495,28 @@ export class AdeganGedung {
     const arah = (tegak ? new THREE.Vector3(-0.22, 0.95, 0.5) : new THREE.Vector3(-0.55, 0.64, 0.78)).normalize();
     const vfov = THREE.MathUtils.degToRad(this.kamera.fov);
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * this.kamera.aspect);
-    const radius = Math.hypot(this.denah.lebar, this.denah.panjang) / 2 + (tegak ? 0.5 : 1.5);
-    const jarak = radius / Math.sin(Math.min(vfov, hfov) / 2);
-    const target = new THREE.Vector3(0, this.dasar(lantai) + 0.4, 0.8);
+    // Titik yang harus tampak: sudut gedung pada lantai ini, dan di lantai dasar juga kedai kopi di halaman.
+    const W = this.denah.lebar / 2 + (tegak ? 0.3 : 1);
+    const D = this.denah.panjang / 2 + (tegak ? 0.3 : 1);
+    const y0 = this.dasar(lantai);
+    const titik: THREE.Vector3[] = [];
+    for (const x of [-W, W]) for (const z of [-D, D]) for (const y of [y0, y0 + 3]) titik.push(new THREE.Vector3(x, y, z));
+    if (lantai === 1) for (const x of [4, 14.6]) for (const z of [12.6, 24.9]) titik.push(new THREE.Vector3(x, 0, z), new THREE.Vector3(x, 3.4, z));
+    // Bingkai dihitung pada bidang layar (proyeksi sejajar), lalu dijauhkan sedikit untuk perspektif.
+    const mundur = arah.clone().negate();
+    const kanan = new THREE.Vector3().crossVectors(mundur, new THREE.Vector3(0, 1, 0)).normalize();
+    const atas = new THREE.Vector3().crossVectors(kanan, mundur).normalize();
+    let [x1, x2, y1, y2] = [Infinity, -Infinity, Infinity, -Infinity];
+    for (const t of titik) {
+      x1 = Math.min(x1, t.dot(kanan));
+      x2 = Math.max(x2, t.dot(kanan));
+      y1 = Math.min(y1, t.dot(atas));
+      y2 = Math.max(y2, t.dot(atas));
+    }
+    const tengah = kanan.clone().multiplyScalar((x1 + x2) / 2).add(atas.clone().multiplyScalar((y1 + y2) / 2));
+    // Sasaran putar di lantai, pada garis pandang yang melewati tengah bingkai.
+    const target = tengah.clone().sub(arah.clone().multiplyScalar((tengah.y - y0 - 0.4) / arah.y));
+    const jarak = Math.max((x2 - x1) / 2 / Math.tan(hfov / 2), (y2 - y1) / 2 / Math.tan(vfov / 2)) * 1.12;
     return { posisi: target.clone().add(arah.multiplyScalar(THREE.MathUtils.clamp(jarak, 26, 80))), target };
   }
 
@@ -572,7 +596,7 @@ export class AdeganGedung {
     if (this.penghuni.length && this.terlihat && !this.opsi.gerakDikurangi && kini - this.waktuStaf >= 33) {
       const dt = Math.min(0.25, (kini - this.waktuStaf) / 1000);
       this.waktuStaf = kini;
-      for (const { p, lantai } of this.penghuni) if (this.lantai.get(lantai)?.grup.visible) p.perbarui(dt);
+      for (const { p, lantai } of this.penghuni) if (lantai === 0 || this.lantai.get(lantai)?.grup.visible) p.perbarui(dt);
       this.perluRender = true;
     }
     if (this.perluRender && this.terlihat) {
@@ -633,18 +657,16 @@ export class AdeganGedung {
   private perbaruiPotongan() {
     const arah = new THREE.Vector3().subVectors(this.kamera.position, this.kendali.target).setY(0).normalize();
     let berubah = false;
-    for (const l of this.lantai.values()) {
-      for (const d of l.luar) {
-        // Setinggi mata (momen pembuka) fasad tidak dipotong: pengunjung melihat menembus kaca.
-        const potong = d.normal.dot(arah) > 0.28 && this.kamera.position.y - d.grup.position.y > 3.5;
-        const tujuan = potong ? 0 : 1;
-        if (Math.abs(d.skala - tujuan) > 0.001) {
-          d.skala += (tujuan - d.skala) * 0.18;
-          if (Math.abs(d.skala - tujuan) < 0.004) d.skala = tujuan;
-          d.grup.scale.y = Math.max(d.skala, 0.0001);
-          d.grup.visible = d.skala > 0.01;
-          berubah = true;
-        }
+    for (const d of [...[...this.lantai.values()].flatMap((l) => l.luar), ...this.potonganLuar]) {
+      // Setinggi mata (momen pembuka) fasad tidak dipotong: pengunjung melihat menembus kaca.
+      const potong = d.normal.dot(arah) > 0.28 && this.kamera.position.y - d.grup.position.y > 3.5;
+      const tujuan = potong ? 0 : 1;
+      if (Math.abs(d.skala - tujuan) > 0.001) {
+        d.skala += (tujuan - d.skala) * 0.18;
+        if (Math.abs(d.skala - tujuan) < 0.004) d.skala = tujuan;
+        d.grup.scale.y = Math.max(d.skala, 0.0001);
+        d.grup.visible = d.skala > 0.01;
+        berubah = true;
       }
     }
     if (berubah) {
@@ -725,6 +747,7 @@ export class AdeganGedung {
   private bersihkanBangunan() {
     this.penghuni.forEach(({ p }) => p.buang());
     this.penghuni = [];
+    this.potonganLuar = [];
     this.petaJalan.clear();
     this.tujuanJalan.clear();
     for (const l of this.lantai.values()) {
@@ -911,14 +934,35 @@ export class AdeganGedung {
     const bayangan = new THREE.MeshBasicMaterial({ map: tBayangan, transparent: true, depthWrite: false });
     this.materialLain.push(bayangan);
     await Promise.all(
-      this.rencanaStaf.map(async ({ rencana, lantai, cadangan }) => {
-        const aset = await muatStaf(rencana.nama).catch(() => null);
-        const l = this.lantai.get(lantai);
+      this.rencanaStaf.map(async ({ rencana, lantai, cadangan, varian }) => {
+        const [aset, kain] = await Promise.all([
+          muatStaf(rencana.nama).catch(() => null),
+          varian ? muatTekstur(`staf/varian/${varian}`).catch(() => null) : null,
+        ]);
+        // Lantai 0 = halaman (kedai kopi), di luar grup lantai gedung.
+        const induk = lantai === 0 ? this.grupLuar : this.lantai.get(lantai)?.grup;
         const peta = this.petaJalan.get(lantai);
-        if (!aset || !l || !peta || versi !== this.versiBangun) return;
-        const p = new Penghuni(aset, rencana, peta, (m) => this.salinBahan(m, lantai), this.salinBahan(bayangan, lantai), this.opsi.gerakDikurangi);
+        if (!aset || !induk || !peta || versi !== this.versiBangun) return;
+        // Karakter bervarian memakai bahan sendiri dengan peta warna pakaiannya; transformasi UV disalin dari peta asal.
+        const salin = (m: THREE.Material) => {
+          const b = this.salinBahan(m, lantai) as THREE.MeshStandardMaterial;
+          if (!kain || !b.map) return b;
+          const v = b.clone();
+          const t = kain.clone();
+          t.offset.copy(b.map.offset);
+          t.repeat.copy(b.map.repeat);
+          t.center.copy(b.map.center);
+          t.rotation = b.map.rotation;
+          t.channel = b.map.channel;
+          t.needsUpdate = true;
+          v.map = t;
+          this.materialLain.push(v);
+          this.teksturDibuat.push(t);
+          return v;
+        };
+        const p = new Penghuni(aset, rencana, peta, salin, this.salinBahan(bayangan, lantai), this.opsi.gerakDikurangi);
         cadangan.removeFromParent();
-        l.grup.add(p.akar);
+        induk.add(p.akar);
         this.penghuni.push({ p, lantai });
         this.minta();
       }),
@@ -939,7 +983,15 @@ export class AdeganGedung {
       pose: 'berdiri' | 'duduk';
       kerja: () => Aksi[];
       keluar?: [number, number][];
+      /** Tujuan jalan sendiri (koordinat bingkai L), menggantikan tujuan aula lantai. */
+      tujuan?: [number, number][];
       tahan?: () => boolean;
+      selang?: [number, number];
+      singgah?: Aksi[];
+      /** Arah hadap di setiap tujuan, dengan konvensi `hadap` (menghadap −Z lokal pada 0). */
+      hadapTujuan?: number[];
+      /** Nama tekstur pakaian pengganti di model/staf/varian. */
+      varian?: string;
       figur: Figur;
     },
   ) {
@@ -955,6 +1007,7 @@ export class AdeganGedung {
     this.rencanaStaf.push({
       lantai: this.lantaiBangun,
       cadangan,
+      varian: s.varian,
       rencana: {
         nama: s.nama,
         posisi: keLantai(s.x, s.z),
@@ -962,8 +1015,14 @@ export class AdeganGedung {
         pose: s.pose,
         kerja: s.kerja,
         keluar: (s.keluar ?? []).map(([x, z]) => keLantai(x, z)),
-        tujuan: s.keluar?.length ? (this.tujuanJalan.get(this.lantaiBangun) ?? []) : [],
+        tujuan: s.tujuan ? s.tujuan.map(([x, z]) => keLantai(x, z)) : s.keluar?.length ? (this.tujuanJalan.get(this.lantaiBangun) ?? []) : [],
         tahan: s.tahan,
+        selang: s.selang,
+        singgah: s.singgah,
+        arahTujuan: s.hadapTujuan?.map((h) => {
+          const v = new THREE.Vector3(-Math.sin(h), 0, -Math.cos(h)).applyAxisAngle(new THREE.Vector3(0, 1, 0), L.rotation.y);
+          return Math.atan2(v.x, v.z);
+        }),
         benih: this.rencanaStaf.length * 7 + 3,
       },
     });
@@ -1030,10 +1089,12 @@ export class AdeganGedung {
     this.mesh(this.catat(new THREE.PlaneGeometry(1.1, 2.2)), mukaMon, xMon, yTanah + 1.2 + 0.25, depan + 6 + 0.165, g, false);
     this.kotak(1.6, 0.25, 0.7, m.beton, xMon, yTanah + 0.125, depan + 6, g);
 
-    // Tiang bendera Merah Putih, lazim di gedung pemerintah daerah.
-    const xBendera = pintu.x + pm.lebar / 2 + 5;
-    this.kotak(1.4, 0.3, 1.4, m.beton, xBendera, yTanah + 0.15, depan + 7, g);
-    this.silinder(0.04, 0.06, 9, p.logam, xBendera, yTanah + 4.8, depan + 7, g, 12);
+    // Tiang bendera Merah Putih, lazim di gedung pemerintah daerah: di sudut kiri halaman, karena sisi kanan
+    // ditempati kedai kopi dan tiangnya tidak boleh menutupi tangga luar.
+    const xBendera = -W / 2 - 4.5;
+    const zBendera = depan + 4.5;
+    this.kotak(1.4, 0.3, 1.4, m.beton, xBendera, yTanah + 0.15, zBendera, g);
+    this.silinder(0.04, 0.06, 9, p.logam, xBendera, yTanah + 4.8, zBendera, g, 12);
     const merah = new THREE.MeshStandardMaterial({ color: '#c8102e', roughness: 0.8, side: THREE.DoubleSide });
     const putih = new THREE.MeshStandardMaterial({ color: '#f2f0ea', roughness: 0.8, side: THREE.DoubleSide });
     this.materialLain.push(merah, putih);
@@ -1041,11 +1102,11 @@ export class AdeganGedung {
     const pos = kain.attributes.position as THREE.BufferAttribute;
     for (let i = 0; i < pos.count; i++) pos.setZ(i, Math.sin((pos.getX(i) + 0.75) * 3.2) * 0.08 * (pos.getX(i) + 0.75));
     kain.computeVertexNormals();
-    this.mesh(kain, merah, xBendera + 0.78, yTanah + 8.75, depan + 7, g, false);
-    this.mesh(kain, putih, xBendera + 0.78, yTanah + 8.25, depan + 7, g, false);
+    this.mesh(kain, merah, xBendera + 0.78, yTanah + 8.75, zBendera, g, false);
+    this.mesh(kain, putih, xBendera + 0.78, yTanah + 8.25, zBendera, g, false);
 
     // Lampu jalan.
-    for (const x of [-22, -6, 10, 26]) {
+    for (const x of [-22, -6, 15, 26]) {
       this.silinder(0.05, 0.08, 6, p.aluminium, x, yTanah + 3, depan + 17.2, g, 10);
       this.kotak(0.14, 0.08, 1.2, p.aluminium, x, yTanah + 6, depan + 17.7, g);
       this.kotak(0.18, 0.04, 0.5, p.lampu, x, yTanah + 5.95, depan + 18.1, g, false);
@@ -1058,7 +1119,7 @@ export class AdeganGedung {
       [W / 2 + 7, -6, 1],
       [W / 2 + 8, 6, 1.15],
       [-W / 2 - 3, depan + 12, 0.85],
-      [W / 2 + 4, depan + 12.5, 0.95],
+      [W / 2 + 8.5, depan + 13.5, 0.95],
       [-6, -D / 2 - 8, 1.2],
       [7, -D / 2 - 7, 1],
       [-W / 2 - 14, depan + 4, 1.3],
@@ -1074,10 +1135,442 @@ export class AdeganGedung {
     }
     for (let i = 0; i < 6; i++) {
       const x = -(W + 14) / 2 + 3 + i * ((W + 8) / 5);
-      if (Math.abs(x - pintu.x) < pm.lebar) continue;
+      // Celah di depan pintu gedung dan pintu kedai kopi.
+      if (Math.abs(x - pintu.x) < pm.lebar || Math.abs(x - (W / 2 + 0.2)) < 2.5) continue;
       this.bulat(1.8, 0.7, 0.9, 0.3, i % 2 ? p.daun : p.daunTua, x, yTanah + 0.35, depan + 15.6, g);
     }
+    this.bangunKafe(g, p);
     this.gabung(g);
+    for (const d of this.potonganLuar) this.gabung(d.grup);
+  }
+
+  /** Bata ekspos dengan nat semen, diulang sesuai ukuran bidang (satu ubin = 1,2 × 0,6 m). */
+  private bahanBata(simpan: Map<string, THREE.MeshStandardMaterial>, lebar: number, tinggi: number) {
+    const kunci = `${lebar.toFixed(2)}x${tinggi.toFixed(2)}`;
+    let m = simpan.get(kunci);
+    if (m) return m;
+    let dasar = simpan.get('dasar');
+    if (!dasar) {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 256;
+      const g = c.getContext('2d')!;
+      g.fillStyle = '#cfc6b8';
+      g.fillRect(0, 0, 512, 256);
+      let acak = 7;
+      const r = () => ((acak = (acak * 9301 + 49297) % 233280) / 233280);
+      const warna = ['#9c4f35', '#a85a3c', '#8f4630', '#b06446', '#97503a', '#a3563b'];
+      // Delapan baris bata ikatan setengah: 1,2 m × 0,6 m per ubin tekstur.
+      for (let b = 0; b < 8; b++) {
+        const geser = b % 2 ? 32 : 0;
+        for (let k = -1; k < 8; k++) {
+          g.fillStyle = warna[Math.floor(r() * warna.length)];
+          g.fillRect(k * 64 + geser + 2, b * 32 + 2, 60, 28);
+          g.fillStyle = 'rgba(0,0,0,0.07)';
+          g.fillRect(k * 64 + geser + 2, b * 32 + 24, 60, 6);
+        }
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.anisotropy = 8;
+      this.teksturDibuat.push(t);
+      dasar = new THREE.MeshStandardMaterial({ map: t, roughness: 0.92 });
+      simpan.set('dasar', dasar);
+      this.materialLain.push(dasar);
+    }
+    m = dasar.clone();
+    m.map = dasar.map!.clone();
+    m.map.repeat.set(lebar / 1.2, tinggi / 0.6);
+    m.map.needsUpdate = true;
+    this.teksturDibuat.push(m.map);
+    this.materialLain.push(m);
+    simpan.set(kunci, m);
+    return m;
+  }
+
+  /**
+   * GARUDA Coffee Shop di halaman depan, sisi kanan pintu masuk: paviliun kaca berangka baja dengan dinding
+   * bata ekspos, meja bar, empat meja bundar yang masing-masing dikelilingi lima kursi, dua barista,
+   * tiga pramusaji, dan dua belas tamu muda. Bingkai lokal: −Z ke pintu kedai (arah jalan), +Z ke meja
+   * bar (membelakangi gedung). Lantai kedai 15 cm di atas pelataran.
+   */
+  private bangunKafe(g: THREE.Group, p: Pustaka) {
+    const W = 10.4;
+    const D = 11;
+    const H = 3.2;
+    const T = 0.12;
+    const pusat = new THREE.Vector3(this.denah.lebar / 2 + 0.2, -0.17, this.denah.panjang / 2 + 8.2);
+    const K = new THREE.Group();
+    K.position.copy(pusat);
+    K.rotation.y = Math.PI;
+    g.add(K);
+    K.updateMatrix();
+    // Figur cadangan memakai bahan halaman, bukan bahan lantai terakhir yang dibangun.
+    this.matOrang = new Map();
+    this.tambahanAktif = this.materialLain;
+    const bata = new Map<string, THREE.MeshStandardMaterial>();
+    const dunia = (x: number, z: number) => new THREE.Vector3(x, 0, z).applyMatrix4(K.matrix);
+    const normal = (x: number, z: number) => new THREE.Vector3(x, 0, z).applyAxisAngle(new THREE.Vector3(0, 1, 0), K.rotation.y);
+
+    // Alas beton, teras kecil di depan pintu, dan lantai papan kayu.
+    this.kotak(W + 0.3, 0.15, D + 1.3, p.beton, 0, -0.075, -0.5, K);
+    this.bidangLantai(W, D, p.lantaiKayu, 0, 0.003, 0, K);
+    this.bidangLantai(W + 0.3, 1.0, p.terrazzo, 0, 0.003, -D / 2 - 0.65, K);
+
+    // Peta jalan pramusaji dan barista: sejajar sumbu dunia, karena kedai hanya diputar setengah putaran.
+    const peta = new PetaJalan(W, D, pusat.x, pusat.z);
+    this.petaJalan.set(0, peta);
+    const halangi = (x1: number, x2: number, z1: number, z2: number, tepi = 0.1) => {
+      const a = dunia(x1 - tepi, z1 - tepi);
+      const b = dunia(x2 + tepi, z2 + tepi);
+      peta.halangi(a.x, b.x, a.z, b.z);
+    };
+
+    // ——— Dinding: kaca berangka baja menghadap jalan dan pelataran, bata ekspos di sisi bar ———
+    const sisi = [
+      { n: [0, -1], panjang: W, kaca: true, titik: (u: number, k: number) => [u - W / 2, -D / 2 - k] },
+      { n: [0, 1], panjang: W, kaca: false, titik: (u: number, k: number) => [u - W / 2, D / 2 + k] },
+      { n: [-1, 0], panjang: D, kaca: false, titik: (u: number, k: number) => [-W / 2 - k, u - D / 2] },
+      { n: [1, 0], panjang: D, kaca: true, titik: (u: number, k: number) => [W / 2 + k, u - D / 2] },
+    ];
+    const pintu: [number, number] = [W / 2 - 0.85, W / 2 + 0.85];
+    for (const [i, sd] of sisi.entries()) {
+      const atas = new THREE.Group();
+      atas.position.set(pusat.x, pusat.y + AMBANG, pusat.z);
+      atas.rotation.y = K.rotation.y;
+      this.grupLuar.add(atas);
+      this.potonganLuar.push({ grup: atas, normal: normal(sd.n[0], sd.n[1]), skala: 1 });
+      const sepanjangX = sd.n[1] !== 0;
+      const seg = (u1: number, u2: number, a: number, b: number, m: THREE.Material, tebal = T, geser = T / 2) => {
+        if (u2 - u1 < 0.01 || b - a < 0.01) return;
+        const [x, z] = sd.titik((u1 + u2) / 2, geser);
+        const induk = a >= AMBANG - 0.001 ? atas : K;
+        const y = induk === atas ? a - AMBANG : a;
+        this.kotak(sepanjangX ? u2 - u1 : tebal, b - a, sepanjangX ? tebal : u2 - u1, m, x, y + (b - a) / 2, z, induk, !m.transparent);
+      };
+      const L = sd.panjang;
+      if (sd.kaca) {
+        const celah = i === 0 ? pintu : null;
+        seg(0, L, 0, 0.35, p.logamGelap, 0.1);
+        const modul = L / Math.round(L / 1.35);
+        for (let u = 0; u <= L + 0.001; u += modul) {
+          if (celah && u > celah[0] - 0.05 && u < celah[1] + 0.05) continue;
+          seg(u - 0.035, u + 0.035, 0.35, AMBANG, p.logamGelap, 0.09);
+          seg(u - 0.035, u + 0.035, AMBANG, H, p.logamGelap, 0.09);
+        }
+        const bidang: [number, number][] = celah ? [[0, celah[0]], [celah[1], L]] : [[0, L]];
+        for (const [a, b] of bidang) {
+          seg(a, b, 0.35, AMBANG, p.kacaBening, 0.02);
+          seg(a, b, AMBANG, H - 0.32, p.kacaBening, 0.02);
+        }
+        seg(0, L, 2.37, 2.43, p.logamGelap, 0.08);
+        seg(0, L, H - 0.32, H, p.logamGelap, 0.16);
+        if (celah) {
+          // Pintu kaca ganda berkusen baja dengan gagang kuningan panjang.
+          for (const u of [celah[0], celah[1]]) {
+            seg(u - 0.05, u + 0.05, 0.0, AMBANG, p.logamGelap, 0.12);
+            seg(u - 0.05, u + 0.05, AMBANG, 2.4, p.logamGelap, 0.12);
+          }
+          const tengah = (celah[0] + celah[1]) / 2;
+          seg(celah[0] + 0.05, celah[1] - 0.05, 0.02, AMBANG, p.kacaBening, 0.02);
+          seg(celah[0] + 0.05, celah[1] - 0.05, AMBANG, 2.37, p.kacaBening, 0.02);
+          seg(celah[0], celah[1], 2.43, H - 0.32, p.kacaBening, 0.02);
+          seg(tengah - 0.02, tengah + 0.02, 0.02, AMBANG, p.logamGelap, 0.05);
+          seg(tengah - 0.02, tengah + 0.02, AMBANG, 2.37, p.logamGelap, 0.05);
+          for (const u of [tengah - 0.12, tengah + 0.12]) seg(u - 0.015, u + 0.015, 0.7, AMBANG, p.kuningan, 0.06, -0.03);
+          for (const u of [tengah - 0.12, tengah + 0.12]) seg(u - 0.015, u + 0.015, AMBANG, 1.6, p.kuningan, 0.06, -0.03);
+        }
+      } else {
+        seg(0, L, 0, AMBANG, this.bahanBata(bata, L, AMBANG));
+        seg(0, L, AMBANG, H, this.bahanBata(bata, L, H - AMBANG));
+      }
+      // Balok ring baja di puncak dinding.
+      seg(-T, L + T, H, H + 0.16, p.logamGelap, 0.2);
+    }
+    // Papan nama di atas pintu, berdiri di balok depan.
+    const tMerek = teksturMerekKafe();
+    this.teksturDibuat.push(tMerek);
+    const mMerek = new THREE.MeshStandardMaterial({ map: tMerek, roughness: 0.4, metalness: 0.25 });
+    this.materialLain.push(mMerek);
+    const atasDepan = this.potonganLuar[this.potonganLuar.length - 4].grup;
+    this.kotak(2.5, 0.96, 0.08, p.logamGelap, 0, H + 0.62 - AMBANG, -D / 2 - 0.06, atasDepan);
+    this.mesh(this.catat(new THREE.PlaneGeometry(2.4, 0.9)), mMerek, 0, H + 0.62 - AMBANG, -D / 2 - 0.101, atasDepan, false).rotation.y = Math.PI;
+    // Balok atap terbuka (pergola) tempat lampu gantung, melintang di atas dua deret meja.
+    const meja: [number, number][] = [
+      [-2.6, -3.5],
+      [2.6, -3.5],
+      [-2.6, -0.1],
+      [2.6, -0.1],
+    ];
+    for (const z of [-3.5, -0.1, 2.9]) this.kotak(W, 0.14, 0.1, p.logamGelap, 0, H + 0.08, z, K);
+
+    // ——— Meja bar: muka kayu berlekuk, puncak terrazzo ———
+    const xBar = [-W / 2, 2.6];
+    const zBar = [3.2, 3.85];
+    const tengahBar = (xBar[0] + xBar[1]) / 2;
+    const panjangBar = xBar[1] - xBar[0];
+    this.kotak(panjangBar, 1.0, zBar[1] - zBar[0], p.walnut, tengahBar, 0.5, (zBar[0] + zBar[1]) / 2, K);
+    for (let x = xBar[0] + 0.06; x < xBar[1] - 0.03; x += 0.09) this.kotak(0.05, 0.86, 0.03, p.oak, x, 0.53, zBar[0] - 0.012, K);
+    this.kotak(panjangBar, 0.1, 0.06, p.logamGelap, tengahBar, 0.05, zBar[0] + 0.02, K);
+    this.kotak(panjangBar + 0.05, 0.05, zBar[1] - zBar[0] + 0.12, p.terrazzo, tengahBar, 1.025, (zBar[0] + zBar[1]) / 2 - 0.04, K);
+    halangi(xBar[0], xBar[1], zBar[0], zBar[1]);
+    // Kasir: tablet di dudukan dan laci uang.
+    this.kotak(0.36, 0.08, 0.3, p.plastikHitam, -3.7, 1.09, 3.55, K);
+    const tablet = this.kotak(0.26, 0.18, 0.015, p.layarMenyala, -3.7, 1.24, 3.5, K);
+    tablet.rotation.x = 0.35;
+    // Etalase kue: kotak kaca dua susun.
+    this.kotak(1.0, 0.5, 0.5, p.kacaBening, -2.0, 1.3, 3.5, K, false);
+    for (const y of [1.07, 1.3]) {
+      this.kotak(0.96, 0.015, 0.46, p.logam, -2.0, y, 3.5, K);
+      for (let k = 0; k < 4; k++) this.bulat(0.14, 0.07, 0.11, 0.03, [p.kardus, p.oak, p.potTerakota, p.kainPasir][(k + Math.round(y * 10)) % 4], -2.35 + k * 0.23, y + 0.045, 3.45, K);
+    }
+    // Gelas bawa pulang di tempat pengambilan.
+    for (let k = 0; k < 3; k++) {
+      this.silinder(0.045, 0.035, 0.15, p.plastikPutih, 0.8 + k * 0.17, 1.125, 3.4, K, 14);
+      this.silinder(0.047, 0.042, 0.05, p.kardus, 0.8 + k * 0.17, 1.12, 3.4, K, 14);
+    }
+
+    // ——— Meja belakang bar: mesin espreso, penggiling, lemari pendingin, rak biji kopi ———
+    const zBelakang = D / 2 - 0.3;
+    this.kotak(W - 1.1 - 1.8, 0.9, 0.6, p.walnut, -W / 2 + 1.1 + (W - 1.1 - 1.8) / 2, 0.45, zBelakang, K);
+    this.kotak(W - 1.1 - 1.8 + 0.04, 0.04, 0.64, p.terrazzo, -W / 2 + 1.1 + (W - 1.1 - 1.8) / 2, 0.92, zBelakang, K);
+    halangi(-W / 2, W / 2 - 1.8, zBelakang - 0.3, D / 2);
+    // Mesin espreso dua grup berlapis krom.
+    this.bulat(0.8, 0.46, 0.5, 0.04, p.logam, 0.9, 1.17, zBelakang, K);
+    this.kotak(0.82, 0.05, 0.36, p.logamGelap, 0.9, 0.97, zBelakang - 0.25, K);
+    for (const dx of [-0.2, 0.2]) {
+      this.silinder(0.05, 0.05, 0.08, p.logam, 0.9 + dx, 1.05, zBelakang - 0.28, K, 14);
+      this.kotak(0.04, 0.03, 0.2, p.plastikHitam, 0.9 + dx, 1.02, zBelakang - 0.42, K);
+    }
+    for (let k = 0; k < 5; k++) this.silinder(0.035, 0.03, 0.06, p.keramik, 0.62 + k * 0.14, 1.43, zBelakang + 0.05, K, 12);
+    // Penggiling kopi dengan corong biji.
+    for (const x of [-0.15, -0.55]) {
+      this.kotak(0.18, 0.36, 0.24, p.logamGelap, x, 1.12, zBelakang, K);
+      this.silinder(0.1, 0.05, 0.22, p.kacaBening, x, 1.41, zBelakang, K, 14);
+      this.silinder(0.085, 0.045, 0.14, p.walnut, x, 1.37, zBelakang, K, 14);
+    }
+    // Keran dan bak cuci, teko susu.
+    this.silinder(0.015, 0.015, 0.3, p.logam, -1.5, 1.08, zBelakang + 0.15, K, 8);
+    for (const x of [-1.9, -2.05]) this.silinder(0.045, 0.05, 0.12, p.logam, x, 1.0, zBelakang - 0.1, K, 12);
+    // Lemari pendingin kaca di ujung meja belakang.
+    const xDingin = -W / 2 + 0.55;
+    this.kotak(1.0, 1.95, 0.62, p.logamGelap, xDingin, 0.975, zBelakang, K);
+    this.kotak(0.86, 1.7, 0.02, p.kacaBening, xDingin, 1.0, zBelakang - 0.32, K, false);
+    for (const y of [0.45, 0.95, 1.45]) {
+      this.kotak(0.86, 0.02, 0.5, p.logam, xDingin, y, zBelakang, K);
+      for (let k = 0; k < 5; k++) this.silinder(0.035, 0.035, 0.24, p.produk[(k + y * 4) % p.produk.length | 0], xDingin - 0.32 + k * 0.16, y + 0.13, zBelakang - 0.12, K, 10);
+    }
+    // Rak kayu melayang dan papan menu di dinding bata.
+    for (const y of [1.55, 1.95]) {
+      this.kotak(5.8, 0.04, 0.26, p.oak, -0.6, y, D / 2 - 0.13, K);
+      for (let k = 0; k < 14; k++) {
+        const x = -3.3 + k * 0.4;
+        if (k % 3 === 0) this.silinder(0.06, 0.06, 0.2, p.kacaBening, x, y + 0.12, D / 2 - 0.13, K, 12);
+        else if (k % 3 === 1) this.silinder(0.04, 0.035, 0.08, p.keramik, x, y + 0.06, D / 2 - 0.13, K, 12);
+        else this.bulat(0.13, 0.2, 0.08, 0.02, p.produk[k % p.produk.length], x, y + 0.12, D / 2 - 0.13, K);
+      }
+    }
+    const tMenu = teksturMenuKafe();
+    this.teksturDibuat.push(tMenu);
+    const mMenu = new THREE.MeshStandardMaterial({ map: tMenu, roughness: 0.8 });
+    this.materialLain.push(mMenu);
+    this.kotak(1.84, 0.94, 0.04, p.walnut, -0.6, 2.62, D / 2 - 0.02, K);
+    this.mesh(this.catat(new THREE.PlaneGeometry(1.76, 0.86)), mMenu, -0.6, 2.62, D / 2 - 0.045, K, false).rotation.y = Math.PI;
+    // Sudut di samping lorong barista: rak barang dagangan dan tanaman besar.
+    this.bulat(1.2, 1.9, 0.4, 0.02, p.oak, W / 2 - 0.75, 0.95, D / 2 - 0.25, K);
+    for (const y of [0.55, 1.05, 1.55]) this.produkDiRak(K, p, W / 2 - 1.3, W / 2 - 0.2, y, D / 2 - 0.3, Math.round(y * 5));
+    this.tanaman(K, p, W / 2 - 0.6, zBar[0] + 0.3, 1.3);
+    halangi(W / 2 - 1.8, W / 2, zBar[0], D / 2);
+
+    // Neon di dinding bata samping, menghadap ruang duduk.
+    const tNeon = teksturNeonKafe();
+    this.teksturDibuat.push(tNeon);
+    const mNeon = new THREE.MeshStandardMaterial({ map: tNeon, emissiveMap: tNeon, emissive: '#ffb36b', emissiveIntensity: 1.6, transparent: true, depthWrite: false });
+    this.materialLain.push(mNeon);
+    this.mesh(this.catat(new THREE.PlaneGeometry(3.6, 0.9)), mNeon, -W / 2 + 0.02, 2.1, -1.8, K, false).rotation.y = Math.PI / 2;
+
+    // ——— Empat meja bundar, masing-masing dikelilingi lima kursi kayu ———
+    const lampuMat = new THREE.MeshStandardMaterial({ color: '#fff3dc', emissive: '#ffcf8a', emissiveIntensity: 2.2 });
+    this.materialLain.push(lampuMat);
+    const kursiMeja: { x: number; z: number; a: number }[][] = [];
+    for (const [tx, tz] of meja) {
+      this.silinder(0.55, 0.55, 0.045, p.oak, tx, 0.745, tz, K, 40);
+      this.silinder(0.045, 0.06, 0.72, p.logamGelap, tx, 0.36, tz, K, 14);
+      this.silinder(0.26, 0.28, 0.03, p.logamGelap, tx, 0.015, tz, K, 24);
+      // Celah antarkursi menghadap lorong tengah, tempat pramusaji melayani.
+      const celah = tx > 0 ? -Math.PI / 2 : Math.PI / 2;
+      const kursi = [];
+      for (let k = 0; k < 5; k++) {
+        const a = celah + Math.PI / 5 + (k * 2 * Math.PI) / 5;
+        const x = tx + Math.sin(a) * 0.9;
+        const z = tz + Math.cos(a) * 0.9;
+        this.kursiKayu(K, p, x, z, a, p.kainPasir);
+        kursi.push({ x, z, a });
+      }
+      kursiMeja.push(kursi);
+      halangi(tx - 1.15, tx + 1.15, tz - 1.15, tz + 1.15, 0);
+      // Lampu gantung rotan di atas meja.
+      this.silinder(0.006, 0.006, H - 2.25, p.logamGelap, tx, (H + 2.25) / 2, tz, K, 6);
+      this.silinder(0.05, 0.24, 0.24, p.kainPasir, tx, 2.13, tz, K, 20);
+      this.dinamis(this.mesh(this.catat(new THREE.SphereGeometry(0.06, 12, 8)), lampuMat, tx, 2.02, tz, K, false));
+    }
+    // Lampu gantung di atas meja bar.
+    for (const x of [-3.2, -1.2, 0.8]) {
+      this.silinder(0.006, 0.006, H - 2.4, p.logamGelap, x, (H + 2.4) / 2, zBar[0] + 0.3, K, 6);
+      this.silinder(0.04, 0.12, 0.18, p.logamGelap, x, 2.31, zBar[0] + 0.3, K, 16);
+      this.dinamis(this.mesh(this.catat(new THREE.SphereGeometry(0.045, 10, 8)), lampuMat, x, 2.22, zBar[0] + 0.3, K, false));
+    }
+    // Tanaman di sudut ruang duduk dan di teras.
+    for (const [x, z, s] of [
+      [-W / 2 + 0.5, -D / 2 + 0.5, 1.4],
+      [W / 2 - 0.5, -D / 2 + 0.5, 1.4],
+      [-W / 2 + 0.5, 1.7, 1.2],
+    ] as [number, number, number][]) {
+      this.tanaman(K, p, x, z, s);
+      halangi(x - 0.35, x + 0.35, z - 0.35, z + 0.35, 0);
+    }
+    for (const x of [-1.6, 1.6]) this.tanaman(K, p, x, -D / 2 - 0.65, 1.1);
+    // Papan menu lipat di teras.
+    // Papan menu lipat (bentuk A) di teras: dua papan kapur berbingkai kayu yang bertemu di puncak.
+    for (const s of [-1, 1]) {
+      const papan = this.kotak(0.55, 0.85, 0.03, p.walnut, 3.0, 0.41, -D / 2 - 0.65 + s * 0.11, K);
+      papan.rotation.x = -s * 0.26;
+      const muka = this.kotak(0.47, 0.72, 0.01, p.plastikHitam, 3.0, 0.42, -D / 2 - 0.65 + s * 0.127, K, false);
+      muka.rotation.x = -s * 0.26;
+    }
+
+    // ——— Tamu: tiga orang di setiap meja dengan isi meja di depannya ———
+    const tamu: [NamaStaf, string, number][][] = [
+      [['jack', 'tamu-1', 0], ['devita', 'tamu-9', 2], ['achmad', 'tamu-3', 3]],
+      [['didin', 'tamu-2', 1], ['host-wanita', 'tamu-8', 2], ['host-wanita', 'tamu-12', 4]],
+      [['host-pria', 'tamu-4', 0], ['devita', 'tamu-11', 1], ['petugas-disperindag', 'tamu-5', 3]],
+      [['jack', 'tamu-6', 1], ['petugas-dinkes', 'tamu-10', 3], ['achmad', 'tamu-7', 4]],
+    ];
+    tamu.forEach((kelompok, iMeja) => {
+      const [tx, tz] = meja[iMeja];
+      kelompok.forEach(([nama, varian, iKursi], j) => {
+        const k = kursiMeja[iMeja][iKursi];
+        this.daftarStaf(K, {
+          nama,
+          x: k.x,
+          z: k.z,
+          hadap: k.a,
+          pose: 'duduk',
+          kerja: () => ['duduk', 'duduk-bicara'],
+          varian,
+          figur: TAMU[(iMeja * 3 + j) % TAMU.length],
+        });
+        // Kopi panas atau es kopi susu di depan setiap tamu, ponsel di sebagian meja.
+        const cx = tx + Math.sin(k.a) * 0.36;
+        const cz = tz + Math.cos(k.a) * 0.36;
+        if ((iMeja + j) % 2) {
+          this.silinder(0.07, 0.07, 0.01, p.keramik, cx, 0.773, cz, K, 16);
+          this.silinder(0.042, 0.035, 0.07, p.keramik, cx, 0.81, cz, K, 14);
+        } else {
+          this.silinder(0.038, 0.032, 0.15, p.kacaBening, cx, 0.843, cz, K, 14);
+          this.silinder(0.034, 0.03, 0.1, p.kardus, cx, 0.82, cz, K, 14);
+        }
+        if ((iMeja + j) % 3 === 0) this.kotak(0.075, 0.008, 0.15, p.plastikHitam, cx + Math.cos(k.a) * 0.14, 0.772, cz - Math.sin(k.a) * 0.14, K);
+      });
+    });
+    // Laptop terbuka di dua meja: tempat nugas dan rapat kecil.
+    for (const iMeja of [0, 3]) {
+      const [tx, tz] = meja[iMeja];
+      const a = kursiMeja[iMeja][tamu[iMeja][0][2]].a;
+      const lx = tx + Math.sin(a) * 0.12;
+      const lz = tz + Math.cos(a) * 0.12;
+      const alas = this.kotak(0.32, 0.012, 0.22, p.aluminium, lx, 0.775, lz, K);
+      alas.rotation.y = a;
+      const layar = this.kotak(0.32, 0.21, 0.008, p.layarMenyala, lx - Math.sin(a) * 0.11, 0.88, lz - Math.cos(a) * 0.11, K);
+      layar.rotation.set(0, a, 0);
+      layar.rotateX(-0.25);
+    }
+
+    // ——— Barista di balik meja bar ———
+    const zBarista = (zBar[1] + zBelakang - 0.3) / 2;
+    this.daftarStaf(K, {
+      nama: 'host-pria',
+      x: 0.9,
+      z: zBarista,
+      hadap: Math.PI,
+      pose: 'berdiri',
+      kerja: () => ['diam'],
+      tujuan: [
+        [-0.35, zBarista],
+        [1.5, zBarista],
+        [-2.0, zBarista],
+      ],
+      hadapTujuan: [Math.PI, 0, 0],
+      selang: [7, 8],
+      singgah: ['diam', 'bicara'],
+      varian: 'barista-pria',
+      figur: BARISTA[0],
+    });
+    this.daftarStaf(K, {
+      nama: 'resepsionis-wanita',
+      x: -3.7,
+      z: zBarista,
+      hadap: 0,
+      pose: 'berdiri',
+      kerja: () => ['bicara', 'diam'],
+      tujuan: [
+        [-2.3, zBarista],
+        [-1.6, zBarista],
+        [-4.0, zBarista],
+      ],
+      hadapTujuan: [0, Math.PI, Math.PI],
+      selang: [9, 10],
+      singgah: ['diam'],
+      varian: 'barista-wanita',
+      figur: BARISTA[1],
+    });
+
+    // ——— Pramusaji: menunggu di depan bar, lalu mengantar pesanan ke meja ———
+    const layan: [number, number][] = [];
+    const hadapLayan: number[] = [];
+    for (const [tx, tz] of meja) {
+      layan.push([Math.sign(tx) * 1.25, tz]);
+      hadapLayan.push(tx > 0 ? -Math.PI / 2 : Math.PI / 2);
+      if (tz > -1) {
+        layan.push([tx, tz + 1.4]);
+        hadapLayan.push(Math.PI);
+      }
+    }
+    layan.push([0.9, zBar[0] - 0.45]);
+    hadapLayan.push(Math.PI);
+    const pramusaji: [NamaStaf, string, number, number, Aksi[]][] = [
+      ['didin', 'pramusaji-1', 1.3, 2.5, ['diam']],
+      ['devita', 'pramusaji-2', -1.3, 2.5, ['diam']],
+      ['host-pria', 'pramusaji-3', 3.4, 1.8, ['diam', 'bicara']],
+    ];
+    pramusaji.forEach(([nama, varian, x, z, gerak], i) => {
+      this.daftarStaf(K, {
+        nama,
+        x,
+        z,
+        hadap: 0,
+        pose: 'berdiri',
+        kerja: () => ['diam'],
+        tujuan: layan,
+        hadapTujuan: hadapLayan,
+        selang: [3 + i, 5],
+        singgah: gerak,
+        varian,
+        figur: PRAMUSAJI[i],
+      });
+    });
+
+    // Tiang papan nama di pelataran, menghadap jalan dan pengunjung dari gedung.
+    const tiang = new THREE.Group();
+    const posTiang = dunia(W / 2 + 1.2, -D / 2 + 0.6);
+    tiang.position.set(posTiang.x, -0.32, posTiang.z);
+    tiang.rotation.y = -0.45;
+    g.add(tiang);
+    for (const x of [-1.05, 1.05]) this.kotak(0.08, 2.5, 0.08, p.logamGelap, x, 1.25, 0, tiang);
+    this.kotak(2.3, 0.9, 0.1, p.logamGelap, 0, 2.05, 0, tiang);
+    this.mesh(this.catat(new THREE.PlaneGeometry(2.2, 0.82)), mMerek, 0, 2.05, 0.051, tiang, false);
+    this.kotak(2.6, 0.2, 0.5, p.beton, 0, 0.1, 0, tiang);
   }
 
   /** Pohon peneduh: batang meruncing dan tajuk berbentuk gumpalan tak beraturan. */
@@ -2303,6 +2796,35 @@ const FIGUR_STAF: Figur[] = [
 const PETUGAS: Figur[] = [
   { kulit: '#9d6a47', baju: '#8b7d55', bawah: '#3b3a33', rambut: '#15110e' },
   { kulit: '#bb855e', baju: '#f1eee8', bawah: '#2d3a45', kerudung: '#3d5a7a' },
+];
+
+/** Barista GARUDA Coffee Shop: kaus hitam dan celemek kanvas. */
+const BARISTA: Figur[] = [
+  { kulit: '#a06b48', baju: '#1c1c1c', bawah: '#6b4a30', rambut: '#14100d' },
+  { kulit: '#b9845d', baju: '#1c1c1c', bawah: '#6b4a30', rambut: '#1a1410' },
+];
+
+/** Pramusaji: kemeja hitam dan celemek, satu berkerudung marun. */
+const PRAMUSAJI: Figur[] = [
+  { kulit: '#98633f', baju: '#151515', bawah: '#2a2a2a', rambut: '#120e0c' },
+  { kulit: '#b88660', baju: '#151515', bawah: '#2a2a2a', kerudung: '#6e1f2f' },
+  { kulit: '#a7714d', baju: '#c9b08a', bawah: '#1f1f1f', rambut: '#16110e' },
+];
+
+/** Tamu muda kedai: busana sehari-hari ala Gen Z yang berbeda-beda. */
+const TAMU: Figur[] = [
+  { kulit: '#a87250', baju: '#b9b2dd', bawah: '#5d7894', rambut: '#120e0c' },
+  { kulit: '#c08b63', baju: '#e7d3d8', bawah: '#7d95b5', kerudung: '#c9a7b9' },
+  { kulit: '#8f5c3c', baju: '#4b5236', bawah: '#1d1d1d', rambut: '#15110e' },
+  { kulit: '#9b6846', baju: '#bfa98a', bawah: '#6b5440', rambut: '#120e0c' },
+  { kulit: '#b5805a', baju: '#8a9a86', bawah: '#e9e4da', kerudung: '#d8d2c4' },
+  { kulit: '#c3906a', baju: '#c8b8e0', bawah: '#efe8f4', kerudung: '#b7a6d6' },
+  { kulit: '#a06b48', baju: '#9cb9cf', bawah: '#d9cbb3', rambut: '#14100d' },
+  { kulit: '#b07a52', baju: '#a7c0d6', bawah: '#f0e3d6', kerudung: '#e8c7c0' },
+  { kulit: '#94603f', baju: '#1f4a45', bawah: '#151515', rambut: '#120e0c' },
+  { kulit: '#8d5a3b', baju: '#ef7b1f', bawah: '#181818', rambut: '#15110e' },
+  { kulit: '#bb855e', baju: '#6b4a32', bawah: '#2b2622', kerudung: '#3b2b22' },
+  { kulit: '#9a6644', baju: '#1d2a44', bawah: '#7aa0c4', rambut: '#120e0c' },
 ];
 
 /** Ukuran model di tempatnya: tinggi atau lebar dalam meter, serta geseran dan putaran tambahan. */

@@ -167,8 +167,8 @@ export default function Gedung3D({ ruangan, sesi, denah, identitas, aksiRuang, l
   const st = terpilih ? statusRuang(terpilih, sesi) : null;
   const sedangSiaran = sesi.filter((s) => s.status === 'berlangsung').length;
   const ringkasAlt = `${label}. Lantai ${lantai} berisi ${ruangLantai.map((r) => r.nama).join(', ')}. ${
-    sedangSiaran ? `${sedangSiaran} studio sedang siaran.` : 'Tidak ada studio yang sedang siaran.'
-  }`;
+    lantai === 1 ? 'Tangga luar di kiri pintu masuk naik ke lantai 2; GARUDA Coffee Shop ada di halaman depan sebelah kanan. ' : ''
+  }${sedangSiaran ? `${sedangSiaran} studio sedang siaran.` : 'Tidak ada studio yang sedang siaran.'}`;
 
   if (!webgl) {
     return (

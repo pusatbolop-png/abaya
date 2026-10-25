@@ -19,6 +19,8 @@ function cariRekaman(u: URL) {
   const kunci = u.pathname + u.search;
   const tepat = data.rekaman[kunci] ?? data.rekaman[u.pathname] ?? data.rekaman[u.pathname + '?'];
   if (tepat && !u.searchParams.has('q')) return tepat;
+  // Catatan konten bulan yang tidak direkam berarti bulan itu kosong, bukan bulan lain.
+  if (u.pathname === '/api/konten') return { status: 200, isi: { bulan: u.searchParams.get('bulan'), daftar: [], hitung: {} } };
   // Tanggal atau kata kunci berbeda: pakai rekaman lain untuk alamat yang sama.
   const status = u.searchParams.get('status');
   const dasar =

@@ -107,6 +107,12 @@ export interface RencanaStaf {
   tujuan: THREE.Vector3[];
   /** Selama bernilai true, staf tetap di tempat (misalnya sedang siaran). */
   tahan?: () => boolean;
+  /** Lama bekerja di tempat sebelum berjalan lagi, detik: [paling singkat, rentang acak]. */
+  selang?: [number, number];
+  /** Aksi saat singgah di tujuan; bawaan: diam atau menelepon. */
+  singgah?: Aksi[];
+  /** Arah hadap saat singgah, sejajar dengan `tujuan` (misalnya pramusaji menghadap meja). */
+  arahTujuan?: number[];
   /** Pembangkit acak tetap agar setiap staf punya ritme sendiri. */
   benih: number;
 }
@@ -124,6 +130,7 @@ export class Penghuni {
   private jalur: THREE.Vector3[] = [];
   private langkah = 0;
   private jalurPergi: THREE.Vector3[] = [];
+  private arahSinggah: number | null = null;
   private acak: () => number;
 
   constructor(
@@ -159,7 +166,7 @@ export class Penghuni {
       }
       this.aksi.set(nama, a);
     }
-    this.timer = 15 + this.acak() * 45;
+    this.timer = r.selang ? r.selang[0] + this.acak() * r.selang[1] : 15 + this.acak() * 45;
     this.mainkanKerja(0);
     // Gerak dikurangi: satu pose kerja, tidak berjalan.
     if (diam) this.mixer.update(1.5);
@@ -191,7 +198,9 @@ export class Penghuni {
 
   private rencanakanPergi() {
     if (!this.r.tujuan.length || this.r.tahan?.()) return false;
-    const tujuan = this.r.tujuan[Math.floor(this.acak() * this.r.tujuan.length)];
+    const ke = Math.floor(this.acak() * this.r.tujuan.length);
+    const tujuan = this.r.tujuan[ke];
+    this.arahSinggah = this.r.arahTujuan?.[ke] ?? null;
     const pintu = this.r.keluar[this.r.keluar.length - 1] ?? this.r.posisi;
     const aula = this.peta.jalur(pintu, tujuan);
     if (!aula) return false;
@@ -230,6 +239,10 @@ export class Penghuni {
         this.melangkah(dt);
         return;
       case 'singgah':
+        if (this.arahSinggah !== null) {
+          const beda = sudutBeda(this.akar.rotation.y, this.arahSinggah);
+          this.akar.rotation.y += THREE.MathUtils.clamp(beda, -3 * dt, 3 * dt);
+        }
         if (this.timer > 0) return;
         {
           // Jalur pulang: kebalikan jalur pergi, berakhir di titik mulai duduk (atau tempat berdiri).
@@ -262,7 +275,7 @@ export class Penghuni {
   private selesaiKembali() {
     this.akar.position.copy(this.r.posisi);
     this.keadaan = 'kerja';
-    this.timer = 30 + this.acak() * 60;
+    this.timer = this.r.selang ? this.r.selang[0] + this.acak() * this.r.selang[1] : 30 + this.acak() * 60;
     this.mainkanKerja(0.4);
   }
 
@@ -279,7 +292,8 @@ export class Penghuni {
       if (this.keadaan === 'pergi') {
         this.keadaan = 'singgah';
         this.timer = 5 + this.acak() * 8;
-        this.main(this.aksi.has('telepon') && this.acak() < 0.5 ? 'telepon' : 'diam', 0.4);
+        const pilihan = (this.r.singgah ?? (this.acak() < 0.5 ? ['telepon'] : ['diam'])).filter((k) => this.aksi.has(k));
+        this.main(pilihan[Math.floor(this.acak() * pilihan.length)] ?? 'diam', 0.4);
       } else this.keadaan = 'berbalik';
       return;
     }

@@ -59,3 +59,24 @@ export function muatModel(nama: NamaModel): Promise<THREE.Group> {
   }
   return janji;
 }
+
+const pemuatGambar = new THREE.TextureLoader();
+const simpananTekstur = new Map<string, Promise<THREE.Texture>>();
+
+/**
+ * Tekstur pakaian pengganti (WebP) untuk karakter berkerangka. Hasil retekstur Meshy memakai UV asli
+ * karakter dasarnya, jadi cukup menukar peta warnanya. Disimpan sekali dan dipakai ulang.
+ */
+export function muatTekstur(berkas: string): Promise<THREE.Texture> {
+  let janji = simpananTekstur.get(berkas);
+  if (!janji) {
+    janji = pemuatGambar.loadAsync(`${PRATINJAU ? '' : '/'}model/${berkas}.webp`).then((t) => {
+      t.flipY = false;
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    });
+    janji.catch(() => simpananTekstur.delete(berkas));
+    simpananTekstur.set(berkas, janji);
+  }
+  return janji;
+}
