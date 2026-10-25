@@ -125,12 +125,14 @@ Tombol menyebut hasilnya: "Simpan penjualan", "Terima UMKM ini", "Siapkan pencai
 Hasilnya ringan (sekitar 140 kB gzip, dimuat terpisah hanya saat 3D tampil) dan warnanya diturunkan langsung dari palet aplikasi.
 
 **D-33. Denah mengikuti sketsa pemilik program dan dibangun dari data.**
-- Lantai 1: resepsionis di kiri depan, pintu masuk di depan, Studio Live 1–2 di kiri, dan Studio Live 3–4 di kanan.
+- Lantai 1: resepsionis di kiri depan, pintu masuk di depan, Studio Live 1–2 di kiri, Studio Live 3–4 di kanan, serta loket Layanan Disperindag dan Layanan Dinkes di belakang tengah.
 - Lantai 2: Ruang Podcast di depan, Ruang Belajar AI dan Ruang Tim Ahli di tengah, Ruang Rapat dan dua toilet di belakang.
 
 Koordinat memakai orientasi sketsa: x dari dinding kiri, z dari dinding depan (pintu masuk). Pratinjau di Pengaturan tampil persis seperti sketsa. Maket 3D memutarnya 180° supaya fasad depan menghadap kamera.
 Ukuran meter (pelat 18 × 20 m, tinggi lantai 3,6 m) diperkirakan dari proporsi sketsa dan ditandai "belum sesuai gambar kerja" sampai dikonfirmasi.
-Setiap ruangan menyimpan sisi pintunya. Tangga yang tidak ada di sketsa ditempatkan di celah belakang tengah (x 7,5–9,5 m), satu-satunya area kosong yang sama di kedua lantai.
+Setiap ruangan menyimpan sisi pintunya. Tangga tidak ada di sketsa. Penempatan pertama di belakang tengah ternyata menutupi loket Disperindag dan Dinkes. Tangga lalu dipindah ke tengah aula (x 7–9 m, z 7,5–13,5 m) dan naik ke arah depan, sehingga kakinya menghadap loket layanan dan ujung atasnya tiba di koridor lantai 2 dekat Ruang Podcast. Badannya pejal berplester dengan injakan walnut agar terbaca jelas dari sudut kamera mana pun.
+Studio live berupa bilik terbuka sesuai arahan pemilik program: tanpa dinding di sisi pintu dan di sisi yang menghadap pintu masuk gedung. Dinding latar walnut dan panel akustik tetap ada di sisi yang tertutup. Loket layanan perizinan terbuka di sisi depannya.
+Basis data versi 2 dimutakhirkan otomatis: ukuran ruangan lantai 1 yang belum diubah admin disesuaikan, dan dua loket layanan ditambahkan.
 Gudang konsinyasi tidak ada di sketsa, jadi tidak digambar. Pencatatan stok tetap berjalan tanpa bergantung pada ruangan.
 Ruang Podcast bisa dijadwalkan seperti studio dan punya lampu ON AIR sendiri.
 
@@ -142,12 +144,13 @@ Pemilik program meminta hasil yang bagus dan realistis, jadi suasana senja yang 
 - Gedung: fasad kaca bermullion aluminium dengan pintu kaca ganda dan kanopi berlogo, dinding samping berjendela (pejal di sisi studio dan toilet), tepi pelat beton, serta tangga dengan balok baja dan pagar kaca.
 - Perabot bersudut tumpul sesuai fungsi ruang: studio dengan dinding bilah walnut, rak produk, panel akustik, ring light di tripod, dan softbox; podcast dengan meja bundar dan lengan mikrofon; ruang belajar dengan komputer dan layar besar; ruang tim dengan klaster meja; ruang rapat; serta toilet berkeramik.
 - Dinding luar yang menghadap kamera dipotong setinggi ambang jendela (1 m), seperti maket potongan arsitek.
+- Figur manusia skala 1:1 bergaya maket (tanpa wajah, berkulit sawo matang, sebagian berkerudung) agar ruang terbaca hidup: seorang host di setiap studio memegang produk ke arah ring light, dua tamu podcast, dua resepsionis berseragam PCC, serta petugas berseragam khaki ASN di loket Disperindag dan berjas putih di loket Dinkes.
 - Geometri statis digabung per material agar panggilan gambar tetap sedikit. Peta bayangan hanya dihitung ulang setelah gerakan kamera berhenti. Di ponsel, pascaproses dan sebagian lampu dimatikan.
 
 **D-35. Signage dirancang seperti signage gedung.**
 - Papan nama hijau hutan dengan kode ruangan berwarna jingga di samping pintu.
 - Huruf kuningan tertanam di lantai ambang pintu, terbaca dari arah datang.
-- Kotak lampu ON AIR di atas pintu studio dan ruang podcast, menyala (dengan pendaran) ketika sesi dimulai.
+- Kotak lampu ON AIR di atas pintu ruang podcast, dan pada studio terbuka digantung dari langit-langit di tengah bukaan bersama papan namanya. Lampu menyala (dengan pendaran) ketika sesi dimulai.
 - Monumen berlogo di pelataran, huruf berlogo di kanopi pintu masuk, dan dinding fitur berlogo di belakang meja resepsionis.
 - Papan direktori kedua lantai di dekat pintu masuk, dan tiang petunjuk lantai di kaki tangga.
 

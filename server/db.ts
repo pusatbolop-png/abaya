@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config';
-import { RUANGAN_AWAL, PENGATURAN_AWAL, INSTANSI_AWAL } from './defaults';
+import { RUANGAN_AWAL, PENGATURAN_AWAL, INSTANSI_AWAL, DENAH_LANTAI1_V2 } from './defaults';
 
 export type DB = Database.Database;
 
@@ -211,6 +211,7 @@ const MIGRASI: string[] = [
   ALTER TABLE ruangan ADD COLUMN sisi_pintu TEXT NOT NULL DEFAULT 'depan';
   DELETE FROM pengaturan WHERE kunci = 'keuangan';
   `,
+  /* 3 */ `SELECT 1;`,
 ];
 
 export function bukaDb(file = path.join(config.dataDir, 'pcc.sqlite')): DB {
@@ -230,6 +231,7 @@ function migrasi(db: DB) {
     for (let i = versi; i < MIGRASI.length; i++) db.exec(MIGRASI[i]);
     if (versi === 0) isiAwal(db);
     else if (versi < 2) sesuaikanVersi1(db);
+    if (versi > 0) sesuaikanVersi2(db);
     db.pragma(`user_version = ${MIGRASI.length}`);
   })();
 }
@@ -265,6 +267,29 @@ function sesuaikanVersi1(db: DB) {
   if (lama.every((i) => !i.instansi)) {
     db.prepare("INSERT INTO pengaturan (kunci, nilai) VALUES ('instansi', ?) ON CONFLICT(kunci) DO UPDATE SET nilai = excluded.nilai").run(JSON.stringify(INSTANSI_AWAL));
   }
+}
+
+/**
+ * Versi 3 menata ulang lantai 1 mengikuti sketsa lengkap: layanan Disperindag dan Dinkes di belakang,
+ * tangga pindah ke tengah aula. Ruangan yang ukurannya sudah diubah admin dibiarkan.
+ */
+function sesuaikanVersi2(db: DB) {
+  const ubah = db.prepare('UPDATE ruangan SET x = ?, z = ?, lebar = ?, panjang = ? WHERE kode = ? AND x = ? AND z = ? AND lebar = ? AND panjang = ?');
+  const ada = db.prepare('SELECT 1 FROM ruangan WHERE kode = ?');
+  const tambah = db.prepare(
+    `INSERT INTO ruangan (kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas, sisi_pintu, urutan)
+     VALUES (@kode, @nama, @jenis, @lantai, @x, @z, @lebar, @panjang, @kapasitas, @sisi_pintu, @urutan)`,
+  );
+  let berubah = false;
+  RUANGAN_AWAL.forEach((r, i) => {
+    const lama = DENAH_LANTAI1_V2[r.kode];
+    if (lama) berubah = ubah.run(r.x, r.z, r.lebar, r.panjang, r.kode, ...lama).changes > 0 || berubah;
+    else if (!ada.get(r.kode)) {
+      tambah.run({ ...r, urutan: i });
+      berubah = true;
+    }
+  });
+  if (berubah) db.prepare("UPDATE pengaturan SET nilai = 'false' WHERE kunci = 'denahTerkonfirmasi'").run();
 }
 
 export function sekarang(): string {

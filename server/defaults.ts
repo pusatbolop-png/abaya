@@ -72,11 +72,13 @@ export interface RuanganAwal {
 // resepsionis di kiri depan, dua studio live di kiri dan dua di kanan, ruang podcast di depan lantai 2.
 // Ukuran meter masih perkiraan dari proporsi sketsa dan bisa disesuaikan di Pengaturan.
 export const RUANGAN_AWAL: RuanganAwal[] = [
-  { kode: '1.01', nama: 'Resepsionis', jenis: 'lobi', lantai: 1, x: 0, z: 0, lebar: 5, panjang: 4, kapasitas: 6, sisi_pintu: 'kanan' },
-  { kode: '1.02', nama: 'Studio Live 1', jenis: 'studio', lantai: 1, x: 0, z: 5.5, lebar: 5, panjang: 5, kapasitas: 4, sisi_pintu: 'kanan' },
-  { kode: '1.03', nama: 'Studio Live 2', jenis: 'studio', lantai: 1, x: 0, z: 13.5, lebar: 6, panjang: 6.5, kapasitas: 4, sisi_pintu: 'kanan' },
-  { kode: '1.04', nama: 'Studio Live 3', jenis: 'studio', lantai: 1, x: 12, z: 3, lebar: 6, panjang: 4.5, kapasitas: 4, sisi_pintu: 'kiri' },
-  { kode: '1.05', nama: 'Studio Live 4', jenis: 'studio', lantai: 1, x: 12, z: 11.5, lebar: 6, panjang: 8, kapasitas: 4, sisi_pintu: 'kiri' },
+  { kode: '1.01', nama: 'Resepsionis', jenis: 'lobi', lantai: 1, x: 0, z: 0, lebar: 5, panjang: 3.8, kapasitas: 6, sisi_pintu: 'kanan' },
+  { kode: '1.02', nama: 'Studio Live 1', jenis: 'studio', lantai: 1, x: 0, z: 4.8, lebar: 5, panjang: 4.2, kapasitas: 4, sisi_pintu: 'kanan' },
+  { kode: '1.03', nama: 'Studio Live 2', jenis: 'studio', lantai: 1, x: 0, z: 11.2, lebar: 6, panjang: 5.6, kapasitas: 4, sisi_pintu: 'kanan' },
+  { kode: '1.04', nama: 'Studio Live 3', jenis: 'studio', lantai: 1, x: 12, z: 2.7, lebar: 6, panjang: 3.8, kapasitas: 4, sisi_pintu: 'kiri' },
+  { kode: '1.05', nama: 'Studio Live 4', jenis: 'studio', lantai: 1, x: 12, z: 9.9, lebar: 6, panjang: 6, kapasitas: 4, sisi_pintu: 'kiri' },
+  { kode: '1.06', nama: 'Layanan Disperindag', jenis: 'layanan', lantai: 1, x: 5.5, z: 17.4, lebar: 4.5, panjang: 2.6, kapasitas: 4, sisi_pintu: 'depan' },
+  { kode: '1.07', nama: 'Layanan Dinkes', jenis: 'layanan', lantai: 1, x: 11.5, z: 17.4, lebar: 5, panjang: 2.6, kapasitas: 4, sisi_pintu: 'depan' },
   { kode: '2.01', nama: 'Ruang Podcast', jenis: 'podcast', lantai: 2, x: 3.5, z: 0, lebar: 10, panjang: 4.5, kapasitas: 6, sisi_pintu: 'belakang' },
   { kode: '2.02', nama: 'Ruang Belajar AI', jenis: 'kelas', lantai: 2, x: 0, z: 6, lebar: 6, panjang: 6.5, kapasitas: 16, sisi_pintu: 'kanan' },
   { kode: '2.03', nama: 'Ruang Tim Ahli', jenis: 'kerja', lantai: 2, x: 10, z: 6, lebar: 8, panjang: 6.5, kapasitas: 10, sisi_pintu: 'kiri' },
@@ -91,5 +93,15 @@ export const PELAT_LANTAI = {
   panjang: 20,
   tinggi: 3.6,
   pintuMasuk: { x: 6.5, lebar: 3 },
-  tangga: { x: 7.5, z: 14, lebar: 2, panjang: 6 },
+  // Tangga di tengah aula, naik ke arah depan, agar layanan perizinan di belakang tetap terlihat.
+  tangga: { x: 7, z: 7.5, lebar: 2, panjang: 6, naik: 'depan' as const },
+};
+
+/** Denah lantai 1 versi 2 (sebelum layanan perizinan ditambahkan), untuk mengenali ruangan yang belum diubah admin. */
+export const DENAH_LANTAI1_V2: Record<string, [x: number, z: number, lebar: number, panjang: number]> = {
+  '1.01': [0, 0, 5, 4],
+  '1.02': [0, 5.5, 5, 5],
+  '1.03': [0, 13.5, 6, 6.5],
+  '1.04': [12, 3, 6, 4.5],
+  '1.05': [12, 11.5, 6, 8],
 };

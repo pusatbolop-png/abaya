@@ -82,7 +82,7 @@ export const STATUS_PENCAIRAN: Record<StatusPencairan, string> = {
   batal: 'Dibatalkan',
 };
 
-export type JenisRuangan = 'studio' | 'podcast' | 'kelas' | 'toilet' | 'galeri' | 'gudang' | 'kurasi' | 'lobi' | 'kerja' | 'rapat' | 'kontrol' | 'servis';
+export type JenisRuangan = 'studio' | 'podcast' | 'kelas' | 'toilet' | 'galeri' | 'gudang' | 'kurasi' | 'lobi' | 'kerja' | 'rapat' | 'kontrol' | 'servis' | 'layanan';
 export const JENIS_RUANGAN: Record<JenisRuangan, string> = {
   studio: 'Studio live',
   podcast: 'Studio podcast',
@@ -96,6 +96,7 @@ export const JENIS_RUANGAN: Record<JenisRuangan, string> = {
   rapat: 'Ruang rapat',
   kontrol: 'Ruang kontrol',
   servis: 'Servis',
+  layanan: 'Layanan perizinan',
 };
 
 export type Peran = 'admin' | 'petugas';
