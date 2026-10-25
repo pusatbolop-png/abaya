@@ -147,6 +147,13 @@ Pemilik program meminta hasil yang bagus dan realistis, jadi suasana senja yang 
 - Figur manusia skala 1:1 bergaya maket (tanpa wajah, berkulit sawo matang, sebagian berkerudung) agar ruang terbaca hidup: seorang host di setiap studio memegang produk ke arah ring light, dua tamu podcast, dua resepsionis berseragam PCC, serta petugas berseragam khaki ASN di loket Disperindag dan berjas putih di loket Dinkes.
 - Geometri statis digabung per material agar panggilan gambar tetap sedikit. Peta bayangan hanya dihitung ulang setelah gerakan kamera berhenti. Di ponsel, pascaproses dan sebagian lampu dimatikan.
 
+**D-34a. Model realistis dari Meshy AI.**
+Atas permintaan pemilik program, figur dan perabot utama diganti dengan model hasil Meshy AI (text-to-3D, tekstur PBR 2K): host live pria dan wanita berkerudung yang memegang produk, resepsionis berseragam, figur duduk di kursi kantor (khaki ASN dan berkerudung), ring light meja, softbox, monstera dalam pot terakota, sofa sage, pohon peneduh, kursi kantor, dan kursi kayu. Total 13 model, 390 kredit.
+- Berkas di `public/model/*.glb` sudah dioptimasi dengan gltf-transform: verteks terkuantisasi, tekstur WebP 1024 px (512 px untuk kursi dan lampu). Ukurannya 0,2–0,8 MB per model, 5,7 MB seluruhnya, dari semula 5–8 MB per model.
+- Tidak memakai Draco atau meshopt karena keduanya butuh WASM yang diblokir CSP ketat. Tekstur dibaca lewat elemen gambar, bukan fetch, karena alasan yang sama.
+- Maket tampil dulu dengan versi prosedural. Model dimuat sesudahnya dan menggantikan versi prosedural di tempatnya. Bila sebuah model gagal dimuat, versi prosedural tetap dipakai.
+- Bahan model disalin per lantai agar pemudaran Lantai 2 tidak ikut memudarkan perabot Lantai 1.
+
 **D-35. Signage dirancang seperti signage gedung.**
 - Papan nama hijau hutan dengan kode ruangan berwarna jingga di samping pintu.
 - Huruf kuningan tertanam di lantai ambang pintu, terbaca dari arah datang.

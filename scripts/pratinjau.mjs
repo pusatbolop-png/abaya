@@ -1,7 +1,7 @@
 // Membuat pratinjau statis: satu berkas HTML mandiri yang bisa dibuka di ponsel atau PC tanpa server.
 // Langkahnya: jalankan server demo sementara, rekam semua respons yang dibaca antarmuka, lalu bangun
 // aplikasi dengan tiruan API (src/pratinjau) dan sematkan skrip, gaya, huruf, serta logo ke satu berkas.
-// Hasil: dist/pratinjau/pcc-pratinjau.html
+// Hasil: dist/pratinjau/pcc-pratinjau.html, ditambah dist/pratinjau/model/*.glb yang diterbitkan di sampingnya.
 import { spawn, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -39,6 +39,9 @@ execFileSync('npx', ['vite', 'build', '--config', 'vite.pratinjau.config.ts'], {
   env: { ...process.env, VITE_PRATINJAU: '1', PCC_REKAMAN: path.join(KELUAR, 'rekaman.json') },
 });
 satukan(path.join(KELUAR, 'vite'), path.join(KELUAR, 'pcc-pratinjau.html'));
+// Model 3D terlalu besar untuk disematkan; diterbitkan sebagai berkas di samping halaman (model/*.glb).
+fs.rmSync(path.join(KELUAR, 'model'), { recursive: true, force: true });
+fs.cpSync('public/model', path.join(KELUAR, 'model'), { recursive: true });
 fs.rmSync(dataDir, { recursive: true, force: true });
 
 async function rekam(berkas) {

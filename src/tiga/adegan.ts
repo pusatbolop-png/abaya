@@ -8,6 +8,7 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { buatMaterialLuar, buatPustaka, semuaMaterial, type Pustaka } from './material';
+import { muatModel, type NamaModel } from './model';
 import {
   muatGambar,
   siapkanHuruf,
@@ -184,6 +185,10 @@ export class AdeganGedung {
   private denah: DataDenah = { lebar: 18, panjang: 20, tinggi: 3.6, pintuMasuk: { x: 6.5, lebar: 3 }, tangga: { x: 7, z: 7.5, lebar: 2, panjang: 6, naik: 'depan' } };
   private semuaRuang: DataRuang[] = [];
   private matOrang = new Map<string, THREE.MeshStandardMaterial>();
+  /** Tempat model Meshy: berisi versi prosedural sampai modelnya selesai dimuat. */
+  private slot: { nama: NamaModel; grup: THREE.Group; lantai: number; ukuran: UkuranSlot }[] = [];
+  private lantaiBangun = 0;
+  private versiBangun = 0;
   private tambahanAktif: THREE.Material[] = [];
 
   constructor(
@@ -312,6 +317,9 @@ export class AdeganGedung {
     this.denah = denah;
     this.semuaRuang = ruang;
     this.bersihkanBangunan();
+    this.versiBangun++;
+    this.slot = [];
+    this.lantaiBangun = 0;
     this.bangunLuar();
     const nomorLantai = [...new Set([1, ...ruang.map((r) => r.lantai)])].sort();
     for (const n of nomorLantai) this.bangunLantai(n, ruang.filter((r) => r.lantai === n));
@@ -324,6 +332,7 @@ export class AdeganGedung {
     }
     this.renderer.shadowMap.needsUpdate = true;
     this.minta();
+    void this.pasangModel(this.versiBangun);
   }
 
   aturSiaran(idRuangSiaran: number[]) {
@@ -757,6 +766,17 @@ export class AdeganGedung {
 
   /** Gabungkan mesh statis dalam satu grup per material agar jumlah panggilan gambar kecil. */
   private gabung(grup: THREE.Group) {
+    // Tempat model tidak ikut digabung karena isinya akan diganti.
+    const lepas: [THREE.Object3D, THREE.Object3D][] = [];
+    grup.traverse((o) => {
+      if (o.userData.slot && o.parent) lepas.push([o, o.parent]);
+    });
+    for (const [o, induk] of lepas) induk.remove(o);
+    this.gabungIsi(grup);
+    for (const [o, induk] of lepas) induk.add(o);
+  }
+
+  private gabungIsi(grup: THREE.Group) {
     grup.updateMatrixWorld(true);
     const balik = grup.matrixWorld.clone().invert();
     const kelompok = new Map<string, { m: THREE.Material; bayang: boolean; g: THREE.BufferGeometry[] }>();
@@ -787,6 +807,70 @@ export class AdeganGedung {
       mesh.receiveShadow = true;
       grup.add(mesh);
     }
+  }
+
+  /** Tempat model Meshy di (x, y, z) lokal induk; `cadangan` membangun versi prosedural di dalamnya. */
+  private pasang(nama: NamaModel, induk: THREE.Object3D, x: number, y: number, z: number, hadap: number, ukuran: UkuranSlot, cadangan: (g: THREE.Group) => void) {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    g.rotation.y = hadap;
+    g.userData.slot = true;
+    induk.add(g);
+    cadangan(g);
+    this.slot.push({ nama, grup: g, lantai: this.lantaiBangun, ukuran });
+    return g;
+  }
+
+  /** Ganti isi prosedural setiap tempat dengan model Meshy begitu modelnya tersedia. */
+  private async pasangModel(versi: number) {
+    const bahan = new Map<string, THREE.Material>();
+    const salinBahan = (m: THREE.Material, lantai: number) => {
+      // Bahan disalin per lantai agar pemudaran satu lantai tidak memengaruhi lantai lain.
+      const kunci = `${lantai}|${m.uuid}`;
+      let b = bahan.get(kunci);
+      if (!b) {
+        b = m.clone();
+        bahan.set(kunci, b);
+        this.materialLain.push(b);
+        const l = this.lantai.get(lantai);
+        if (l) {
+          l.material.push(b);
+          l.asli.set(b, { opacity: b.opacity, transparent: b.transparent, depthWrite: b.depthWrite });
+          if (l.terlihat < 0.999) {
+            b.transparent = true;
+            b.opacity *= l.terlihat;
+            b.depthWrite = false;
+          }
+        }
+      }
+      return b;
+    };
+    const nama = [...new Set(this.slot.map((s) => s.nama))];
+    await Promise.all(
+      nama.map(async (n) => {
+        const contoh = await muatModel(n).catch(() => null);
+        if (!contoh || versi !== this.versiBangun) return;
+        for (const s of this.slot.filter((x) => x.nama === n)) {
+          // Bungkus salinan agar skala normalisasinya (tinggi 1) tetap utuh.
+          const model = new THREE.Group();
+          model.add(contoh.clone());
+          const u = contoh.userData.ukuran as THREE.Vector3;
+          // `lebar` diukur pada sisi datar terpanjang, karena tidak semua model memanjang di sumbu X.
+          const skala = s.ukuran.lebar ? s.ukuran.lebar / Math.max(u.x, u.z) : (s.ukuran.tinggi ?? 1);
+          model.scale.setScalar(skala);
+          if (s.ukuran.geser) model.position.copy(s.ukuran.geser);
+          if (s.ukuran.putar) model.rotation.y = s.ukuran.putar;
+          model.traverse((o) => {
+            const mesh = o as THREE.Mesh;
+            if (mesh.isMesh) mesh.material = Array.isArray(mesh.material) ? mesh.material.map((m) => salinBahan(m, s.lantai)) : salinBahan(mesh.material, s.lantai);
+          });
+          s.grup.clear();
+          s.grup.add(model);
+        }
+        this.renderer.shadowMap.needsUpdate = true;
+        this.minta();
+      }),
+    );
   }
 
   private dinamis<T extends THREE.Object3D>(o: T): T {
@@ -874,7 +958,9 @@ export class AdeganGedung {
       [-W / 2 - 14, depan + 4, 1.3],
       [W / 2 + 15, depan + 2, 1.2],
     ];
-    pohon.slice(0, this.opsi.ringan ? 6 : pohon.length).forEach(([x, z, s], i) => this.pohon(x, yTanah, z, s, i, p, g));
+    pohon.slice(0, this.opsi.ringan ? 6 : pohon.length).forEach(([x, z, s], i) =>
+      this.pasang('pohon', g, x, yTanah, z, i * 1.7, { tinggi: 5.6 * s }, (t) => this.pohon(0, 0, 0, s, i, p, t)),
+    );
     // Pagar tanaman rendah di tepi halaman depan.
     for (const sisi of [-1, 1]) {
       const x = sisi * ((W + 14) / 2 - 0.8);
@@ -924,6 +1010,7 @@ export class AdeganGedung {
     const tambahan: THREE.Material[] = [];
     this.matOrang = new Map();
     this.tambahanAktif = tambahan;
+    this.lantaiBangun = n;
     const grup = new THREE.Group();
     const statis = new THREE.Group();
     grup.add(statis);
@@ -1390,7 +1477,8 @@ export class AdeganGedung {
 
   // ——— Perabot (koordinat lokal ruangan) ———
 
-  private kursiKantor(L: THREE.Group, p: Pustaka, x: number, z: number, hadap: number, m = p.kainArang) {
+  private kursiKantor(L: THREE.Group, p: Pustaka, x: number, z: number, hadap: number, m = p.kainArang, polos = false): THREE.Group {
+    if (!polos) return this.pasang('kursi-kantor', L, x, 0, z, hadap, { lebar: 0.62 }, (g) => this.kursiKantor(g, p, 0, 0, 0, m, true));
     const g = new THREE.Group();
     g.position.set(x, 0, z);
     g.rotation.y = hadap;
@@ -1407,7 +1495,8 @@ export class AdeganGedung {
     return g;
   }
 
-  private kursiKayu(L: THREE.Group, p: Pustaka, x: number, z: number, hadap: number, jok = p.kainLumut) {
+  private kursiKayu(L: THREE.Group, p: Pustaka, x: number, z: number, hadap: number, jok = p.kainLumut, polos = false): THREE.Group {
+    if (!polos) return this.pasang('kursi-kayu', L, x, 0, z, hadap, { lebar: 0.58 }, (g) => this.kursiKayu(g, p, 0, 0, 0, jok, true));
     const g = new THREE.Group();
     g.position.set(x, 0, z);
     g.rotation.y = hadap;
@@ -1448,7 +1537,8 @@ export class AdeganGedung {
     this.kotak(0.42, 0.015, 0.13, p.plastikPutih, 0, 0.008, -0.22, g);
   }
 
-  private tanaman(L: THREE.Group, p: Pustaka, x: number, z: number, s = 1) {
+  private tanaman(L: THREE.Group, p: Pustaka, x: number, z: number, s = 1, polos = false) {
+    if (!polos) return void this.pasang('tanaman', L, x, 0, z, s * 5, { tinggi: 0.95 * s }, (g) => this.tanaman(g, p, 0, 0, s, true));
     const pot = this.silinder(0.24 * s, 0.18 * s, 0.5 * s, p.potTerakota, x, 0.25 * s, z, L, 18);
     void pot;
     this.silinder(0.22 * s, 0.22 * s, 0.02, p.tanah, x, 0.49 * s, z, L, 16);
@@ -1505,38 +1595,44 @@ export class AdeganGedung {
     for (let i = 0; i < 5; i++) {
       const m = p.produk[(i * 2 + 1) % p.produk.length];
       const x = -0.7 + i * 0.35;
-      if (i % 2) this.silinder(0.06, 0.06, 0.2, m, x, 0.885, zMeja - 0.15, L, 16);
-      else this.bulat(0.16, 0.22, 0.1, 0.01, m, x, 0.895, zMeja - 0.15, L);
+      if (i % 2) this.silinder(0.06, 0.06, 0.2, m, x, 0.885, zMeja + 0.12, L, 16);
+      else this.bulat(0.16, 0.22, 0.1, 0.01, m, x, 0.895, zMeja + 0.12, L);
     }
     // Host berdiri di balik meja, memegang produk ke arah kamera ponsel.
     const urut = this.semuaRuang.filter((x) => x.jenis === 'studio').findIndex((x) => x.id === r.id);
     this.orang(L, 0, zMeja + 0.5, 0, { ...HOST[Math.max(0, urut) % HOST.length], pose: 'berdiri', pegang: p.produk[(urut + 2) % p.produk.length] });
-    // Ring light dengan ponsel, di tripod menghadap host.
+    // Ring light dengan ponsel. Versi prosedural berdiri di tripod lantai; model Meshy berupa ring light meja
+    // yang diletakkan di tepi depan meja siaran, menghadap host.
     const zRing = Math.max(-d / 2 + 1.1, zMeja - 1.5);
-    const tripod = (x: number, z: number, tinggi: number) => {
-      this.silinder(0.012, 0.012, tinggi, p.plastikHitam, x, tinggi / 2, z, L, 8);
+    const tripod = (g: THREE.Group, x: number, z: number, tinggi: number) => {
+      this.silinder(0.012, 0.012, tinggi, p.plastikHitam, x, tinggi / 2, z, g, 8);
       for (let i = 0; i < 3; i++) {
         const a = (i / 3) * Math.PI * 2;
-        const kaki = this.silinder(0.01, 0.01, 0.75, p.plastikHitam, x + Math.sin(a) * 0.17, 0.32, z + Math.cos(a) * 0.17, L, 6);
+        const kaki = this.silinder(0.01, 0.01, 0.75, p.plastikHitam, x + Math.sin(a) * 0.17, 0.32, z + Math.cos(a) * 0.17, g, 6);
         kaki.rotation.set(Math.cos(a) * 0.45, 0, -Math.sin(a) * 0.45);
       }
     };
-    tripod(0, zRing, 1.5);
     const ringMat = new THREE.MeshStandardMaterial({ color: '#fdf6ec', emissive: '#fff1de', emissiveIntensity: 0.2, roughness: 0.4 });
     tambahan.push(ringMat);
-    const ring = this.dinamis(new THREE.Mesh(this.catat(new THREE.TorusGeometry(0.23, 0.022, 10, 48)), ringMat));
-    ring.position.set(0, 1.55, zRing);
-    L.add(ring);
-    this.bulat(0.075, 0.15, 0.01, 0.01, p.plastikHitam, 0, 1.55, zRing, L);
-    // Dua lampu softbox di tripod, menyorot host dari samping depan.
+    this.pasang('ring-light', L, 0, 0, zRing, 0, { tinggi: 0.5, geser: new THREE.Vector3(0, 0.785, zMeja - 0.2 - zRing), putar: Math.PI }, (g) => {
+      tripod(g, 0, 0, 1.5);
+      const ring = this.dinamis(new THREE.Mesh(this.catat(new THREE.TorusGeometry(0.23, 0.022, 10, 48)), ringMat));
+      ring.position.set(0, 1.55, 0);
+      g.add(ring);
+      this.bulat(0.075, 0.15, 0.01, 0.01, p.plastikHitam, 0, 1.55, 0, g);
+    });
+    // Dua lampu softbox di tripod, di kiri dan kanan meja agar tidak menghalangi pandangan ke host.
     for (const sx of [-1, 1]) {
-      const x = sx * Math.min(w / 2 - 0.7, 1.4);
-      const z = zMeja - 0.9;
-      tripod(x, z, 1.75);
-      const box = this.bulat(0.6, 0.6, 0.22, 0.03, p.plastikHitam, x, 1.95, z, L);
-      box.rotation.y = -sx * 0.6;
-      const muka = this.kotak(0.52, 0.52, 0.01, p.lampu, x + sx * 0.06, 1.95, z + 0.08, L, false);
-      muka.rotation.y = -sx * 0.6;
+      // Di studio sempit softbox mundur ke depan meja agar tidak menaungi host.
+      const sempit = w < 4.5;
+      const x = sx * (w / 2 - (sempit ? 0.4 : 0.55));
+      const z = sempit ? zMeja - 0.75 : zMeja + 0.05;
+      // Softbox menghadap host (+Z lokal diputar ke arah host).
+      this.pasang('softbox', L, x, 0, z, Math.atan2(-x, zMeja + 0.5 - z), { tinggi: 1.4, putar: Math.PI }, (g) => {
+        tripod(g, 0, 0, 1.75);
+        this.bulat(0.6, 0.6, 0.22, 0.03, p.plastikHitam, 0, 1.95, 0, g);
+        this.kotak(0.52, 0.52, 0.01, p.lampu, 0, 1.95, 0.12, g, false);
+      });
     }
     // Lampu kunci yang menyala saat siaran.
     const kunci = this.dinamis(new THREE.PointLight('#fff4e4', 9, 5, 2));
@@ -1563,8 +1659,8 @@ export class AdeganGedung {
       const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
       const kx = Math.sin(a) * 1.15;
       const kz = 0.1 + Math.cos(a) * 1.15;
-      this.kursiKantor(L, p, kx, kz, a, p.kainLumut);
-      if (i % 2 === 0) this.orang(L, kx, kz, a, { ...HOST[(i / 2 + 1) % HOST.length], pose: 'duduk' });
+      if (i % 2 === 0) this.orangDuduk(L, p, kx, kz, a, HOST[(i / 2 + 1) % HOST.length], p.kainLumut);
+      else this.kursiKantor(L, p, kx, kz, a, p.kainLumut);
       // Mikrofon di lengan pada meja.
       const mx = Math.sin(a) * 0.55;
       const mz = 0.1 + Math.cos(a) * 0.55;
@@ -1685,8 +1781,7 @@ export class AdeganGedung {
     this.kotak(lebarLoket - 0.2, 0.02, 0.02, p.kuningan, 0, 0.92, zLoket - 0.23, L, false);
     this.meja(L, p, 0, zLoket + 0.55, lebarLoket - 0.4, 0.55, p.oak);
     this.monitor(L, p, -0.45, 0.74, zLoket + 0.5, Math.PI);
-    this.kursiKantor(L, p, -0.45, zLoket + 1.15, 0);
-    this.orang(L, -0.45, zLoket + 1.15, 0, { ...(r.nama.toLowerCase().includes('dinkes') ? PETUGAS[1] : PETUGAS[0]), pose: 'duduk' });
+    this.orangDuduk(L, p, -0.45, zLoket + 1.15, 0, r.nama.toLowerCase().includes('dinkes') ? PETUGAS[1] : PETUGAS[0]);
     // Kursi tunggu pemohon di depan loket.
     for (const x of [-0.6, 0.6]) this.kursiKayu(L, p, x, -d / 2 - 0.55, Math.PI, p.kainHutan);
     // Papan nama instansi besar di dinding belakang.
@@ -1701,6 +1796,22 @@ export class AdeganGedung {
     this.bulat(0.5, 1.2, 0.25, 0.02, p.walnut, w / 2 - 0.55, 0.6, zDinding - 0.15, L);
     for (const y of [0.75, 1.0]) this.produkDiRak(L, p, w / 2 - 0.75, w / 2 - 0.35, y, zDinding - 0.2, Math.round(y * 9));
     this.tanaman(L, p, -w / 2 + 0.5, d / 2 - 0.5, 1.1);
+  }
+
+  /** Figur duduk di kursi kantor; model Meshy-nya sudah termasuk kursi. */
+  private orangDuduk(L: THREE.Group, p: Pustaka, x: number, z: number, hadap: number, o: Figur, kursi = p.kainArang) {
+    const isi = (g: THREE.Group) => {
+      this.kursiKantor(g, p, 0, 0, 0, kursi, true);
+      this.orang(g, 0, 0, 0, { ...o, pose: 'duduk' }, true);
+    };
+    if (o.modelDuduk) this.pasang(o.modelDuduk, L, x, 0, z, hadap, { tinggi: 1.3 }, isi);
+    else {
+      const g = new THREE.Group();
+      g.position.set(x, 0, z);
+      g.rotation.y = hadap;
+      L.add(g);
+      isi(g);
+    }
   }
 
   /** Bahan pakaian dan kulit figur, dipakai bersama dalam satu lantai. */
@@ -1718,7 +1829,9 @@ export class AdeganGedung {
    * Figur manusia skala 1:1 bergaya maket arsitektur: proporsi nyata, tanpa wajah. Menghadap −Z lokal;
    * `hadap` memutar seperti kursi. Pose duduk pas dengan dudukan kursiKantor.
    */
-  private orang(L: THREE.Group, x: number, z: number, hadap: number, o: Figur & { pose: 'berdiri' | 'duduk'; pegang?: THREE.Material }) {
+  private orang(L: THREE.Group, x: number, z: number, hadap: number, o: Figur & { pose: 'berdiri' | 'duduk'; pegang?: THREE.Material }, polos = false): THREE.Group {
+    if (!polos && o.model && o.pose === 'berdiri')
+      return this.pasang(o.model, L, x, 0, z, hadap, { tinggi: o.kerudung ? 1.62 : 1.7 }, (g) => this.orang(g, 0, 0, 0, o, true));
     const g = new THREE.Group();
     g.position.set(x, 0, z);
     g.rotation.y = hadap;
@@ -1849,9 +1962,13 @@ export class AdeganGedung {
         if (!this.bebas(1, cx - 2, cx + 2, cz - 1.6, cz + 1.6)) continue;
         taruh(cx, cz, (c) => {
           this.bulat(3.4, 0.012, 2.6, 0.005, p.kainPasir, c.x, 0.007, c.z, G);
-          this.bulat(2.2, 0.42, 0.85, 0.08, p.kainLumut, c.x, 0.21, c.z - 0.85, G);
-          this.bulat(2.2, 0.42, 0.18, 0.08, p.kainLumut, c.x, 0.56, c.z - 1.2, G);
-          for (const sx of [-1, 1]) this.bulat(0.2, 0.55, 0.85, 0.06, p.kainLumut, c.x + sx * 1.0, 0.36, c.z - 0.85, G);
+          // Sofa menghadap meja (+Z dunia); hadap π memutar arah −Z lokal ke sana.
+          // Model sofa memanjang di sumbu Z, jadi diputar seperempat putaran.
+          this.pasang('sofa', G, c.x, 0, c.z - 0.85, Math.PI, { lebar: 2.3, putar: Math.PI / 2 }, (g) => {
+            this.bulat(2.2, 0.42, 0.85, 0.08, p.kainLumut, 0, 0.21, 0, g);
+            this.bulat(2.2, 0.42, 0.18, 0.08, p.kainLumut, 0, 0.56, 0.35, g);
+            for (const sx of [-1, 1]) this.bulat(0.2, 0.55, 0.85, 0.06, p.kainLumut, sx * 1.0, 0.36, 0, g);
+          });
           for (const sx of [-1, 1]) {
             const kursi = this.kursiKayu(G, p, c.x + sx * 0.9, c.z + 0.9, sx * 0.3, p.kainHutan);
             kursi.scale.setScalar(1.15);
@@ -1916,6 +2033,9 @@ interface PerabotRuang {
 }
 
 interface Figur {
+  /** Model Meshy untuk pose berdiri dan duduk; tanpa model, figur prosedural dipakai. */
+  model?: NamaModel;
+  modelDuduk?: NamaModel;
   kulit: string;
   baju: string;
   bawah: string;
@@ -1925,20 +2045,29 @@ interface Figur {
 
 /** Host live dan tamu podcast: warna kulit sawo matang, busana sehari-hari yang rapi. */
 const HOST: Figur[] = [
-  { kulit: '#b07a52', baju: '#2f4a3c', bawah: '#2a2622', kerudung: '#d8c3a2' },
-  { kulit: '#8d5a3b', baju: '#7a4527', bawah: '#2b2f33', rambut: '#17120f' },
-  { kulit: '#c08b63', baju: '#e6dccb', bawah: '#3a3530', kerudung: '#7d2f2a' },
-  { kulit: '#9a6644', baju: '#26405a', bawah: '#22262a', rambut: '#120e0c' },
+  { model: 'host-wanita', modelDuduk: 'duduk-wanita', kulit: '#b07a52', baju: '#2f4a3c', bawah: '#2a2622', kerudung: '#d8c3a2' },
+  { model: 'host-pria', modelDuduk: 'duduk-pria', kulit: '#8d5a3b', baju: '#7a4527', bawah: '#2b2f33', rambut: '#17120f' },
+  { model: 'host-wanita', modelDuduk: 'duduk-wanita', kulit: '#c08b63', baju: '#e6dccb', bawah: '#3a3530', kerudung: '#7d2f2a' },
+  { model: 'host-pria', modelDuduk: 'duduk-pria', kulit: '#9a6644', baju: '#26405a', bawah: '#22262a', rambut: '#120e0c' },
 ];
 
 /** Seragam resepsionis PCC: blazer hijau tua, satu berkerudung jingga lembaga. */
 const RESEPSIONIS: Figur[] = [
-  { kulit: '#b5805a', baju: '#233b30', bawah: '#1f2321', kerudung: '#e2742a' },
-  { kulit: '#94603f', baju: '#233b30', bawah: '#1f2321', rambut: '#15110e' },
+  { model: 'resepsionis-wanita', kulit: '#b5805a', baju: '#233b30', bawah: '#1f2321', kerudung: '#e2742a' },
+  { model: 'resepsionis-pria', kulit: '#94603f', baju: '#233b30', bawah: '#1f2321', rambut: '#15110e' },
 ];
 
 /** Petugas loket: seragam khaki ASN untuk Disperindag, jas putih untuk Dinkes. */
 const PETUGAS: Figur[] = [
-  { kulit: '#9d6a47', baju: '#8b7d55', bawah: '#3b3a33', rambut: '#15110e' },
-  { kulit: '#bb855e', baju: '#f1eee8', bawah: '#2d3a45', kerudung: '#3d5a7a' },
+  { modelDuduk: 'duduk-pria', kulit: '#9d6a47', baju: '#8b7d55', bawah: '#3b3a33', rambut: '#15110e' },
+  { modelDuduk: 'duduk-wanita', kulit: '#bb855e', baju: '#f1eee8', bawah: '#2d3a45', kerudung: '#3d5a7a' },
 ];
+
+/** Ukuran model di tempatnya: tinggi atau lebar dalam meter, serta geseran dan putaran tambahan. */
+interface UkuranSlot {
+  tinggi?: number;
+  /** Panjang sisi datar terpanjang. */
+  lebar?: number;
+  geser?: THREE.Vector3;
+  putar?: number;
+}

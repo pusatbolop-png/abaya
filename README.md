@@ -68,5 +68,6 @@ src/           antarmuka React
   styles/      token desain, komponen, tata letak
 public/fonts/  Plus Jakarta Sans dan Newsreader (OFL), di-host lokal
 public/merek/  lambang resmi PCC (PNG transparan)
+public/model/  model 3D figur dan perabot hasil Meshy AI (GLB teroptimasi)
 tests/e2e/     uji peramban ujung ke ujung
 ```
