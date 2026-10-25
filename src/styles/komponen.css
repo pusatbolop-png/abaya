@@ -217,6 +217,39 @@
     grid-template-columns: 1fr;
   }
 }
+/* Daftar staf ruangan: nama, jenis kelamin, hapus. */
+.daftar-staf {
+  display: grid;
+  gap: var(--r-3);
+  margin: var(--r-5) 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.daftar-staf legend {
+  padding: 0;
+  margin-bottom: var(--r-2);
+  font-weight: 600;
+}
+.daftar-staf > .tombol {
+  justify-self: start;
+}
+.baris-staf {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9.5rem auto;
+  gap: var(--r-3);
+  align-items: center;
+}
+@media (max-width: 420px) {
+  .baris-staf {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding-bottom: var(--r-3);
+    border-bottom: var(--garis);
+  }
+  .baris-staf .masukan {
+    grid-column: 1 / -1;
+  }
+}
 .unggah {
   display: flex;
   align-items: center;

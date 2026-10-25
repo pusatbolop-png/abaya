@@ -6,7 +6,7 @@ import { useInfo, useSesi, useToast } from '../../lib/konteks';
 import { Bidang, GalatMuat, KepalaHalaman, Lembar, Masukan, Memuat, Pemberitahuan, Pilihan, Status, Tombol, useKirim } from '../../ui/dasar';
 import { Ikon } from '../../ui/Ikon';
 import { tanggal } from '../../../shared/format';
-import { JENIS_RUANGAN, PERAN, RUANG_SIARAN, SISI_PINTU, type JenisRuangan, type Peran } from '../../../shared/konstanta';
+import { BATAS_STAF_RUANG, JENIS_RUANGAN, PERAN, RUANG_SIARAN, SISI_PINTU, type JenisRuangan, type Peran, type StafRuang } from '../../../shared/konstanta';
 
 interface Ruang {
   id: number;
@@ -20,6 +20,7 @@ interface Ruang {
   panjang: number;
   kapasitas: number | null;
   sisiPintu: keyof typeof SISI_PINTU;
+  staf: StafRuang[];
 }
 interface DataPengaturan {
   organisasi: { nama: string; singkat: string; naungan: string; alamat: string; whatsapp: string; email: string; jamLayanan: string };
@@ -412,8 +413,12 @@ function Ruangan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
 function LembarRuang({ ruang, pelat, tutup, selesai }: { ruang: Ruang | null; pelat: { lebar: number; panjang: number }; tutup: () => void; selesai: () => Promise<void> }) {
   const toast = useToast();
   const [v, setV] = useState({ nama: '', lebar: '', panjang: '', x: '', z: '', kapasitas: '', sisiPintu: 'depan' });
+  const [staf, setStaf] = useState<StafRuang[]>([]);
   const { sibuk, galat, bidang, kirim } = useKirim();
+  const galatStaf = Object.entries(bidang).find(([k]) => k.startsWith('staf'))?.[1];
+  const ubahStaf = (i: number, isi: Partial<StafRuang>) => setStaf((d) => d.map((s, j) => (j === i ? { ...s, ...isi } : s)));
   useEffect(() => {
+    if (ruang) setStaf(ruang.staf ?? []);
     if (ruang)
       setV({
         nama: ruang.nama,
@@ -437,10 +442,11 @@ function LembarRuang({ ruang, pelat, tutup, selesai }: { ruang: Ruang | null; pe
         z: angkaKoma(v.z),
         kapasitas: v.kapasitas ? Number(v.kapasitas) : null,
         sisi_pintu: v.sisiPintu,
+        staf: staf.filter((s) => s.nama.trim()).map((s) => ({ nama: s.nama.trim(), perempuan: s.perempuan })),
       }),
     );
     if (ok) {
-      toast(`Ukuran ${v.nama} tersimpan. Denah 3D ikut diperbarui.`);
+      toast(`${v.nama} tersimpan. Denah 3D ikut diperbarui.`);
       tutup();
       await selesai();
     }
@@ -493,6 +499,33 @@ function LembarRuang({ ruang, pelat, tutup, selesai }: { ruang: Ruang | null; pe
           {(a) => <Masukan {...a} value={v.kapasitas} onChange={(e) => setV((x) => ({ ...x, kapasitas: e.target.value.replace(/\D/g, '') }))} inputMode="numeric" className="angka" />}
         </Bidang>
       </div>
+      <fieldset className="daftar-staf">
+        <legend>Staf yang berkantor di sini</legend>
+        <p className="redup kecil">Tampil sebagai figur yang bekerja di meja dan papan nama di maket 3D. Kosongkan bila ruangan tidak berpenghuni tetap.</p>
+        {galatStaf && (
+          <p className="pesan-galat">
+            <Ikon nama="peringatan" />
+            <span>{galatStaf}</span>
+          </p>
+        )}
+        {staf.map((s, i) => (
+          <div className="baris-staf" key={i}>
+            <Masukan aria-label={`Nama staf ${i + 1}`} value={s.nama} maxLength={40} onChange={(e) => ubahStaf(i, { nama: e.target.value })} />
+            <Pilihan aria-label={`Jenis kelamin ${s.nama || `staf ${i + 1}`}`} value={s.perempuan ? 'p' : 'l'} onChange={(e) => ubahStaf(i, { perempuan: e.target.value === 'p' })}>
+              <option value="l">Laki-laki</option>
+              <option value="p">Perempuan</option>
+            </Pilihan>
+            <Tombol kecil ragam="halus" onClick={() => setStaf((d) => d.filter((_, j) => j !== i))} aria-label={`Hapus ${s.nama || `staf ${i + 1}`}`}>
+              Hapus
+            </Tombol>
+          </div>
+        ))}
+        {staf.length < BATAS_STAF_RUANG && (
+          <Tombol kecil onClick={() => setStaf((d) => [...d, { nama: '', perempuan: false }])}>
+            Tambah staf
+          </Tombol>
+        )}
+      </fieldset>
     </Lembar>
   );
 }

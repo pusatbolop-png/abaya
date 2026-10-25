@@ -111,5 +111,12 @@ export const RUANG_SIARAN: readonly JenisRuangan[] = ['studio', 'podcast'];
 export const SISI_PINTU = { depan: 'Depan (arah pintu masuk)', belakang: 'Belakang', kiri: 'Kiri', kanan: 'Kanan' } as const;
 
 /** Batas stok yang dianggap menipis. */
+/** Staf yang berkantor di sebuah ruangan; tampil sebagai figur dan papan nama meja di maket 3D. */
+export interface StafRuang {
+  nama: string;
+  perempuan: boolean;
+}
+export const BATAS_STAF_RUANG = 8;
+
 export const STOK_MENIPIS = 5;
 export const BATAS_BERKAS_BYTE = 5 * 1024 * 1024;

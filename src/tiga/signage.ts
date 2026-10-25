@@ -217,3 +217,18 @@ export function teksturPetunjukLantai(lantai: number) {
   g.fillText(String(lantai), 56, 410);
   return tekstur(c);
 }
+
+/** Papan nama meja: balok akrilik gelap dengan nama staf berhuruf pasir. Rasio 3,5 : 1. */
+export function teksturNamaMeja(nama: string) {
+  const { c, g } = kanvas(560, 160);
+  g.fillStyle = '#1f2a24';
+  g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = JINGGA;
+  g.fillRect(0, c.height - 10, c.width, 10);
+  g.fillStyle = '#f4f1ea';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  pasLebar(g, nama, c.width - 60, 76, `600 {u}px ${SANS}`);
+  g.fillText(nama, c.width / 2, c.height / 2 - 4);
+  return tekstur(c);
+}

@@ -44,8 +44,11 @@ satukan(path.join(KELUAR, 'vite'), path.join(KELUAR, 'pcc-pratinjau.html'));
 // tidak mengizinkan fetch data: URI.
 fs.rmSync(path.join(KELUAR, 'model'), { recursive: true, force: true });
 fs.mkdirSync(path.join(KELUAR, 'model'));
-for (const f of fs.readdirSync('public/model').filter((f) => f.endsWith('.glb')))
-  fs.writeFileSync(path.join(KELUAR, 'model', f.replace(/\.glb$/, '.json')), JSON.stringify({ glb: fs.readFileSync(path.join('public/model', f)).toString('base64') }));
+for (const f of fs.readdirSync('public/model', { recursive: true }).filter((f) => String(f).endsWith('.glb'))) {
+  const tujuan = path.join(KELUAR, 'model', String(f).replace(/\.glb$/, '.json'));
+  fs.mkdirSync(path.dirname(tujuan), { recursive: true });
+  fs.writeFileSync(tujuan, JSON.stringify({ glb: fs.readFileSync(path.join('public/model', String(f))).toString('base64') }));
+}
 fs.rmSync(dataDir, { recursive: true, force: true });
 
 async function rekam(berkas) {

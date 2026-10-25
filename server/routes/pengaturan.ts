@@ -4,7 +4,7 @@ import type { DB } from '../db';
 import { sekarang } from '../db';
 import { hashSandi, hanyaAdmin, type Variabel } from '../auth';
 import { normalisasiWa, tanggalWib, awalHariWib, akhirHariWib } from '../../shared/format';
-import { STOK_MENIPIS } from '../../shared/konstanta';
+import { BATAS_STAF_RUANG, STOK_MENIPIS } from '../../shared/konstanta';
 import { ambilPengaturan, simpanPengaturan, periksa, wajib, GalatPengguna, tidakDitemukan, catatAktivitas, bacaJson } from '../util';
 import { simpanBerkas, hapusBerkas } from '../berkas';
 import { sandiKuat } from './auth';
@@ -20,7 +20,10 @@ export function rutePengaturan(db: DB) {
 
   app.get('/', (c) => {
     const s = ambilPengaturan(db);
-    const ruangan = db.prepare('SELECT *, sisi_pintu AS sisiPintu FROM ruangan ORDER BY lantai, urutan').all();
+    const ruangan = db
+      .prepare('SELECT *, sisi_pintu AS sisiPintu FROM ruangan ORDER BY lantai, urutan')
+      .all()
+      .map((r) => ({ ...(r as object), staf: JSON.parse((r as { staf: string }).staf) }));
     return c.json({ ...s, logo: s.logo ? `/api/publik/logo?v=${s.logo.slice(-16, -4)}` : LOGO_BAWAAN, logoBawaan: !s.logo, ruangan, pelat: PELAT_LANTAI });
   });
 
@@ -85,12 +88,16 @@ export function rutePengaturan(db: DB) {
           z: ukuran('Posisi Z', 0, PELAT_LANTAI.panjang),
           kapasitas: z.coerce.number().int().min(0).max(500).nullable().optional(),
           sisi_pintu: z.enum(['depan', 'belakang', 'kiri', 'kanan'], { error: 'Pilih sisi pintu.' }),
+          staf: z
+            .array(z.object({ nama: wajib('Nama staf').max(40), perempuan: z.boolean() }))
+            .max(BATAS_STAF_RUANG, { error: `Paling banyak ${BATAS_STAF_RUANG} staf per ruangan.` })
+            .default([]),
         })
         .refine((v) => v.x + v.lebar <= PELAT_LANTAI.lebar, { message: `Ruangan melewati batas lebar gedung ${PELAT_LANTAI.lebar} m.`, path: ['lebar'] })
         .refine((v) => v.z + v.panjang <= PELAT_LANTAI.panjang, { message: `Ruangan melewati batas panjang gedung ${PELAT_LANTAI.panjang} m.`, path: ['panjang'] }),
       await bacaJson(c),
     );
-    db.prepare('UPDATE ruangan SET nama = ?, lebar = ?, panjang = ?, x = ?, z = ?, kapasitas = ?, sisi_pintu = ? WHERE id = ?').run(
+    db.prepare('UPDATE ruangan SET nama = ?, lebar = ?, panjang = ?, x = ?, z = ?, kapasitas = ?, sisi_pintu = ?, staf = ? WHERE id = ?').run(
       d.nama,
       d.lebar,
       d.panjang,
@@ -98,6 +105,7 @@ export function rutePengaturan(db: DB) {
       d.z,
       d.kapasitas ?? null,
       d.sisi_pintu,
+      JSON.stringify(d.staf),
       id,
     );
     catatAktivitas(db, c.get('pengguna').id, 'atur', 'ruangan', id, `Ukuran ${d.nama} diperbarui`);

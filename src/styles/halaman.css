@@ -642,6 +642,13 @@
   font-weight: 620;
   font-size: 0.875rem;
 }
+.g3-staf {
+  display: grid;
+  gap: 2px;
+}
+.g3-staf p:last-child {
+  font-weight: 620;
+}
 .g3-sesi {
   display: grid;
   gap: 4px;

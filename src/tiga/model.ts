@@ -5,20 +5,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PRATINJAU } from '../lib/pratinjau';
 
-export type NamaModel =
-  | 'host-wanita'
-  | 'host-pria'
-  | 'resepsionis-wanita'
-  | 'resepsionis-pria'
-  | 'duduk-wanita'
-  | 'duduk-pria'
-  | 'ring-light'
-  | 'softbox'
-  | 'tanaman'
-  | 'sofa'
-  | 'pohon'
-  | 'kursi-kantor'
-  | 'kursi-kayu';
+export type NamaModel = 'ring-light' | 'softbox' | 'tanaman' | 'sofa' | 'pohon' | 'kursi-kantor' | 'kursi-kayu';
 
 // Tanpa dekoder WASM, dan tekstur dibaca lewat elemen gambar (img-src blob:) alih-alih fetch, agar
 // tetap berjalan di bawah CSP yang ketat, termasuk pratinjau statis.
@@ -29,9 +16,9 @@ const pemuat = new GLTFLoader().register((parser) => {
 
 // Pratinjau statis memuat berkas yang diterbitkan di samping halamannya: alamatnya relatif, dan
 // berupa JSON berisi GLB base64 karena tempat terbitnya tidak menyajikan .glb.
-async function muatGltf(nama: NamaModel) {
-  if (!PRATINJAU) return pemuat.loadAsync(`/model/${nama}.glb`);
-  const { glb } = (await (await fetch(`model/${nama}.json`)).json()) as { glb: string };
+export async function muatBerkas(berkas: string) {
+  if (!PRATINJAU) return pemuat.loadAsync(`/model/${berkas}.glb`);
+  const { glb } = (await (await fetch(`model/${berkas}.json`)).json()) as { glb: string };
   return pemuat.parseAsync(Uint8Array.from(atob(glb), (c) => c.charCodeAt(0)).buffer, '');
 }
 
@@ -45,7 +32,7 @@ const simpanan = new Map<NamaModel, Promise<THREE.Group>>();
 export function muatModel(nama: NamaModel): Promise<THREE.Group> {
   let janji = simpanan.get(nama);
   if (!janji) {
-    janji = muatGltf(nama).then((gltf) => {
+    janji = muatBerkas(nama).then((gltf) => {
       const akar = gltf.scene;
       const kotak = new THREE.Box3().setFromObject(akar);
       const ukuran = kotak.getSize(new THREE.Vector3());

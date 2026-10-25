@@ -310,6 +310,12 @@ function PanelRuang({
           </div>
         ) : null}
       </dl>
+      {r.staf?.length ? (
+        <div className="g3-staf">
+          <p className="redup kecil">Staf di ruangan ini</p>
+          <p>{r.staf.map((s) => s.nama).join(', ')}</p>
+        </div>
+      ) : null}
       {RUANG_SIARAN.includes(r.jenis as JenisRuangan) && (
         <div className="g3-sesi">
           {st.berlangsung ? (

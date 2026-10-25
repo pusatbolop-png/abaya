@@ -154,6 +154,18 @@ Atas permintaan pemilik program, figur dan perabot utama diganti dengan model ha
 - Maket tampil dulu dengan versi prosedural. Model dimuat sesudahnya dan menggantikan versi prosedural di tempatnya. Bila sebuah model gagal dimuat, versi prosedural tetap dipakai.
 - Bahan model disalin per lantai agar pemudaran Lantai 2 tidak ikut memudarkan perabot Lantai 1.
 
+**D-34b. Staf yang hidup: bekerja dan berjalan.**
+Atas permintaan pemilik program, semua staf di maket bergerak seperti manusia.
+- Karakter: 10 karakter Meshy dalam pose-A, diberi kerangka otomatis, lalu dianimasikan dari pustaka gerak Meshy. Gerakannya: berjalan, diam, berbicara ke kamera, menelepon, duduk, duduk sambil berbicara, bangkit dari kursi, dan duduk kembali. Karakternya: dua host, dua resepsionis, petugas Disperindag dan Dinkes, serta Bang Jack, Didin, Achmad, dan Devita di Ruang Tim Ahli. Biayanya 476 kredit (350 untuk karakter dan kerangka, 126 untuk 42 gerakan).
+- Kerangka hasil Meshy berbeda orientasi tulangnya antar-karakter, sehingga setiap karakter dianimasikan dengan klipnya sendiri; klip tidak dipindahkan antar-karakter.
+- Klip dirampingkan: hanya rotasi tulang dan translasi pinggul, digabung satu berkas per karakter (0,1–0,2 MB). Posisi pinggul disamakan saat dimuat agar peralihan duduk, bangkit, berjalan, dan duduk kembali tidak melompat.
+- Perilaku: setiap staf bekerja di tempatnya, lalu sesekali berdiri dan berjalan ke tujuan di aula (direktori, depan loket, koridor, dekat toilet). Di sana ia singgah, lalu kembali dan duduk lagi.
+  - Jalur dicari dengan A* pada kisi 25 cm yang menghindari ruangan, tangga, dan perabot aula.
+  - Host tidak meninggalkan studio yang sedang siaran. Satu resepsionis selalu berjaga, dan pengisi podcast tetap di mejanya.
+- Staf Ruang Tim Ahli adalah data (kolom `staf` di tabel ruangan, migrasi 4). Admin mengubahnya di Pengaturan → Ruangan. Namanya tampil di papan nama meja dan di panel informasi ruangan maket.
+- Performa: karakter tidak ikut peta bayangan (memakai bayangan bundar lembut di kaki), dan animasi berjalan sekitar 30 bingkai per detik hanya di lantai yang tampak. Dengan `prefers-reduced-motion`, staf diam dalam satu pose kerja.
+- Figur prosedural tampil sampai karakternya termuat, dan tetap dipakai bila pemuatan gagal.
+
 **D-35. Signage dirancang seperti signage gedung.**
 - Papan nama hijau hutan dengan kode ruangan berwarna jingga di samping pintu.
 - Huruf kuningan tertanam di lantai ambang pintu, terbaca dari arah datang.

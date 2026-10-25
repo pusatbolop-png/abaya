@@ -146,8 +146,9 @@ export function rutePublik(db: DB) {
 export function dataGedung(db: DB) {
   const hari = tanggalWib();
   const ruangan = db
-    .prepare('SELECT id, kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas, sisi_pintu AS sisiPintu FROM ruangan ORDER BY lantai, urutan')
-    .all();
+    .prepare('SELECT id, kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas, sisi_pintu AS sisiPintu, staf FROM ruangan ORDER BY lantai, urutan')
+    .all()
+    .map((r) => ({ ...(r as object), staf: JSON.parse((r as { staf: string }).staf) }));
   const sesi = db
     .prepare(
       `SELECT id, ruangan_id AS ruanganId, judul, platform, host, jadwal_mulai AS jadwalMulai, jadwal_selesai AS jadwalSelesai, status, mulai

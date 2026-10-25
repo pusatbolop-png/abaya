@@ -212,6 +212,7 @@ const MIGRASI: string[] = [
   DELETE FROM pengaturan WHERE kunci = 'keuangan';
   `,
   /* 3 */ `SELECT 1;`,
+  /* 4 */ `ALTER TABLE ruangan ADD COLUMN staf TEXT NOT NULL DEFAULT '[]';`,
 ];
 
 export function bukaDb(file = path.join(config.dataDir, 'pcc.sqlite')): DB {
@@ -231,17 +232,18 @@ function migrasi(db: DB) {
     for (let i = versi; i < MIGRASI.length; i++) db.exec(MIGRASI[i]);
     if (versi === 0) isiAwal(db);
     else if (versi < 2) sesuaikanVersi1(db);
-    if (versi > 0) sesuaikanVersi2(db);
+    if (versi > 0 && versi < 3) sesuaikanVersi2(db);
+    if (versi > 0 && versi < 4) isiStafAwal(db);
     db.pragma(`user_version = ${MIGRASI.length}`);
   })();
 }
 
 function isiRuangan(db: DB) {
   const ruang = db.prepare(
-    `INSERT INTO ruangan (kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas, sisi_pintu, urutan)
-     VALUES (@kode, @nama, @jenis, @lantai, @x, @z, @lebar, @panjang, @kapasitas, @sisi_pintu, @urutan)`,
+    `INSERT INTO ruangan (kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas, sisi_pintu, staf, urutan)
+     VALUES (@kode, @nama, @jenis, @lantai, @x, @z, @lebar, @panjang, @kapasitas, @sisi_pintu, @staf, @urutan)`,
   );
-  RUANGAN_AWAL.forEach((r, i) => ruang.run({ ...r, urutan: i }));
+  RUANGAN_AWAL.forEach((r, i) => ruang.run({ ...r, staf: JSON.stringify(r.staf ?? []), urutan: i }));
 }
 
 /** Isian struktural yang dibutuhkan aplikasi untuk berjalan, bukan data contoh. */
@@ -285,11 +287,17 @@ function sesuaikanVersi2(db: DB) {
     const lama = DENAH_LANTAI1_V2[r.kode];
     if (lama) berubah = ubah.run(r.x, r.z, r.lebar, r.panjang, r.kode, ...lama).changes > 0 || berubah;
     else if (!ada.get(r.kode)) {
-      tambah.run({ ...r, urutan: i });
+      tambah.run({ kode: r.kode, nama: r.nama, jenis: r.jenis, lantai: r.lantai, x: r.x, z: r.z, lebar: r.lebar, panjang: r.panjang, kapasitas: r.kapasitas, sisi_pintu: r.sisi_pintu, urutan: i });
       berubah = true;
     }
   });
   if (berubah) db.prepare("UPDATE pengaturan SET nilai = 'false' WHERE kunci = 'denahTerkonfirmasi'").run();
+}
+
+/** Versi 4 menambahkan daftar staf ruangan; isi staf bawaan bila ruangannya belum punya staf. */
+function isiStafAwal(db: DB) {
+  const isi = db.prepare("UPDATE ruangan SET staf = ? WHERE kode = ? AND staf = '[]'");
+  for (const r of RUANGAN_AWAL) if (r.staf?.length) isi.run(JSON.stringify(r.staf), r.kode);
 }
 
 export function sekarang(): string {

@@ -1,4 +1,4 @@
-import type { JenisRuangan } from '../shared/konstanta';
+import type { JenisRuangan, StafRuang } from '../shared/konstanta';
 
 export interface Organisasi {
   nama: string;
@@ -66,6 +66,7 @@ export interface RuanganAwal {
   panjang: number;
   kapasitas: number | null;
   sisi_pintu: SisiPintu;
+  staf?: StafRuang[];
 }
 
 // Denah mengikuti sketsa pemilik program (25 Oktober 2026): pintu masuk di sisi depan,
@@ -81,7 +82,14 @@ export const RUANGAN_AWAL: RuanganAwal[] = [
   { kode: '1.07', nama: 'Layanan Dinkes', jenis: 'layanan', lantai: 1, x: 11.5, z: 17.4, lebar: 5, panjang: 2.6, kapasitas: 4, sisi_pintu: 'depan' },
   { kode: '2.01', nama: 'Ruang Podcast', jenis: 'podcast', lantai: 2, x: 3.5, z: 0, lebar: 10, panjang: 4.5, kapasitas: 6, sisi_pintu: 'belakang' },
   { kode: '2.02', nama: 'Ruang Belajar AI', jenis: 'kelas', lantai: 2, x: 0, z: 6, lebar: 6, panjang: 6.5, kapasitas: 16, sisi_pintu: 'kanan' },
-  { kode: '2.03', nama: 'Ruang Tim Ahli', jenis: 'kerja', lantai: 2, x: 10, z: 6, lebar: 8, panjang: 6.5, kapasitas: 10, sisi_pintu: 'kiri' },
+  { kode: '2.03', nama: 'Ruang Tim Ahli', jenis: 'kerja', lantai: 2, x: 10, z: 6, lebar: 8, panjang: 6.5, kapasitas: 10, sisi_pintu: 'kiri',
+    staf: [
+      { nama: 'Bang Jack', perempuan: false },
+      { nama: 'Didin', perempuan: false },
+      { nama: 'Achmad', perempuan: false },
+      { nama: 'Devita', perempuan: true },
+    ],
+  },
   { kode: '2.04', nama: 'Ruang Rapat', jenis: 'rapat', lantai: 2, x: 0, z: 15, lebar: 7, panjang: 5, kapasitas: 12, sisi_pintu: 'depan' },
   { kode: '2.05', nama: 'Toilet', jenis: 'toilet', lantai: 2, x: 10, z: 17, lebar: 2, panjang: 3, kapasitas: null, sisi_pintu: 'depan' },
   { kode: '2.06', nama: 'Toilet', jenis: 'toilet', lantai: 2, x: 13, z: 17, lebar: 2, panjang: 3, kapasitas: null, sisi_pintu: 'depan' },

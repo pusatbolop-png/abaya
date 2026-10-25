@@ -144,6 +144,25 @@ test('alur lengkap: daftar → seleksi → stok → live → jual → retur → 
   assert.match(Buffer.from(r.data as ArrayBuffer).toString('utf8'), /Kopi Lereng Arjuno/);
 });
 
+test('staf ruangan tampil di data gedung dan bisa diubah admin', async () => {
+  const tim = db.prepare("SELECT * FROM ruangan WHERE kode = '2.03'").get() as { id: number; nama: string; lebar: number; panjang: number; x: number; z: number; sisi_pintu: string };
+  let gedung = (await minta('GET', '/api/publik/gedung')).data as { ruangan: { kode: string; staf: { nama: string; perempuan: boolean }[] }[] };
+  assert.deepEqual(
+    gedung.ruangan.find((r) => r.kode === '2.03')!.staf.map((s) => s.nama),
+    ['Bang Jack', 'Didin', 'Achmad', 'Devita'],
+  );
+  const dasar = { nama: tim.nama, lebar: tim.lebar, panjang: tim.panjang, x: tim.x, z: tim.z, sisi_pintu: tim.sisi_pintu };
+  let r = await minta('PUT', `/api/pengaturan/ruangan/${tim.id}`, { ...dasar, staf: [{ nama: '  ', perempuan: false }] });
+  assert.equal(r.status, 400);
+  r = await minta('PUT', `/api/pengaturan/ruangan/${tim.id}`, { ...dasar, staf: [{ nama: 'Devita', perempuan: true }, { nama: 'Rina', perempuan: true }] });
+  assert.equal(r.status, 200, JSON.stringify(r.data));
+  gedung = (await minta('GET', '/api/publik/gedung')).data as typeof gedung;
+  assert.deepEqual(gedung.ruangan.find((r) => r.kode === '2.03')!.staf, [
+    { nama: 'Devita', perempuan: true },
+    { nama: 'Rina', perempuan: true },
+  ]);
+});
+
 test('pengguna tanpa sesi tidak bisa membaca data pengelolaan', async () => {
   const res = await app.request('/api/umkm');
   assert.equal(res.status, 401);
