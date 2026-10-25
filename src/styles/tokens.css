@@ -1,7 +1,7 @@
 /*
   Identitas visual PCC
   Palet diambil dari lanskap Pasuruan: pasir lautan Bromo, abu vulkanik, lumut Kebun Raya Purwodadi,
-  hutan lereng Arjuno, dan satu aksen — tembaga fajar di kaldera. Rasio kontras dicatat di DECISIONS.md.
+  hutan lereng Arjuno, dan satu aksen — jingga logo PCC. Rasio kontras dicatat di DECISIONS.md.
 */
 
 @font-face {
@@ -57,10 +57,13 @@
   --hutan-terang: #2f4639;
   --arang: #1d221f;        /* teks utama */
   --redup: #5c6058;        /* teks sekunder, 5,7:1 di atas pasir */
-  --tembaga: #a4532b;      /* satu-satunya aksen: siaran langsung, fokus, penanda aktif */
-  --tembaga-tua: #8e4422;
-  --tembaga-muda: #e3a27c; /* aksen di atas permukaan gelap */
-  --tembaga-latar: #f3e3d8;
+  /* Satu-satunya aksen, satu keluarga warna dari logo PCC (#EF6C12).
+     Nama variabel tetap "tembaga" agar tidak mengubah seluruh lembar gaya. */
+  --jingga-pcc: #ef6c12;   /* warna logo: hanya untuk logo dan cahaya 3D, bukan teks */
+  --tembaga: #b24c0b;      /* aksen antarmuka: siaran langsung, fokus, penanda aktif (4,7:1) */
+  --tembaga-tua: #9a3f08;
+  --tembaga-muda: #f28a3c; /* aksen di atas permukaan gelap (7,0:1) */
+  --tembaga-latar: #fbe6d6;
 
   /* Warna fungsi, dipakai bersama ikon dan teks — tidak pernah sendirian */
   --berhasil: #2f5d45;

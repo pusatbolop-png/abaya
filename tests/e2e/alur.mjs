@@ -110,10 +110,12 @@ try {
     await page.getByRole('button', { name: 'Simpan profil lembaga' }).click();
     await toast(page, 'Profil lembaga tersimpan');
     await page.getByRole('tab', { name: 'Instansi perizinan' }).click();
-    const instansi = page.getByLabel('Instansi penerbit');
-    await instansi.nth(0).fill('Instansi Uji Satu');
-    await instansi.nth(1).fill('Instansi Uji Dua');
-    await instansi.nth(2).fill('Instansi Uji Tiga');
+    // Dua instansi resmi sudah terpasang sejak awal; admin cukup menyimpan bila sesuai.
+    const instansi = page.getByLabel('Instansi', { exact: true });
+    await instansi.first().waitFor();
+    if ((await instansi.count()) !== 2) throw new Error('Jumlah instansi bukan dua');
+    if (!(await instansi.nth(0).inputValue()).includes('Disperindag')) throw new Error('Instansi pertama bukan Disperindag');
+    if (!(await instansi.nth(1).inputValue()).includes('Dinkes')) throw new Error('Instansi kedua bukan Dinkes');
     await page.getByRole('button', { name: 'Simpan instansi perizinan' }).click();
     await toast(page, 'Instansi perizinan tersimpan');
   });

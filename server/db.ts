@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config';
-import { RUANGAN_AWAL, PENGATURAN_AWAL } from './defaults';
+import { RUANGAN_AWAL, PENGATURAN_AWAL, INSTANSI_AWAL } from './defaults';
 
 export type DB = Database.Database;
 
@@ -207,6 +207,10 @@ const MIGRASI: string[] = [
     dibuat TEXT NOT NULL
   );
   `,
+  /* 2 */ `
+  ALTER TABLE ruangan ADD COLUMN sisi_pintu TEXT NOT NULL DEFAULT 'depan';
+  DELETE FROM pengaturan WHERE kunci = 'keuangan';
+  `,
 ];
 
 export function bukaDb(file = path.join(config.dataDir, 'pcc.sqlite')): DB {
@@ -221,23 +225,46 @@ export function bukaDb(file = path.join(config.dataDir, 'pcc.sqlite')): DB {
 
 function migrasi(db: DB) {
   const versi = db.pragma('user_version', { simple: true }) as number;
-  for (let i = versi; i < MIGRASI.length; i++) {
-    db.transaction(() => {
-      db.exec(MIGRASI[i]);
-      if (i === 0) isiAwal(db);
-      db.pragma(`user_version = ${i + 1}`);
-    })();
-  }
+  if (versi >= MIGRASI.length) return;
+  db.transaction(() => {
+    for (let i = versi; i < MIGRASI.length; i++) db.exec(MIGRASI[i]);
+    if (versi === 0) isiAwal(db);
+    else if (versi < 2) sesuaikanVersi1(db);
+    db.pragma(`user_version = ${MIGRASI.length}`);
+  })();
+}
+
+function isiRuangan(db: DB) {
+  const ruang = db.prepare(
+    `INSERT INTO ruangan (kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas, sisi_pintu, urutan)
+     VALUES (@kode, @nama, @jenis, @lantai, @x, @z, @lebar, @panjang, @kapasitas, @sisi_pintu, @urutan)`,
+  );
+  RUANGAN_AWAL.forEach((r, i) => ruang.run({ ...r, urutan: i }));
 }
 
 /** Isian struktural yang dibutuhkan aplikasi untuk berjalan, bukan data contoh. */
 function isiAwal(db: DB) {
   const setel = db.prepare('INSERT INTO pengaturan (kunci, nilai) VALUES (?, ?)');
   for (const [k, v] of Object.entries(PENGATURAN_AWAL)) setel.run(k, JSON.stringify(v));
-  const ruang = db.prepare(
-    'INSERT INTO ruangan (kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas, urutan) VALUES (@kode, @nama, @jenis, @lantai, @x, @z, @lebar, @panjang, @kapasitas, @urutan)',
-  );
-  RUANGAN_AWAL.forEach((r, i) => ruang.run({ ...r, urutan: i }));
+  isiRuangan(db);
+}
+
+/**
+ * Basis data versi 1 memakai denah dan instansi sementara. Ganti dengan denah sketsa dan
+ * dua instansi resmi, kecuali bila sudah dipakai (ada sesi live) atau sudah diisi admin.
+ */
+function sesuaikanVersi1(db: DB) {
+  const adaSesi = (db.prepare('SELECT COUNT(*) AS n FROM sesi_live').get() as { n: number }).n > 0;
+  if (!adaSesi) {
+    db.exec('DELETE FROM ruangan');
+    isiRuangan(db);
+    db.prepare("UPDATE pengaturan SET nilai = 'false' WHERE kunci = 'denahTerkonfirmasi'").run();
+  }
+  const baris = db.prepare("SELECT nilai FROM pengaturan WHERE kunci = 'instansi'").get() as { nilai: string } | undefined;
+  const lama = baris ? (JSON.parse(baris.nilai) as { instansi: string }[]) : [];
+  if (lama.every((i) => !i.instansi)) {
+    db.prepare("INSERT INTO pengaturan (kunci, nilai) VALUES ('instansi', ?) ON CONFLICT(kunci) DO UPDATE SET nilai = excluded.nilai").run(JSON.stringify(INSTANSI_AWAL));
+  }
 }
 
 export function sekarang(): string {

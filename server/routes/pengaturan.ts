@@ -10,6 +10,7 @@ import { simpanBerkas, hapusBerkas } from '../berkas';
 import { sandiKuat } from './auth';
 import { daftarPosisi } from './dana';
 import { PELAT_LANTAI } from '../defaults';
+import { LOGO_BAWAAN } from './publik';
 
 const ukuran = (label: string, min: number, maks: number) =>
   z.coerce.number({ error: `${label} harus berupa angka.` }).min(min, `${label} minimal ${min} m.`).max(maks, `${label} maksimal ${maks} m.`);
@@ -19,8 +20,8 @@ export function rutePengaturan(db: DB) {
 
   app.get('/', (c) => {
     const s = ambilPengaturan(db);
-    const ruangan = db.prepare('SELECT * FROM ruangan ORDER BY lantai, urutan').all();
-    return c.json({ ...s, logo: s.logo ? `/api/publik/logo?v=${s.logo.slice(-16, -4)}` : null, ruangan, pelat: PELAT_LANTAI });
+    const ruangan = db.prepare('SELECT *, sisi_pintu AS sisiPintu FROM ruangan ORDER BY lantai, urutan').all();
+    return c.json({ ...s, logo: s.logo ? `/api/publik/logo?v=${s.logo.slice(-16, -4)}` : LOGO_BAWAAN, logoBawaan: !s.logo, ruangan, pelat: PELAT_LANTAI });
   });
 
   app.put('/organisasi', async (c) => {
@@ -70,19 +71,6 @@ export function rutePengaturan(db: DB) {
     return c.json({ ok: true });
   });
 
-  app.put('/keuangan', async (c) => {
-    hanyaAdmin(c);
-    const d = periksa(
-      z.object({
-        potonganPersen: z.coerce.number({ error: 'Potongan harus berupa angka.' }).min(0, 'Potongan minimal 0%.').max(50, 'Potongan maksimal 50%.'),
-      }),
-      await bacaJson(c),
-    );
-    simpanPengaturan(db, 'keuangan', d);
-    catatAktivitas(db, c.get('pengguna').id, 'atur', 'pengaturan', null, `Potongan jasa diatur ${d.potonganPersen}%`);
-    return c.json({ ok: true });
-  });
-
   app.put('/ruangan/:id', async (c) => {
     hanyaAdmin(c);
     const id = Number(c.req.param('id'));
@@ -96,18 +84,20 @@ export function rutePengaturan(db: DB) {
           x: ukuran('Posisi X', 0, PELAT_LANTAI.lebar),
           z: ukuran('Posisi Z', 0, PELAT_LANTAI.panjang),
           kapasitas: z.coerce.number().int().min(0).max(500).nullable().optional(),
+          sisi_pintu: z.enum(['depan', 'belakang', 'kiri', 'kanan'], { error: 'Pilih sisi pintu.' }),
         })
         .refine((v) => v.x + v.lebar <= PELAT_LANTAI.lebar, { message: `Ruangan melewati batas lebar gedung ${PELAT_LANTAI.lebar} m.`, path: ['lebar'] })
         .refine((v) => v.z + v.panjang <= PELAT_LANTAI.panjang, { message: `Ruangan melewati batas panjang gedung ${PELAT_LANTAI.panjang} m.`, path: ['panjang'] }),
       await bacaJson(c),
     );
-    db.prepare('UPDATE ruangan SET nama = ?, lebar = ?, panjang = ?, x = ?, z = ?, kapasitas = ? WHERE id = ?').run(
+    db.prepare('UPDATE ruangan SET nama = ?, lebar = ?, panjang = ?, x = ?, z = ?, kapasitas = ?, sisi_pintu = ? WHERE id = ?').run(
       d.nama,
       d.lebar,
       d.panjang,
       d.x,
       d.z,
       d.kapasitas ?? null,
+      d.sisi_pintu,
       id,
     );
     catatAktivitas(db, c.get('pengguna').id, 'atur', 'ruangan', id, `Ukuran ${d.nama} diperbarui`);

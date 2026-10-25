@@ -127,7 +127,7 @@ export function ruteUmkm(db: DB) {
       dibuat: u.dibuat,
       izin,
       produk,
-      dana: posisiDana(db, u.id, s.keuangan.potonganPersen),
+      dana: posisiDana(db, u.id),
     });
   });
 

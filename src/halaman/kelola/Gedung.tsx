@@ -4,14 +4,15 @@ import { useInfo } from '../../lib/konteks';
 import { useBerkala, useData } from '../../lib/data';
 import { GalatMuat, KepalaHalaman, Memuat } from '../../ui/dasar';
 import { Ikon } from '../../ui/Ikon';
-import type { DataRuang } from '../../tiga/adegan';
+import { RUANG_SIARAN, type JenisRuangan } from '../../../shared/konstanta';
+import type { DataDenah, DataRuang } from '../../tiga/adegan';
 import type { SesiRuang } from '../../tiga/Gedung3D';
 
 const Gedung3D = lazy(() => import('../../tiga/Gedung3D'));
 
 export function HalamanGedung() {
   const { info } = useInfo();
-  const g = useData<{ ruangan: DataRuang[]; sesi: SesiRuang[] }>('/api/gedung');
+  const g = useData<{ ruangan: DataRuang[]; sesi: SesiRuang[]; denah: DataDenah }>('/api/gedung');
   useBerkala(() => void g.muatUlang(), 20_000);
   const org = info?.organisasi;
   const siaran = g.data?.sesi.filter((s) => s.status === 'berlangsung').length ?? 0;
@@ -33,9 +34,10 @@ export function HalamanGedung() {
             className="halaman-gedung"
             ruangan={g.data.ruangan}
             sesi={g.data.sesi}
-            identitas={{ nama: org?.nama ?? 'Pasuruan Creative Center', singkat: org?.singkat ?? 'PCC', naungan: org?.naungan ?? '' }}
+            denah={g.data.denah}
+            identitas={{ nama: org?.nama ?? 'Pasuruan Creative Center', singkat: org?.singkat ?? 'PCC', naungan: org?.naungan ?? '', logo: info?.logo ?? undefined }}
             aksiRuang={(r, st) =>
-              r.jenis !== 'studio' ? null : st.berlangsung ? (
+              !RUANG_SIARAN.includes(r.jenis as JenisRuangan) ? null : st.berlangsung ? (
                 <Link className="tautan-panah" to={`/kelola/live/${st.berlangsung.id}`}>
                   Buka sesi yang sedang siaran
                   <Ikon nama="panah-kanan" />

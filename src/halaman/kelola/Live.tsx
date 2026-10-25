@@ -6,7 +6,7 @@ import { useToast } from '../../lib/konteks';
 import { Area, Bidang, GalatMuat, KepalaHalaman, Konfirmasi, Kosong, Lembar, Masukan, Memuat, Pemberitahuan, Pilihan, Status, Tombol, Uang, useKirim } from '../../ui/dasar';
 import { Ikon } from '../../ui/Ikon';
 import { angka, hari, isoKeWibLokal, jam, rupiah, tanggalJam, tanggalWib, wibLokalKeIso } from '../../../shared/format';
-import { PLATFORM_LIVE, STATUS_SESI, type StatusSesi } from '../../../shared/konstanta';
+import { PLATFORM_LIVE, RUANG_SIARAN, STATUS_SESI, type JenisRuangan, type StatusSesi } from '../../../shared/konstanta';
 import { nadaSesi } from './Ringkasan';
 import { LembarPenjualan } from './Penjualan';
 import type { PosisiStok } from './Stok';
@@ -396,7 +396,7 @@ function LembarSesi({
   const [pilihan, setPilihan] = useState<Set<number>>(new Set());
   const [saring, setSaring] = useState('');
   const { sibuk, galat, bidang, kirim, atur } = useKirim();
-  const studio = (ruang.data?.ruangan ?? []).filter((r) => r.jenis === 'studio');
+  const studio = (ruang.data?.ruangan ?? []).filter((r) => RUANG_SIARAN.includes(r.jenis as JenisRuangan));
 
   useEffect(() => {
     if (!buka) return;

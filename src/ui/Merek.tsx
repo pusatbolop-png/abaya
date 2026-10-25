@@ -4,12 +4,10 @@ import { useInfo } from '../lib/konteks';
 export function Merek({ ke = '/', ringkas }: { ke?: string; ringkas?: boolean }) {
   const { info } = useInfo();
   const nama = info?.organisasi.nama ?? 'Pasuruan Creative Center';
-  const singkat = info?.organisasi.singkat ?? 'PCC';
+  const logo = info?.logo ?? '/merek/lambang-pcc.png';
   return (
     <Link to={ke} className="merek" aria-label={`${nama}, ke beranda`}>
-      <span className={['tanda', info?.logo && 'ada-logo'].filter(Boolean).join(' ')} aria-hidden="true">
-        {info?.logo ? <img src={info.logo} alt="" /> : singkat}
-      </span>
+      <img className="tanda" src={logo} alt="" width={23} height={40} />
       {!ringkas && (
         <span className="nama">
           <strong>{nama}</strong>

@@ -25,7 +25,7 @@ if (fs.existsSync(folderWeb)) {
   const indeks = fs.readFileSync(path.join(folderWeb, 'index.html'), 'utf8');
   app.use('/assets/*', serveStatic({ root: path.relative(process.cwd(), folderWeb), onFound: (_p, c) => c.header('Cache-Control', 'public, max-age=31536000, immutable') }));
   app.use('/fonts/*', serveStatic({ root: path.relative(process.cwd(), folderWeb), onFound: (_p, c) => c.header('Cache-Control', 'public, max-age=31536000, immutable') }));
-  app.use('/favicon.svg', serveStatic({ root: path.relative(process.cwd(), folderWeb) }));
+  for (const f of ['/favicon.png', '/apple-touch-icon.png', '/merek/*']) app.use(f, serveStatic({ root: path.relative(process.cwd(), folderWeb) }));
   app.get('*', (c) => {
     if (c.req.path.startsWith('/api/')) return c.notFound();
     return c.html(indeks);

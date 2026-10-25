@@ -4,12 +4,11 @@ import type { DB } from '../db';
 import { sekarang } from '../db';
 import { hanyaAdmin, type Variabel } from '../auth';
 import { tanggalWib, akhirHariWib, rupiah } from '../../shared/format';
-import { ambilPengaturan, periksa, wajib, teksOpsional, bilBulat, GalatPengguna, tidakDitemukan, catatAktivitas, nomorBaru, bacaJson } from '../util';
+import { periksa, wajib, teksOpsional, bilBulat, GalatPengguna, tidakDitemukan, catatAktivitas, nomorBaru, bacaJson } from '../util';
 import { posisiDana } from '../domain/dana';
 import { ambilUmkm } from './umkm';
 
 export function daftarPosisi(db: DB) {
-  const persen = ambilPengaturan(db).keuangan.potonganPersen;
   const umkm = db
     .prepare(
       `SELECT id, kode, nama_usaha AS namaUsaha, bank, no_rekening AS noRekening, atas_nama AS atasNama FROM umkm
@@ -17,8 +16,7 @@ export function daftarPosisi(db: DB) {
     )
     .all() as { id: number; bank: string | null; noRekening: string | null; atasNama: string | null }[];
   return {
-    persen,
-    daftar: umkm.map((u) => ({ ...u, rekeningLengkap: !!(u.bank && u.noRekening && u.atasNama), ...posisiDana(db, u.id, persen) })),
+    daftar: umkm.map((u) => ({ ...u, rekeningLengkap: !!(u.bank && u.noRekening && u.atasNama), ...posisiDana(db, u.id) })),
   };
 }
 
@@ -26,19 +24,19 @@ export function ruteDana(db: DB) {
   const app = new Hono<{ Variables: Variabel }>();
 
   app.get('/', (c) => {
-    const { persen, daftar } = daftarPosisi(db);
+    const { daftar } = daftarPosisi(db);
     const total = daftar.reduce(
       (a, d) => ({ siapCair: a.siapCair + Math.max(0, d.siapCair), menunggu: a.menunggu + d.menungguTransfer, dibayar: a.dibayar + d.sudahDibayar }),
       { siapCair: 0, menunggu: 0, dibayar: 0 },
     );
-    return c.json({ persen, daftar, total });
+    return c.json({ daftar, total });
   });
 
   app.get('/pencairan', (c) => {
     const umkmId = Number(c.req.query('umkm_id')) || null;
     const daftar = db
       .prepare(
-        `SELECT c.id, c.nomor, c.umkm_id AS umkmId, u.nama_usaha AS namaUsaha, c.sampai, c.bruto, c.retur, c.potongan, c.jumlah, c.status,
+        `SELECT c.id, c.nomor, c.umkm_id AS umkmId, u.nama_usaha AS namaUsaha, c.sampai, c.bruto, c.retur, c.jumlah, c.status,
            c.referensi_transfer AS referensiTransfer, c.dibayar, c.catatan, c.dibuat
          FROM pencairan c JOIN umkm u ON u.id = c.umkm_id ${umkmId ? 'WHERE c.umkm_id = ?' : ''}
          ORDER BY c.dibuat DESC LIMIT 300`,
@@ -70,8 +68,7 @@ export function ruteDana(db: DB) {
     if (terakhir.s && d.sampai < terakhir.s) {
       throw new GalatPengguna(409, `Pencairan sebelumnya sudah mencakup sampai ${terakhir.s}. Pilih tanggal batas yang sama atau sesudahnya.`);
     }
-    const persen = ambilPengaturan(db).keuangan.potonganPersen;
-    const pos = posisiDana(db, u.id, persen, akhirHariWib(d.sampai));
+    const pos = posisiDana(db, u.id, akhirHariWib(d.sampai));
     if (pos.siapCair <= 0) {
       throw new GalatPengguna(409, `Belum ada dana yang bisa dicairkan untuk ${u.nama_usaha} sampai tanggal itu.`);
     }
@@ -82,7 +79,7 @@ export function ruteDana(db: DB) {
         .prepare(
           'INSERT INTO pencairan (nomor, umkm_id, sampai, bruto, retur, potongan, jumlah, catatan, dibuat_oleh, dibuat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         )
-        .run(nomor, u.id, d.sampai, pos.bruto, pos.retur, pos.potongan, pos.siapCair, d.catatan, penggunaId, sekarang());
+        .run(nomor, u.id, d.sampai, pos.bruto, pos.retur, 0, pos.siapCair, d.catatan, penggunaId, sekarang());
       const id = Number(r.lastInsertRowid);
       catatAktivitas(db, penggunaId, 'cair', 'pencairan', id, `Pencairan ${nomor} untuk ${u.nama_usaha} sebesar ${rupiah(pos.siapCair)} disiapkan`);
       return { id, nomor, jumlah: pos.siapCair };

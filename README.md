@@ -18,7 +18,7 @@ npm start                # produksi, http://localhost:8080, data di ./data
 ```
 
 Saat pertama dibuka, sistem meminta pembuatan akun administrator. Setelah itu buka **Pengaturan** dan lengkapi daftar *Lengkapi sebelum diluncurkan*:
-nomor WhatsApp resmi, nama tiga instansi perizinan, ukuran ruangan, logo, dan alamat.
+nomor WhatsApp resmi, konfirmasi ukuran ruangan, dan alamat. Instansi perizinan (Disperindag dan Dinkes), denah dari sketsa, dan lambang PCC sudah terpasang sebagai isian bawaan.
 
 ### Mode demo
 
@@ -59,5 +59,6 @@ src/           antarmuka React
   halaman/     halaman publik dan ruang kerja
   styles/      token desain, komponen, tata letak
 public/fonts/  Plus Jakarta Sans dan Newsreader (OFL), di-host lokal
+public/merek/  lambang resmi PCC (PNG transparan)
 tests/e2e/     uji peramban ujung ke ujung
 ```

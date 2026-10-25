@@ -6,7 +6,7 @@ import { useInfo, useSesi, useToast } from '../../lib/konteks';
 import { Bidang, GalatMuat, KepalaHalaman, Lembar, Masukan, Memuat, Pemberitahuan, Pilihan, Status, Tombol, useKirim } from '../../ui/dasar';
 import { Ikon } from '../../ui/Ikon';
 import { tanggal } from '../../../shared/format';
-import { JENIS_RUANGAN, PERAN, type JenisRuangan, type Peran } from '../../../shared/konstanta';
+import { JENIS_RUANGAN, PERAN, RUANG_SIARAN, SISI_PINTU, type JenisRuangan, type Peran } from '../../../shared/konstanta';
 
 interface Ruang {
   id: number;
@@ -19,22 +19,22 @@ interface Ruang {
   lebar: number;
   panjang: number;
   kapasitas: number | null;
+  sisiPintu: keyof typeof SISI_PINTU;
 }
 interface DataPengaturan {
   organisasi: { nama: string; singkat: string; naungan: string; alamat: string; whatsapp: string; email: string; jamLayanan: string };
   instansi: { kunci: string; instansi: string; dokumen: string; wajib: boolean }[];
-  keuangan: { potonganPersen: number };
-  logo: string | null;
+  logo: string;
+  logoBawaan: boolean;
   denahTerkonfirmasi: boolean;
   ruangan: Ruang[];
-  pelat: { lebar: number; panjang: number };
+  pelat: { lebar: number; panjang: number; pintuMasuk: { x: number; lebar: number } };
 }
 
 const BAGIAN = [
   ['lembaga', 'Lembaga'],
   ['perizinan', 'Instansi perizinan'],
   ['ruangan', 'Ruangan'],
-  ['keuangan', 'Keuangan'],
   ['pengguna', 'Pengguna'],
   ['akun', 'Akun saya'],
 ] as const;
@@ -61,14 +61,13 @@ export function Pengaturan() {
         !d.organisasi.whatsapp && { label: 'Nomor WhatsApp resmi', ke: 'lembaga' },
         d.instansi.some((i) => !i.instansi) && { label: `Nama instansi perizinan (${d.instansi.filter((i) => !i.instansi).length} belum diisi)`, ke: 'perizinan' },
         !d.denahTerkonfirmasi && { label: 'Ukuran ruangan sesuai gambar kerja gedung', ke: 'ruangan' },
-        !d.logo && { label: 'Logo PCC', ke: 'lembaga' },
         !d.organisasi.alamat && { label: 'Alamat gedung', ke: 'lembaga' },
       ].filter(Boolean)
     : [];
 
   return (
     <>
-      <KepalaHalaman judul="Pengaturan" keterangan="Profil lembaga, instansi perizinan, denah ruangan, potongan jasa, dan akun pengguna." />
+      <KepalaHalaman judul="Pengaturan" keterangan="Profil lembaga, instansi perizinan, denah ruangan, dan akun pengguna." />
       {kurang.length > 0 && (
         <section className="kelengkapan" aria-labelledby="judul-lengkap">
           <h2 id="judul-lengkap">Lengkapi sebelum diluncurkan</h2>
@@ -101,7 +100,6 @@ export function Pengaturan() {
         {d && bagian === 'lembaga' && <Lembaga d={d} selesai={r.muatUlang} />}
         {d && bagian === 'perizinan' && <Perizinan d={d} selesai={r.muatUlang} />}
         {d && bagian === 'ruangan' && <Ruangan d={d} selesai={r.muatUlang} />}
-        {d && bagian === 'keuangan' && <Keuangan d={d} selesai={r.muatUlang} />}
         {bagian === 'pengguna' && <Pengguna />}
         {bagian === 'akun' && <AkunSaya />}
       </div>
@@ -136,7 +134,7 @@ function Lembaga({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
   const hapusLogo = async () => {
     const ok = await logo.kirim(() => api('DELETE', '/api/pengaturan/logo'));
     if (ok) {
-      toast('Logo dihapus. Tanda huruf PCC dipakai sementara.');
+      toast('Logo unggahan dihapus. Lambang resmi PCC dipakai kembali.');
       await Promise.all([selesai(), muatUlang()]);
     }
   };
@@ -186,13 +184,17 @@ function Lembaga({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
         <h2>Logo</h2>
         {logo.galat && <Pemberitahuan nada="galat">{logo.galat}</Pemberitahuan>}
         <div className="pratinjau-logo">
-          {d.logo ? <img src={d.logo} alt={`Logo ${d.organisasi.nama}`} /> : <span className="tanda-sementara">{d.organisasi.singkat}</span>}
+          <img src={d.logo} alt={`Logo ${d.organisasi.nama}`} />
         </div>
-        <p className="redup kecil">SVG atau PNG berlatar transparan, paling besar 5 MB. Logo dipakai di kepala halaman dan monumen nama gedung pada denah 3D.</p>
+        <p className="redup kecil">
+          {d.logoBawaan
+            ? 'Lambang resmi PCC sudah terpasang. Ganti bila tersedia berkas beresolusi lebih tinggi: SVG atau PNG berlatar transparan, paling besar 5 MB.'
+            : 'Logo unggahan dipakai di kepala halaman. Hapus untuk kembali ke lambang resmi PCC bawaan.'}
+        </p>
         <div className="deret-tombol">
           <label className="tombol tombol-kedua tombol-kecil">
             <Ikon nama="unggah" />
-            {d.logo ? 'Ganti logo' : 'Unggah logo'}
+            Ganti logo
             <input
               type="file"
               className="sr-only"
@@ -204,9 +206,9 @@ function Lembaga({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
               }}
             />
           </label>
-          {d.logo && (
+          {!d.logoBawaan && (
             <Tombol kecil ragam="halus" sibuk={logo.sibuk} onClick={hapusLogo}>
-              Hapus logo
+              Kembali ke lambang bawaan
             </Tombol>
           )}
         </div>
@@ -239,7 +241,7 @@ function Perizinan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<v
     >
       <div className="kepala-bagian">
         <h2>Instansi perizinan</h2>
-        <p>Tiga dokumen izin yang diminta saat pendaftaran dan diverifikasi saat seleksi.</p>
+        <p>Dokumen izin yang diminta saat pendaftaran dan diverifikasi saat seleksi, beserta instansinya.</p>
       </div>
       {galat && <Pemberitahuan nada="galat">{galat}</Pemberitahuan>}
       <ol className="daftar-instansi">
@@ -252,7 +254,7 @@ function Perizinan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<v
               <Bidang label="Nama dokumen" galat={bidang[`${n}.dokumen`]}>
                 {(a) => <Masukan {...a} value={i.dokumen} onChange={(e) => ubah(n, { dokumen: e.target.value })} />}
               </Bidang>
-              <Bidang label="Instansi penerbit" petunjuk={i.instansi ? undefined : 'Belum diisi. Tampil sebagai “akan diumumkan” di formulir.'}>
+              <Bidang label="Instansi" petunjuk={i.instansi ? 'Instansi yang menerbitkan atau memverifikasi dokumen ini.' : 'Belum diisi. Tampil sebagai “akan diumumkan” di formulir.'}>
                 {(a) => <Masukan {...a} value={i.instansi} onChange={(e) => ubah(n, { instansi: e.target.value })} placeholder="Nama resmi instansi" />}
               </Bidang>
               <label className="centang penuh">
@@ -294,7 +296,7 @@ function Ruangan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
       <div className="kepala-bagian">
         <h2>Ruangan dan ukuran</h2>
         <p>
-          Pelat lantai {d.pelat.lebar} × {d.pelat.panjang} m. Posisi diukur dari sudut kiri belakang gedung.
+          Pelat lantai {d.pelat.lebar} × {d.pelat.panjang} m. Posisi diukur dari sudut kiri depan gedung, sama seperti sketsa denah: pintu masuk di sisi atas.
         </p>
       </div>
       {d.denahTerkonfirmasi ? (
@@ -376,8 +378,12 @@ function Ruangan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
           </table>
         </div>
         <figure className="denah-mini">
-          <svg viewBox={`-0.4 -0.4 ${d.pelat.lebar + 0.8} ${d.pelat.panjang + 1.2}`} role="img" aria-label={`Denah lantai ${lantai}`}>
+          <svg viewBox={`-0.4 -1.3 ${d.pelat.lebar + 0.8} ${d.pelat.panjang + 1.7}`} role="img" aria-label={`Denah lantai ${lantai}, pintu masuk di sisi atas`}>
+            <text x={d.pelat.pintuMasuk.x + d.pelat.pintuMasuk.lebar / 2} y="-0.5" fontSize="0.6" fill="#5c6058" textAnchor="middle" fontFamily="Plus Jakarta Sans, sans-serif">
+              Pintu masuk
+            </text>
             <rect x="0" y="0" width={d.pelat.lebar} height={d.pelat.panjang} fill="#fbf9f5" stroke="#1d221f" strokeWidth="0.08" />
+            {lantai === 1 && <rect x={d.pelat.pintuMasuk.x} y="-0.1" width={d.pelat.pintuMasuk.lebar} height="0.2" fill="#b24c0b" />}
             {ruang.map((r) => (
               <g key={r.id}>
                 <rect
@@ -385,8 +391,8 @@ function Ruangan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
                   y={r.z + 0.05}
                   width={r.lebar - 0.1}
                   height={r.panjang - 0.1}
-                  fill={tumpang.includes(r) ? '#f5e1db' : r.jenis === 'studio' ? '#e3ebe2' : '#ece7dc'}
-                  stroke={ubah?.id === r.id ? '#a4532b' : '#b9b09f'}
+                  fill={tumpang.includes(r) ? '#f5e1db' : RUANG_SIARAN.includes(r.jenis) ? '#e3ebe2' : '#ece7dc'}
+                  stroke={ubah?.id === r.id ? '#b24c0b' : '#b9b09f'}
                   strokeWidth={ubah?.id === r.id ? 0.14 : 0.05}
                 />
                 <text x={r.x + 0.4} y={r.z + 1.1} fontSize="0.62" fill="#1d221f" fontFamily="Plus Jakarta Sans, sans-serif" fontWeight="600">
@@ -394,11 +400,8 @@ function Ruangan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
                 </text>
               </g>
             ))}
-            <text x={d.pelat.lebar / 2} y={d.pelat.panjang + 0.7} fontSize="0.6" fill="#5c6058" textAnchor="middle" fontFamily="Plus Jakarta Sans, sans-serif">
-              Sisi depan dan pintu masuk
-            </text>
           </svg>
-          <figcaption className="redup mikro">Pratinjau denah lantai {lantai}. Hijau: studio live.</figcaption>
+          <figcaption className="redup mikro">Pratinjau denah lantai {lantai}. Hijau: studio siaran.</figcaption>
         </figure>
       </div>
       <LembarRuang ruang={ubah} pelat={d.pelat} tutup={() => setUbah(null)} selesai={selesai} />
@@ -408,7 +411,7 @@ function Ruangan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<voi
 
 function LembarRuang({ ruang, pelat, tutup, selesai }: { ruang: Ruang | null; pelat: { lebar: number; panjang: number }; tutup: () => void; selesai: () => Promise<void> }) {
   const toast = useToast();
-  const [v, setV] = useState({ nama: '', lebar: '', panjang: '', x: '', z: '', kapasitas: '' });
+  const [v, setV] = useState({ nama: '', lebar: '', panjang: '', x: '', z: '', kapasitas: '', sisiPintu: 'depan' });
   const { sibuk, galat, bidang, kirim } = useKirim();
   useEffect(() => {
     if (ruang)
@@ -419,6 +422,7 @@ function LembarRuang({ ruang, pelat, tutup, selesai }: { ruang: Ruang | null; pe
         x: String(ruang.x).replace('.', ','),
         z: String(ruang.z).replace('.', ','),
         kapasitas: ruang.kapasitas ? String(ruang.kapasitas) : '',
+        sisiPintu: ruang.sisiPintu,
       });
   }, [ruang]);
   const angkaKoma = (s: string) => Number(s.replace(',', '.'));
@@ -432,6 +436,7 @@ function LembarRuang({ ruang, pelat, tutup, selesai }: { ruang: Ruang | null; pe
         x: angkaKoma(v.x),
         z: angkaKoma(v.z),
         kapasitas: v.kapasitas ? Number(v.kapasitas) : null,
+        sisi_pintu: v.sisiPintu,
       }),
     );
     if (ok) {
@@ -451,7 +456,7 @@ function LembarRuang({ ruang, pelat, tutup, selesai }: { ruang: Ruang | null; pe
         <>
           <Tombol onClick={tutup}>Batal</Tombol>
           <Tombol type="submit" ragam="utama" sibuk={sibuk}>
-            Simpan ukuran ruangan
+            Simpan ruangan
           </Tombol>
         </>
       }
@@ -470,51 +475,25 @@ function LembarRuang({ ruang, pelat, tutup, selesai }: { ruang: Ruang | null; pe
         <Bidang label="Jarak dari dinding kiri" galat={bidang.x}>
           {(a) => <Masukan {...a} {...p('x')} inputMode="decimal" className="angka" />}
         </Bidang>
-        <Bidang label="Jarak dari dinding belakang" galat={bidang.z}>
+        <Bidang label="Jarak dari dinding depan" galat={bidang.z}>
           {(a) => <Masukan {...a} {...p('z')} inputMode="decimal" className="angka" />}
+        </Bidang>
+        <Bidang label="Sisi pintu" galat={bidang.sisi_pintu}>
+          {(a) => (
+            <Pilihan {...a} value={v.sisiPintu} onChange={(e) => setV((x) => ({ ...x, sisiPintu: e.target.value }))}>
+              {Object.entries(SISI_PINTU).map(([k, l]) => (
+                <option key={k} value={k}>
+                  {l}
+                </option>
+              ))}
+            </Pilihan>
+          )}
         </Bidang>
         <Bidang label="Kapasitas orang" opsional>
           {(a) => <Masukan {...a} value={v.kapasitas} onChange={(e) => setV((x) => ({ ...x, kapasitas: e.target.value.replace(/\D/g, '') }))} inputMode="numeric" className="angka" />}
         </Bidang>
       </div>
     </Lembar>
-  );
-}
-
-function Keuangan({ d, selesai }: { d: DataPengaturan; selesai: () => Promise<void> }) {
-  const toast = useToast();
-  const [persen, setPersen] = useState(String(d.keuangan.potonganPersen).replace('.', ','));
-  const { sibuk, galat, bidang, kirim } = useKirim();
-  const simpan = async () => {
-    const ok = await kirim(() => api('PUT', '/api/pengaturan/keuangan', { potonganPersen: Number(persen.replace(',', '.')) }));
-    if (ok) {
-      toast('Potongan jasa tersimpan. Berlaku untuk pencairan berikutnya.');
-      await selesai();
-    }
-  };
-  return (
-    <form
-      className="bagian sempit"
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault();
-        void simpan();
-      }}
-    >
-      <h2>Potongan jasa pengelola</h2>
-      <p className="redup kecil">
-        Persentase dari penjualan bersih setelah retur. Isi 0 bila program tidak memungut potongan. Pencairan yang sudah dibuat tidak berubah.
-      </p>
-      {galat && <Pemberitahuan nada="galat">{galat}</Pemberitahuan>}
-      <Bidang label="Potongan (%)" galat={bidang.potonganPersen}>
-        {(a) => <Masukan {...a} value={persen} onChange={(e) => setPersen(e.target.value.replace(/[^\d,.]/g, ''))} inputMode="decimal" className="angka" style={{ maxWidth: 160 }} />}
-      </Bidang>
-      <div>
-        <Tombol type="submit" ragam="utama" sibuk={sibuk}>
-          Simpan potongan jasa
-        </Tombol>
-      </div>
-    </form>
   );
 }
 

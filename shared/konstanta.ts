@@ -82,14 +82,17 @@ export const STATUS_PENCAIRAN: Record<StatusPencairan, string> = {
   batal: 'Dibatalkan',
 };
 
-export type JenisRuangan = 'studio' | 'galeri' | 'gudang' | 'kurasi' | 'lobi' | 'kerja' | 'rapat' | 'kontrol' | 'servis';
+export type JenisRuangan = 'studio' | 'podcast' | 'kelas' | 'toilet' | 'galeri' | 'gudang' | 'kurasi' | 'lobi' | 'kerja' | 'rapat' | 'kontrol' | 'servis';
 export const JENIS_RUANGAN: Record<JenisRuangan, string> = {
   studio: 'Studio live',
+  podcast: 'Studio podcast',
+  kelas: 'Ruang belajar',
+  toilet: 'Toilet',
   galeri: 'Galeri produk',
   gudang: 'Gudang konsinyasi',
   kurasi: 'Ruang kurasi',
-  lobi: 'Lobi',
-  kerja: 'Ruang kerja bersama',
+  lobi: 'Resepsionis',
+  kerja: 'Ruang tim',
   rapat: 'Ruang rapat',
   kontrol: 'Ruang kontrol',
   servis: 'Servis',
@@ -100,6 +103,11 @@ export const PERAN: Record<Peran, string> = {
   admin: 'Administrator',
   petugas: 'Petugas studio',
 };
+
+/** Ruangan yang bisa dijadwalkan untuk siaran dan memiliki lampu ON AIR. */
+export const RUANG_SIARAN: readonly JenisRuangan[] = ['studio', 'podcast'];
+
+export const SISI_PINTU = { depan: 'Depan (arah pintu masuk)', belakang: 'Belakang', kiri: 'Kiri', kanan: 'Kanan' } as const;
 
 /** Batas stok yang dianggap menipis. */
 export const STOK_MENIPIS = 5;

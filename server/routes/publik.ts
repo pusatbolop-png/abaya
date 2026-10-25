@@ -3,10 +3,14 @@ import { z } from 'zod';
 import type { DB } from '../db';
 import { sekarang } from '../db';
 import { config } from '../config';
+import { PELAT_LANTAI } from '../defaults';
 import { KATEGORI_USAHA, KECAMATAN_PASURUAN, STATUS_UMKM, type StatusUmkm } from '../../shared/konstanta';
 import { normalisasiWa, tanggalWib, awalHariWib, akhirHariWib } from '../../shared/format';
 import { ambilPengaturan, periksa, wajib, teksOpsional, GalatPengguna, nomorBaru, catatAktivitas, pembatasLaju, alamatKlien, bacaJson } from '../util';
 import { simpanBerkas, bacaBerkas, HEADER_BERKAS, hapusBerkas } from '../berkas';
+
+/** Lambang resmi PCC yang dibawa aplikasi; dipakai selama admin belum mengunggah logo lain. */
+export const LOGO_BAWAAN = '/merek/lambang-pcc.png';
 
 const nomorWa = z
   .string()
@@ -42,7 +46,7 @@ export function rutePublik(db: DB) {
     return c.json({
       organisasi: s.organisasi,
       instansi: s.instansi,
-      logo: s.logo ? `/api/publik/logo?v=${s.logo.slice(-16, -4)}` : null,
+      logo: s.logo ? `/api/publik/logo?v=${s.logo.slice(-16, -4)}` : LOGO_BAWAAN,
       kategori: KATEGORI_USAHA,
       kecamatan: KECAMATAN_PASURUAN,
       demo: config.demo || s.mode === 'demo',
@@ -141,7 +145,9 @@ export function rutePublik(db: DB) {
 
 export function dataGedung(db: DB) {
   const hari = tanggalWib();
-  const ruangan = db.prepare('SELECT id, kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas FROM ruangan ORDER BY lantai, urutan').all();
+  const ruangan = db
+    .prepare('SELECT id, kode, nama, jenis, lantai, x, z, lebar, panjang, kapasitas, sisi_pintu AS sisiPintu FROM ruangan ORDER BY lantai, urutan')
+    .all();
   const sesi = db
     .prepare(
       `SELECT id, ruangan_id AS ruanganId, judul, platform, host, jadwal_mulai AS jadwalMulai, jadwal_selesai AS jadwalSelesai, status, mulai
@@ -149,5 +155,5 @@ export function dataGedung(db: DB) {
        ORDER BY jadwal_mulai`,
     )
     .all(awalHariWib(hari), akhirHariWib(hari));
-  return { ruangan, sesi, diperbarui: sekarang() };
+  return { ruangan, sesi, denah: PELAT_LANTAI, diperbarui: sekarang() };
 }

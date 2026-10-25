@@ -17,8 +17,6 @@ interface Posisi {
   rekeningLengkap: boolean;
   bruto: number;
   retur: number;
-  neto: number;
-  potongan: number;
   siapCair: number;
   sudahDibayar: number;
   menungguTransfer: number;
@@ -31,7 +29,6 @@ interface Pencairan {
   sampai: string;
   bruto: number;
   retur: number;
-  potongan: number;
   jumlah: number;
   status: StatusPencairan;
   referensiTransfer: string | null;
@@ -47,7 +44,7 @@ export function Dana() {
   const tab = cari.get('tab') === 'riwayat' ? 'riwayat' : 'posisi';
   const { pengguna } = useSesi();
   const admin = pengguna?.peran === 'admin';
-  const r = useData<{ persen: number; daftar: Posisi[]; total: { siapCair: number; menunggu: number; dibayar: number } }>('/api/dana');
+  const r = useData<{ daftar: Posisi[]; total: { siapCair: number; menunggu: number; dibayar: number } }>('/api/dana');
   const c = useData<{ daftar: Pencairan[] }>('/api/dana/pencairan');
   const [siapkan, setSiapkan] = useState<Posisi | null>(null);
   const [bayar, setBayar] = useState<Pencairan | null>(null);
@@ -64,11 +61,7 @@ export function Dana() {
     <>
       <KepalaHalaman
         judul="Dana UMKM"
-        keterangan={
-          r.data
-            ? `Hak UMKM dihitung dari penjualan dikurangi retur${r.data.persen > 0 ? `, lalu dipotong jasa pengelola ${String(r.data.persen).replace('.', ',')}%` : ', tanpa potongan jasa'}.`
-            : undefined
-        }
+        keterangan="Hak UMKM adalah penjualan dikurangi retur, tanpa potongan jasa pengelola."
       />
       {r.galat && !r.data && <GalatMuat galat={r.galat} ulang={r.muatUlang} />}
       {!r.data && !r.galat && <Memuat />}
@@ -119,11 +112,6 @@ export function Dana() {
                       <th scope="col" className="angka">
                         Retur
                       </th>
-                      {r.data.persen > 0 && (
-                        <th scope="col" className="angka">
-                          Potongan
-                        </th>
-                      )}
                       <th scope="col" className="angka">
                         Siap dicairkan
                       </th>
@@ -147,11 +135,6 @@ export function Dana() {
                         <td data-label="Retur" className="angka">
                           {d.retur ? <Uang n={-d.retur} /> : '—'}
                         </td>
-                        {r.data!.persen > 0 && (
-                          <td data-label="Potongan" className="angka">
-                            {d.potongan ? <Uang n={-d.potongan} /> : '—'}
-                          </td>
-                        )}
                         <td data-label="Siap dicairkan" className="angka tebal">
                           <Uang n={d.siapCair} />
                           {d.menungguTransfer > 0 && (
@@ -236,7 +219,7 @@ export function Dana() {
             ))}
         </>
       )}
-      <LembarSiapkan posisi={siapkan} persen={r.data?.persen ?? 0} tutup={() => setSiapkan(null)} selesai={muatUlang} />
+      <LembarSiapkan posisi={siapkan} tutup={() => setSiapkan(null)} selesai={muatUlang} />
       <LembarBayar pencairan={bayar} tutup={() => setBayar(null)} selesai={muatUlang} />
       <Konfirmasi
         buka={!!batal}
@@ -266,7 +249,7 @@ export function Dana() {
   );
 }
 
-function LembarSiapkan({ posisi, persen, tutup, selesai }: { posisi: Posisi | null; persen: number; tutup: () => void; selesai: () => Promise<void> }) {
+function LembarSiapkan({ posisi, tutup, selesai }: { posisi: Posisi | null; tutup: () => void; selesai: () => Promise<void> }) {
   const toast = useToast();
   const [sampai, setSampai] = useState(tanggalWib());
   const [catatan, setCatatan] = useState('');
@@ -315,12 +298,6 @@ function LembarSiapkan({ posisi, persen, tutup, selesai }: { posisi: Posisi | nu
           <dd className="angka">{rupiah(posisi.bruto)}</dd>
           <dt>Retur</dt>
           <dd className="angka">{rupiah(-posisi.retur)}</dd>
-          {persen > 0 && (
-            <>
-              <dt>Potongan jasa {String(persen).replace('.', ',')}%</dt>
-              <dd className="angka">{rupiah(-posisi.potongan)}</dd>
-            </>
-          )}
           <dt className="jumlah">Dicairkan</dt>
           <dd className="angka jumlah">{rupiah(posisi.siapCair)}</dd>
         </dl>

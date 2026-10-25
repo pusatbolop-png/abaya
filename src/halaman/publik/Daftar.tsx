@@ -201,7 +201,7 @@ export function Daftar() {
                 <div className="izin-judul">
                   <h3>{i.dokumen}</h3>
                   <p className="redup kecil">
-                    {i.instansi || 'Instansi penerbit akan diumumkan'} · {i.wajib ? 'wajib' : 'bila ada'}
+                    {i.instansi || 'Instansi akan diumumkan'} · {i.wajib ? 'wajib' : 'bila ada'}
                   </p>
                 </div>
                 <Bidang label="Nomor izin" galat={bidang[`izin_${i.kunci}_nomor`]} opsional={!i.wajib}>

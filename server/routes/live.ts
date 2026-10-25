@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { DB } from '../db';
 import { sekarang } from '../db';
 import type { Variabel } from '../auth';
-import { PLATFORM_LIVE, type StatusSesi } from '../../shared/konstanta';
+import { PLATFORM_LIVE, RUANG_SIARAN, type JenisRuangan, type StatusSesi } from '../../shared/konstanta';
 import { awalHariWib, akhirHariWib, tanggalWib, jam } from '../../shared/format';
 import { periksa, wajib, teksOpsional, bilBulat, GalatPengguna, tidakDitemukan, catatAktivitas, bacaJson } from '../util';
 
@@ -50,7 +50,9 @@ function ambilSesi(db: DB, id: number): BarisSesi {
 function periksaBentrok(db: DB, ruanganId: number, mulai: string, selesai: string, kecuali = 0) {
   const r = db.prepare("SELECT jenis, nama FROM ruangan WHERE id = ?").get(ruanganId) as { jenis: string; nama: string } | undefined;
   if (!r) throw tidakDitemukan('Studio');
-  if (r.jenis !== 'studio') throw new GalatPengguna(400, `${r.nama} bukan studio live. Pilih salah satu studio.`, { ruangan_id: 'Pilih studio live.' });
+  if (!RUANG_SIARAN.includes(r.jenis as JenisRuangan)) {
+    throw new GalatPengguna(400, `${r.nama} bukan studio siaran. Pilih studio live atau ruang podcast.`, { ruangan_id: 'Pilih studio.' });
+  }
   const bentrok = db
     .prepare(
       `SELECT judul, jadwal_mulai, jadwal_selesai FROM sesi_live

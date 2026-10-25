@@ -5,7 +5,7 @@ import { useBerkala, useData } from '../../lib/data';
 import { useJudul } from '../../ui/dasar';
 import { Ikon } from '../../ui/Ikon';
 import { tautanWa, tampilWa } from '../../../shared/format';
-import type { DataRuang } from '../../tiga/adegan';
+import type { DataDenah, DataRuang } from '../../tiga/adegan';
 import type { SesiRuang } from '../../tiga/Gedung3D';
 
 const Gedung3D = lazy(() => import('../../tiga/Gedung3D'));
@@ -13,6 +13,7 @@ const Gedung3D = lazy(() => import('../../tiga/Gedung3D'));
 interface DataGedung {
   ruangan: DataRuang[];
   sesi: SesiRuang[];
+  denah: DataDenah;
 }
 
 const LANGKAH = [
@@ -79,7 +80,8 @@ export function Beranda() {
               <Gedung3D
                 ruangan={gedung.data.ruangan}
                 sesi={gedung.data.sesi}
-                identitas={{ nama: org?.nama ?? 'Pasuruan Creative Center', singkat: org?.singkat ?? 'PCC', naungan: org?.naungan ?? '' }}
+                denah={gedung.data.denah}
+                identitas={{ nama: org?.nama ?? 'Pasuruan Creative Center', singkat: org?.singkat ?? 'PCC', naungan: org?.naungan ?? '', logo: info?.logo ?? undefined }}
                 label={`Maket tiga dimensi gedung ${org?.nama ?? 'PCC'}`}
               />
             </Suspense>
@@ -117,8 +119,8 @@ export function Beranda() {
             <li key={i.kunci}>
               <span className="tebal">{i.dokumen}</span>
               <span className="redup kecil">
-                {i.instansi ? `Diterbitkan oleh ${i.instansi}. ` : ''}
-                {i.wajib ? 'Wajib.' : 'Lampirkan bila produk Anda memerlukannya.'}
+                {i.instansi ? `${i.instansi}. ` : ''}
+                {i.wajib ? 'Wajib.' : 'Lampirkan bila produk Anda berupa pangan olahan.'}
               </span>
             </li>
           ))}

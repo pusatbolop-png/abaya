@@ -14,12 +14,14 @@ Daftar → seleksi → stok → sesi live → penjualan → retur → dana → e
 Contoh: penjualan mengurangi stok otomatis, retur layak jual mengembalikannya, dan dana dihitung dari penjualan dikurangi retur.
 
 **D-03. Data yang tidak bisa ditebak dijadikan pengaturan, bukan kode.**
-Nama tiga instansi perizinan, nomor WhatsApp resmi, ukuran ruangan, dan logo diisi administrator di menu Pengaturan.
+Instansi perizinan, nomor WhatsApp resmi, ukuran ruangan, dan logo bisa diubah administrator di menu Pengaturan.
+Data resmi dari pemilik program (25 Oktober 2026) sudah menjadi isian bawaan: dua instansi, denah dari sketsa, dan lambang PCC.
 Halaman Pengaturan menampilkan daftar *Lengkapi sebelum diluncurkan* sampai semuanya terisi.
 Selama belum diisi, formulir publik menulis "Instansi penerbit akan diumumkan" dan kaki halaman menulis "Nomor WhatsApp resmi segera diumumkan". Sistem tidak pernah menampilkan nomor atau nama karangan.
 
-**D-04. Jenis dokumen izin bawaan: NIB (wajib), izin edar pangan SPP-IRT/BPOM, dan sertifikat halal.**
-Ketiganya dokumen yang lazim diminta dari UMKM produk. Nama dokumen, instansi penerbit, dan status wajibnya bisa diubah.
+**D-04. Dua instansi perizinan: Disperindag dan Dinkes.**
+Ditetapkan pemilik program. Dokumen yang dipasangkan: Disperindag dengan Nomor Induk Berusaha (NIB, wajib), dan Dinkes dengan SPP-IRT (bila produk berupa pangan olahan).
+Pasangan dokumen ini tebakan yang lazim dan bisa diubah di Pengaturan. Label kolomnya "Instansi", bukan "penerbit", karena NIB secara teknis terbit lewat OSS sementara Disperindag berperan memverifikasi.
 UMKM hanya bisa diterima bila semua izin wajib sudah terverifikasi; aturan ini dijaga di server.
 
 **D-05. Seleksi memakai empat kriteria bernilai 1–5.**
@@ -34,9 +36,9 @@ Stok adalah jumlah mutasi, sehingga riwayatnya selalu bisa diaudit dan tidak bis
 
 **D-08. Retur dibedakan menurut kondisi barang.** Barang layak jual kembali ke stok, sedangkan barang rusak tidak (dicatat untuk dikembalikan ke UMKM). Keduanya mengurangi hak dana UMKM.
 
-**D-09. Potongan jasa pengelola bawaan 0 %.** Program pemerintah daerah umumnya tidak memungut potongan. Persentase bisa diatur.
-Setiap pencairan menyimpan bruto, retur, dan potongannya sendiri, sehingga perubahan persentase tidak mengubah pencairan yang sudah dibuat.
-Penjualan yang dibatalkan setelah dicairkan otomatis mengurangi pencairan berikutnya.
+**D-09. Tanpa potongan jasa pengelola.** Ditetapkan pemilik program, sehingga hak UMKM = penjualan − retur.
+Pengaturan persentase dihapus dari antarmuka dan server; kolom `potongan` di tabel pencairan dibiarkan bernilai 0 agar riwayat tetap utuh.
+Setiap pencairan menyimpan bruto dan returnya sendiri. Penjualan yang dibatalkan setelah dicairkan otomatis mengurangi pencairan berikutnya.
 
 **D-10. Pencairan dua tahap: disiapkan, lalu ditandai sudah ditransfer dengan nomor referensi bank.**
 Transfer dilakukan di luar sistem melalui rekening instansi, dan sistem mencatat bukti agar rekonsiliasi mudah. Pencairan ditolak bila data rekening UMKM belum lengkap.
@@ -88,10 +90,16 @@ Satu temuan moderat tersisa: `uuid` di dalam `exceljs`. Galat itu hanya terjadi 
 | Lumut Purwodadi | `#7D8A76` | dekoratif saja (grafik, kain 3D), tidak untuk teks |
 | Hutan Arjuno | `#24372E` | tombol utama, permukaan gelap |
 | Arang | `#1D221F` | teks utama |
-| **Tembaga fajar** | `#A4532B` | **satu-satunya aksen**: siaran langsung (ON AIR), penanda aktif, cincin fokus |
+| **Jingga PCC** | `#EF6C12` (logo) · `#B24C0B` (antarmuka) | **satu-satunya aksen**: siaran langsung (ON AIR), penanda aktif, cincin fokus |
 
+Aksen awalnya tembaga `#A4532B`. Setelah logo resmi diterima, aksen digeser ke keluarga jingga logo agar merek dan aplikasi satu warna.
+Jingga logo asli (`#EF6C12`) hanya 2,7:1 di atas pasir, jadi untuk teks dan tombol dipakai varian gelap `#B24C0B` (4,7:1; teks putih di atasnya 5,3:1). Di permukaan gelap dipakai `#F28A3C` (7,0:1).
 Teks sekunder `#5C6058` diturunkan dari Arang. Warna fungsi (berhasil, peringatan, galat) dipakai bersama ikon dan teks, tidak pernah sebagai dekorasi.
-Rasio kontras: teks utama 14,3:1; teks sekunder 5,7:1; aksen pada pasir 4,8:1; teks pasir di atas Hutan 11,2:1. Semuanya memenuhi WCAG AA.
+Rasio kontras: teks utama 14,3:1; teks sekunder 5,7:1; teks pasir di atas Hutan 11,2:1. Semuanya memenuhi WCAG AA.
+
+**D-25a. Lambang resmi PCC.** Berkas yang diterima hanya 150 × 150 piksel (JPG berlatar putih). Lambangnya dipisahkan, diperbesar 8×, dan tepinya ditajamkan menjadi PNG transparan (`public/merek/lambang-pcc.png`).
+Lambang ini dipakai di kepala halaman, favicon, monumen, kanopi, dan dinding resepsionis 3D. Tulisan "PCC" dan nama lembaga diset ulang dengan huruf aplikasi karena teks kecil di berkas asli tidak terbaca.
+Untuk cetak dan tampilan besar, sebaiknya disediakan berkas vektor (SVG/AI) atau PNG beresolusi tinggi; berkas pengganti bisa diunggah di Pengaturan.
 
 **D-26. Aksen tembaga diberi makna tunggal: "sedang berlangsung atau sedang dipilih".** Karena itu lampu ON AIR di 3D, lencana ON AIR di antarmuka, tombol *Mulai siaran*, dan cincin fokus papan ketik memakai warna yang sama. Aplikasi dan 3D berbicara satu bahasa.
 
@@ -116,15 +124,34 @@ Tombol menyebut hasilnya: "Simpan penjualan", "Terima UMKM ini", "Siapkan pencai
 **D-32. Three.js murni dengan material prosedural yang digambar di kanvas** (terrazzo, walnut, kain akustik, logam brushed, plester, beton halus, kaca buram), tanpa berkas tekstur eksternal.
 Hasilnya ringan (sekitar 140 kB gzip, dimuat terpisah hanya saat 3D tampil) dan warnanya diturunkan langsung dari palet aplikasi.
 
-**D-33. Denah dibangun dari data ruangan di basis data.** Ubah ukuran atau posisi di Pengaturan, dan maket ikut berubah. Pratinjau denah 2D di Pengaturan memperingatkan bila ada ruangan yang bertumpuk.
-Ukuran bawaan (pelat 24 × 16 m per lantai, 12 ruangan, 4 studio) adalah perkiraan kerja yang ditandai "belum sesuai gambar kerja" sampai administrator mengonfirmasinya.
+**D-33. Denah mengikuti sketsa pemilik program dan dibangun dari data.**
+- Lantai 1: resepsionis di kiri depan, pintu masuk di depan, Studio Live 1–2 di kiri, dan Studio Live 3–4 di kanan.
+- Lantai 2: Ruang Podcast di depan, Ruang Belajar AI dan Ruang Tim Ahli di tengah, Ruang Rapat dan dua toilet di belakang.
 
-**D-34. Gaya maket arsitek bersuasana senja.** Latar gelap hangat, matahari sore, lampu ruang hangat, dan tone mapping ACES.
-Dinding luar yang menghadap kamera otomatis diturunkan seperti maket potongan, sehingga isi ruang selalu terlihat dari sudut mana pun.
+Koordinat memakai orientasi sketsa: x dari dinding kiri, z dari dinding depan (pintu masuk). Pratinjau di Pengaturan tampil persis seperti sketsa. Maket 3D memutarnya 180° supaya fasad depan menghadap kamera.
+Ukuran meter (pelat 18 × 20 m, tinggi lantai 3,6 m) diperkirakan dari proporsi sketsa dan ditandai "belum sesuai gambar kerja" sampai dikonfirmasi.
+Setiap ruangan menyimpan sisi pintunya. Tangga yang tidak ada di sketsa ditempatkan di celah belakang tengah (x 7,5–9,5 m), satu-satunya area kosong yang sama di kedua lantai.
+Gudang konsinyasi tidak ada di sketsa, jadi tidak digambar. Pencatatan stok tetap berjalan tanpa bergantung pada ruangan.
+Ruang Podcast bisa dijadwalkan seperti studio dan punya lampu ON AIR sendiri.
 
-**D-35. Signage dirancang seperti signage gedung.** Papan nama berlapis cat bubuk hijau hutan dengan kode ruangan tembaga di samping pintu, huruf kuningan tertanam di lantai ambang pintu (terbaca dari arah datang), kotak lampu ON AIR di atas pintu studio yang menyala ketika sesi dimulai, monumen nama gedung di pelataran, dan papan petunjuk lantai di tangga.
+**D-34. Maket realistis di siang hari.**
+Pemilik program meminta hasil yang bagus dan realistis, jadi suasana senja yang gelap diganti dengan siang hari:
+- Langit gradien yang juga dipakai sebagai peta pantulan lingkungan, matahari dengan bayangan lembut, dan tone mapping ACES.
+- Ambient occlusion (GTAO, setengah resolusi) untuk bayangan kontak, dan bloom hanya untuk sumber cahaya seperti ON AIR dan ring light.
+- Lingkungan nyata: rumput, paving, kanstin, jalan bermarka, lampu jalan, pohon bertajuk halus, pagar tanaman, dan tiang bendera Merah Putih.
+- Gedung: fasad kaca bermullion aluminium dengan pintu kaca ganda dan kanopi berlogo, dinding samping berjendela (pejal di sisi studio dan toilet), tepi pelat beton, serta tangga dengan balok baja dan pagar kaca.
+- Perabot bersudut tumpul sesuai fungsi ruang: studio dengan dinding bilah walnut, rak produk, panel akustik, ring light di tripod, dan softbox; podcast dengan meja bundar dan lengan mikrofon; ruang belajar dengan komputer dan layar besar; ruang tim dengan klaster meja; ruang rapat; serta toilet berkeramik.
+- Dinding luar yang menghadap kamera dipotong setinggi ambang jendela (1 m), seperti maket potongan arsitek.
+- Geometri statis digabung per material agar panggilan gambar tetap sedikit. Peta bayangan hanya dihitung ulang setelah gerakan kamera berhenti. Di ponsel, pascaproses dan sebagian lampu dimatikan.
 
-**D-36. Momen pembuka sekali saja.** Kamera berdiri di pelataran menghadap fasad kaca dan monumen, melangkah ke pintu, lalu naik memperlihatkan seluruh lantai (7 detik).
+**D-35. Signage dirancang seperti signage gedung.**
+- Papan nama hijau hutan dengan kode ruangan berwarna jingga di samping pintu.
+- Huruf kuningan tertanam di lantai ambang pintu, terbaca dari arah datang.
+- Kotak lampu ON AIR di atas pintu studio dan ruang podcast, menyala (dengan pendaran) ketika sesi dimulai.
+- Monumen berlogo di pelataran, huruf berlogo di kanopi pintu masuk, dan dinding fitur berlogo di belakang meja resepsionis.
+- Papan direktori kedua lantai di dekat pintu masuk, dan tiang petunjuk lantai di kaki tangga.
+
+**D-36. Momen pembuka sekali saja.** Kamera berdiri di pelataran menghadap gedung dua lantai yang utuh, melangkah ke pintu masuk, lalu naik. Saat itu lantai 2 terangkat dan memudar sehingga seluruh lantai 1 terlihat (7,5 detik).
 Bisa dilewati dengan tombol *Lewati*, klik, atau Escape. Momen ini tidak diputar bila `prefers-reduced-motion` aktif, dan tidak diulang setelah pernah dilihat (disimpan di `localStorage`).
 
 **D-37. Aksesibilitas 3D.** Kanvas memiliki deskripsi teks yang selalu terbarui, termasuk jumlah studio yang sedang siaran. Daftar ruangan di samping maket berupa tombol yang bisa dipakai dengan papan ketik.

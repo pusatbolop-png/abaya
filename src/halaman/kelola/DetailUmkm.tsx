@@ -137,7 +137,7 @@ export function DetailUmkm() {
                       {i.dokumen}
                       {i.wajib && <span className="label-wajib">wajib</span>}
                     </h3>
-                    <p className="redup kecil">{i.instansi || 'Instansi penerbit belum diatur di Pengaturan'}</p>
+                    <p className="redup kecil">{i.instansi || 'Instansi belum diatur di Pengaturan'}</p>
                     <p className="kecil">
                       {i.nomor ? (
                         <>

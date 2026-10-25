@@ -1,11 +1,28 @@
-import type { DataRuang } from './adegan';
+import type { DataDenah, DataRuang } from './adegan';
 import { statusRuang, type SesiRuang } from './Gedung3D';
 
-/** Denah datar sebagai cadangan bila peramban tidak mendukung WebGL. */
-export function Denah2D({ ruangan, sesi, dipilih, pilih }: { ruangan: DataRuang[]; sesi: SesiRuang[]; dipilih: number | null; pilih: (id: number | null) => void }) {
+/** Denah datar sebagai cadangan bila peramban tidak mendukung WebGL. Orientasinya sama dengan sketsa: pintu masuk di atas. */
+export function Denah2D({
+  ruangan,
+  denah,
+  sesi,
+  dipilih,
+  pilih,
+}: {
+  ruangan: DataRuang[];
+  denah: DataDenah;
+  sesi: SesiRuang[];
+  dipilih: number | null;
+  pilih: (id: number | null) => void;
+}) {
+  const pm = denah.pintuMasuk;
   return (
-    <svg className="denah-2d" viewBox="-0.5 -0.5 25 17" role="img" aria-label="Denah datar lantai ini">
-      <rect x="0" y="0" width="24" height="16" fill="#1f2622" stroke="#3a443e" strokeWidth="0.08" />
+    <svg className="denah-2d" viewBox={`-0.5 -1.2 ${denah.lebar + 1} ${denah.panjang + 1.7}`} role="img" aria-label="Denah datar lantai ini, pintu masuk di sisi atas">
+      <rect x="0" y="0" width={denah.lebar} height={denah.panjang} fill="#1f2622" stroke="#3a443e" strokeWidth="0.08" />
+      <rect x={pm.x} y="-0.12" width={pm.lebar} height="0.24" fill="#f28a3c" />
+      <text x={pm.x + pm.lebar / 2} y="-0.45" fill="#c9c3b6" fontSize="0.5" textAnchor="middle" fontFamily="Plus Jakarta Sans, sans-serif">
+        Pintu masuk
+      </text>
       {ruangan.map((r) => {
         const { berlangsung } = statusRuang(r, sesi);
         const aktif = dipilih === r.id;
@@ -17,13 +34,13 @@ export function Denah2D({ ruangan, sesi, dipilih, pilih }: { ruangan: DataRuang[
               width={r.lebar - 0.16}
               height={r.panjang - 0.16}
               fill={aktif ? '#3b4a40' : '#2a332e'}
-              stroke={berlangsung ? '#e3a27c' : '#56625a'}
+              stroke={berlangsung ? '#f28a3c' : '#56625a'}
               strokeWidth={berlangsung ? 0.12 : 0.05}
             />
-            <text x={r.x + 0.5} y={r.z + 1.1} fill="#e3a27c" fontSize="0.55" fontFamily="Plus Jakarta Sans, sans-serif" fontWeight="600">
+            <text x={r.x + 0.4} y={r.z + 0.9} fill="#f28a3c" fontSize="0.45" fontFamily="Plus Jakarta Sans, sans-serif" fontWeight="600">
               {r.kode}
             </text>
-            <text x={r.x + 0.5} y={r.z + 1.9} fill="#f4f1ea" fontSize="0.62" fontFamily="Plus Jakarta Sans, sans-serif" fontWeight="600">
+            <text x={r.x + 0.4} y={r.z + 1.55} fill="#f4f1ea" fontSize="0.5" fontFamily="Plus Jakarta Sans, sans-serif" fontWeight="600">
               {r.nama}
             </text>
           </g>

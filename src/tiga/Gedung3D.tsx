@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { AdeganGedung, DataRuang, Identitas } from './adegan';
+import type { AdeganGedung, DataDenah, DataRuang, Identitas } from './adegan';
 import { Ikon } from '../ui/Ikon';
-import { JENIS_RUANGAN, type JenisRuangan } from '../../shared/konstanta';
+import { JENIS_RUANGAN, RUANG_SIARAN, type JenisRuangan } from '../../shared/konstanta';
 import { jam } from '../../shared/format';
 import { Denah2D } from './Denah2D';
 
@@ -20,6 +20,7 @@ export interface SesiRuang {
 interface Props {
   ruangan: DataRuang[];
   sesi: SesiRuang[];
+  denah: DataDenah;
   identitas: Identitas;
   /** Isi tambahan pada panel ruangan terpilih, misalnya tautan ke sesi. */
   aksiRuang?: (r: DataRuang, s: { berlangsung?: SesiRuang; berikutnya?: SesiRuang }) => ReactNode;
@@ -61,7 +62,7 @@ export function statusRuang(r: DataRuang, sesi: SesiRuang[]) {
   return { berlangsung, berikutnya };
 }
 
-export default function Gedung3D({ ruangan, sesi, identitas, aksiRuang, label = 'Maket tiga dimensi gedung', className }: Props) {
+export default function Gedung3D({ ruangan, sesi, denah, identitas, aksiRuang, label = 'Maket tiga dimensi gedung', className }: Props) {
   const kanvas = useRef<HTMLCanvasElement>(null);
   const adegan = useRef<AdeganGedung | null>(null);
   const [webgl] = useState(bolehWebgl);
@@ -74,7 +75,7 @@ export default function Gedung3D({ ruangan, sesi, identitas, aksiRuang, label = 
 
   const daftarLantai = useMemo(() => [...new Set(ruangan.map((r) => r.lantai))].sort(), [ruangan]);
   const siaranIds = useMemo(() => sesi.filter((s) => s.status === 'berlangsung').map((s) => s.ruanganId), [sesi]);
-  const kunciRuang = useMemo(() => JSON.stringify(ruangan) + JSON.stringify(identitas), [ruangan, identitas]);
+  const kunciRuang = useMemo(() => JSON.stringify(ruangan) + JSON.stringify(denah) + JSON.stringify(identitas), [ruangan, denah, identitas]);
 
   // Buat adegan sekali.
   useEffect(() => {
@@ -109,7 +110,7 @@ export default function Gedung3D({ ruangan, sesi, identitas, aksiRuang, label = 
     const a = adegan.current;
     if (!siap || !a) return;
     let batal = false;
-    void a.bangun(ruangan, identitas).then(() => {
+    void a.bangun(ruangan, denah, identitas).then(() => {
       if (batal) return;
       a.aturSiaran(siaranIds);
       if (!sudahDibangun.current) {
@@ -172,7 +173,7 @@ export default function Gedung3D({ ruangan, sesi, identitas, aksiRuang, label = 
   if (!webgl) {
     return (
       <div className={['gedung3d', 'tanpa-webgl', className].filter(Boolean).join(' ')}>
-        <Denah2D ruangan={ruangLantai} sesi={sesi} dipilih={dipilih} pilih={pilihRuang} />
+        <Denah2D ruangan={ruangLantai} denah={denah} sesi={sesi} dipilih={dipilih} pilih={pilihRuang} />
         <PanelLantai daftar={daftarLantai} lantai={lantai} ganti={gantiLantai} />
         <DaftarRuang ruang={ruangLantai} sesi={sesi} dipilih={dipilih} diarah={diarah} pilih={pilihRuang} />
         {terpilih && st && <PanelRuang r={terpilih} st={st} tutup={() => pilihRuang(null)} aksi={aksiRuang?.(terpilih, st)} />}
@@ -309,7 +310,7 @@ function PanelRuang({
           </div>
         ) : null}
       </dl>
-      {r.jenis === 'studio' && (
+      {RUANG_SIARAN.includes(r.jenis as JenisRuangan) && (
         <div className="g3-sesi">
           {st.berlangsung ? (
             <>

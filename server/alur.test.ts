@@ -7,7 +7,6 @@ import path from 'node:path';
 process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'pcc-uji-'));
 const { bukaDb } = await import('./db');
 const { buatApp } = await import('./app');
-const { hitungPotongan } = await import('./domain/dana');
 
 const db = bukaDb(':memory:');
 const app = buatApp(db);
@@ -27,12 +26,6 @@ async function minta(metode: string, url: string, isi?: unknown) {
   const jenis = res.headers.get('content-type') ?? '';
   return { status: res.status, data: jenis.includes('json') ? await res.json() : await res.arrayBuffer(), jenis };
 }
-
-test('potongan dibulatkan dan tidak pernah negatif', () => {
-  assert.equal(hitungPotongan(100_000, 2.5), 2500);
-  assert.equal(hitungPotongan(-5000, 10), 0);
-  assert.equal(hitungPotongan(12_345, 0), 0);
-});
 
 test('alur lengkap: daftar → seleksi → stok → live → jual → retur → dana → ekspor', async () => {
   // Siapkan administrator pertama.
@@ -130,17 +123,14 @@ test('alur lengkap: daftar → seleksi → stok → live → jual → retur → 
   stok = (await minta('GET', '/api/stok')).data as { daftar: { id: number; stok: number }[] };
   assert.equal(stok.daftar.find((p) => p.id === produkId)!.stok, 12);
 
-  // Dana: potongan 10%, neto 90.000 → siap cair 81.000.
-  await minta('PUT', '/api/pengaturan/keuangan', { potonganPersen: 10 });
-  let dana = (await minta('GET', '/api/dana')).data as { daftar: { umkmId: number; siapCair: number; neto: number }[] };
-  const posisi = dana.daftar.find((d) => d.umkmId === umkmId)!;
-  assert.equal(posisi.neto, 90_000);
-  assert.equal(posisi.siapCair, 81_000);
+  // Dana tanpa potongan jasa: 180.000 − retur 90.000 = 90.000 siap dicairkan.
+  let dana = (await minta('GET', '/api/dana')).data as { daftar: { umkmId: number; siapCair: number }[] };
+  assert.equal(dana.daftar.find((d) => d.umkmId === umkmId)!.siapCair, 90_000);
   r = await minta('POST', '/api/dana/pencairan', { umkm_id: umkmId });
   assert.equal(r.status, 201, JSON.stringify(r.data));
   const cairId = (r.data as { id: number }).id;
   assert.equal((await minta('POST', `/api/dana/pencairan/${cairId}/bayar`, { referensi_transfer: 'TRF-001' })).status, 200);
-  dana = (await minta('GET', '/api/dana')).data as { daftar: { umkmId: number; siapCair: number; neto: number }[] };
+  dana = (await minta('GET', '/api/dana')).data as { daftar: { umkmId: number; siapCair: number }[] };
   assert.equal(dana.daftar.find((d) => d.umkmId === umkmId)!.siapCair, 0);
   assert.equal((await minta('POST', '/api/dana/pencairan', { umkm_id: umkmId })).status, 409);
 
