@@ -16,7 +16,8 @@
     "demo:ulang": "NODE_ENV=production tsx server/demo.ts --ulang",
     "test": "node --import tsx --test server/*.test.ts",
     "e2e": "node tests/e2e/alur.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pratinjau": "node scripts/pratinjau.mjs"
   },
   "dependencies": {
     "@fontsource-variable/newsreader": "5.2.8",

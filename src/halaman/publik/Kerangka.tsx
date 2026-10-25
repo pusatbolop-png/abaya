@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation } from 'react-router';
 import { useEffect } from 'react';
 import { Merek } from '../../ui/Merek';
 import { useInfo, useSesi } from '../../lib/konteks';
+import { AKUN_PRATINJAU, PRATINJAU } from '../../lib/pratinjau';
 import { tampilWa, tautanWa } from '../../../shared/format';
 
 export function KerangkaPublik() {
@@ -17,7 +18,13 @@ export function KerangkaPublik() {
       <a href="#isi" className="lompat-isi">
         Lompat ke isi
       </a>
-      {info?.demo && <div className="pita-demo">Mode demo: semua data di sini adalah data contoh dan bukan data resmi.</div>}
+      {PRATINJAU ? (
+        <div className="pita-demo">
+          Pratinjau dengan data contoh. Untuk membuka ruang kerja, pilih Masuk lalu pakai {AKUN_PRATINJAU.email} dengan kata sandi {AKUN_PRATINJAU.sandi}.
+        </div>
+      ) : (
+        info?.demo && <div className="pita-demo">Mode demo: semua data di sini adalah data contoh dan bukan data resmi.</div>
+      )}
       <header className="kepala-publik">
         <Merek />
         <nav aria-label="Navigasi utama">

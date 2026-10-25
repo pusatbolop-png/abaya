@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useInfo, useSesi } from '../../lib/konteks';
 import { ketikaSesiHabis } from '../../lib/api';
+import { PRATINJAU } from '../../lib/pratinjau';
 import { useBerkala, useData } from '../../lib/data';
 import { Merek } from '../../ui/Merek';
 import { Ikon, type NamaIkon } from '../../ui/Ikon';
@@ -65,10 +66,12 @@ export function KerangkaKelola() {
   const ringkas = useData<{ menunggu: number; sesi: { status: string }[] }>(pengguna ? '/api/ringkasan' : null);
   useBerkala(() => void ringkas.muatUlang(), 45_000);
 
+  const jalur = useRef(lokasi.pathname);
+  jalur.current = lokasi.pathname;
   useEffect(() => {
     ketikaSesiHabis(() => {
       setPengguna(null);
-      navigasi(`/masuk?habis=1&ke=${encodeURIComponent(window.location.pathname)}`, { replace: true });
+      navigasi(`/masuk?habis=1&ke=${encodeURIComponent(jalur.current)}`, { replace: true });
     });
     return () => ketikaSesiHabis(() => {});
   }, [navigasi, setPengguna]);
@@ -123,7 +126,13 @@ export function KerangkaKelola() {
       <a href="#isi" className="lompat-isi">
         Lompat ke isi
       </a>
-      {info?.demo && <div className="pita-demo">Mode demo: data di ruang kerja ini adalah data contoh dan bukan data resmi.</div>}
+      {info?.demo && (
+        <div className="pita-demo">
+          {PRATINJAU
+            ? 'Pratinjau dengan data contoh. Anda bisa menjelajahi semua halaman, tetapi perubahan tidak disimpan.'
+            : 'Mode demo: data di ruang kerja ini adalah data contoh dan bukan data resmi.'}
+        </div>
+      )}
       <div className="kelola">
         <aside className="rel">
           <Merek ke="/kelola" />

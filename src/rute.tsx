@@ -1,4 +1,5 @@
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter, createMemoryRouter, Navigate, type RouteObject } from 'react-router';
+import { PRATINJAU } from './lib/pratinjau';
 import { KerangkaPublik } from './halaman/publik/Kerangka';
 import { Beranda } from './halaman/publik/Beranda';
 import { Daftar, DaftarTerkirim } from './halaman/publik/Daftar';
@@ -18,7 +19,7 @@ import { Laporan } from './halaman/kelola/Laporan';
 import { Pengaturan } from './halaman/kelola/Pengaturan';
 import { TidakDitemukan } from './halaman/TidakDitemukan';
 
-export const router = createBrowserRouter([
+const rute: RouteObject[] = [
   {
     element: <KerangkaPublik />,
     children: [
@@ -52,4 +53,7 @@ export const router = createBrowserRouter([
   },
   { path: 'beranda', element: <Navigate to="/" replace /> },
   { path: '*', element: <TidakDitemukan publik /> },
-]);
+];
+
+// Pratinjau berjalan di dalam bingkai tanpa alamat sendiri, jadi riwayat halaman disimpan di memori.
+export const router = PRATINJAU ? createMemoryRouter(rute) : createBrowserRouter(rute);

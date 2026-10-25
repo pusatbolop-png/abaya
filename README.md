@@ -30,6 +30,14 @@ npm run demo:ulang                # hapus dan buat ulang data contoh
 Masuk dengan `admin@demo.pcc` atau `petugas@demo.pcc`, kata sandi `demo-pcc-2026`.
 Basis data demo ditandai khusus, dan `npm start` menolak memakainya, sehingga data contoh tidak pernah terbawa ke produksi.
 
+### Pratinjau tanpa server
+
+```bash
+npm run build && npm run pratinjau   # hasil: dist/pratinjau/pcc-pratinjau.html
+```
+
+Menghasilkan satu berkas HTML berisi aplikasi lengkap dengan data demo yang direkam, untuk dibagikan kepada pimpinan atau mitra. Berkas ini bisa dibuka di ponsel maupun PC. Semua halaman bisa dijelajahi, tetapi perubahan data tidak disimpan.
+
 ### Pengembangan
 
 ```bash
