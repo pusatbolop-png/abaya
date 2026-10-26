@@ -193,6 +193,11 @@ Atas permintaan pemilik program, semua staf di maket bergerak seperti manusia.
   - Jalur dicari dengan A* pada kisi 25 cm yang menghindari ruangan, tangga, dan perabot aula.
   - Host tidak meninggalkan studio yang sedang siaran. Satu resepsionis selalu berjaga, dan pengisi podcast tetap di mejanya.
 - Staf Ruang Tim Ahli adalah data (kolom `staf` di tabel ruangan, migrasi 4). Admin mengubahnya di Pengaturan → Ruangan. Namanya tampil di papan nama meja dan di panel informasi ruangan maket.
+- Gerak dibuat wajar dan diukur otomatis dari klipnya saat dimuat:
+  - Klip jalan diputar sesuai laju badan (laju alami telapak saat menapak, 1,23–1,41 m/detik, diskalakan ke 1,1 m/detik dan melambat di tikungan). Telapak tidak lagi tergelincir: gelincirnya 0,03–0,09 m/detik, dari semula 0,19–0,36.
+  - Klip berdiri disamakan tingginya agar pergelangan kaki setinggi pose ikat. Sebelumnya kaki melayang 3 cm saat berjalan dan tenggelam 5 cm saat berbicara.
+  - Klip duduk disamakan setinggi dudukan kursi (pinggul 0,58 m; dudukan kursi kayu dan kantor ±47 cm), lalu kedua kaki ditapakkan ke lantai dengan IK dua tulang. Sebelumnya pinggul berpindah antara 0,62 dan 0,74 m saat berganti klip duduk, sehingga orang melayang dan naik-turun di kursi.
+  - Berbalik di tempat memakai pose diam, bukan klip jalan, dan dua orang tidak menuju titik singgah yang sama.
 - Performa: karakter tidak ikut peta bayangan (memakai bayangan bundar lembut di kaki), dan animasi berjalan sekitar 30 bingkai per detik hanya di lantai yang tampak. Dengan `prefers-reduced-motion`, staf diam dalam satu pose kerja.
 - Figur prosedural tampil sampai karakternya termuat, dan tetap dipakai bila pemuatan gagal.
 

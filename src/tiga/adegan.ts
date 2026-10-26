@@ -1554,7 +1554,7 @@ export class AdeganGedung {
         kerja: () => ['diam'],
         tujuan: layan,
         hadapTujuan: hadapLayan,
-        selang: [3 + i, 5],
+        selang: [7 + 2 * i, 6],
         singgah: gerak,
         varian,
         figur: PRAMUSAJI[i],
