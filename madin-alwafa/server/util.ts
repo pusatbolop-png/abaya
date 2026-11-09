@@ -1,7 +1,7 @@
-import crypto from 'node:crypto';
 import type { Context } from 'hono';
 import { z } from 'zod';
 import type { DB } from './db';
+import { angkaAcak } from './kripto';
 
 export class GalatPengguna extends Error {
   constructor(
@@ -131,7 +131,7 @@ export function catatLog(db: DB, pelaku: string, aksi: string, detail?: string) 
 
 const HURUF = 'abcdefghjkmnpqrstuvwxyz';
 const ANGKA = '23456789';
-const acak = (abjad: string) => abjad[crypto.randomInt(abjad.length)];
+const acak = (abjad: string) => abjad[angkaAcak(abjad.length)];
 
 /** Sandi awal wali santri: 4 huruf + 4 angka tanpa karakter yang mirip (l/1, o/0). */
 export function buatSandiAwal(): string {

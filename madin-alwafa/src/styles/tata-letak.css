@@ -42,7 +42,7 @@
 }
 .sisi {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -133,7 +133,7 @@
 }
 .bilah-atas {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 15;
   display: none;
   align-items: center;
@@ -162,6 +162,8 @@
   .sisi {
     position: fixed;
     inset: 0 auto 0 0;
+    padding-top: calc(18px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     width: min(300px, 86vw);
     transform: translateX(-104%);
     transition: transform var(--sedang);
@@ -265,7 +267,7 @@
 }
 .atas-wali {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 20;
   border-bottom: 1px solid var(--garis);
   background: rgba(3, 18, 14, 0.62);

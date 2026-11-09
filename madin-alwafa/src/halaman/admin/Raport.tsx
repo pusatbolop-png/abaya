@@ -8,6 +8,7 @@ import { useToast } from '../../lib/toast';
 import type { Kelas, Periode } from '../../lib/tipe';
 import { Avatar, GalatMuat, KepalaHalaman, Kosong, Lencana, Memuat, Modal, Pesan, Tombol, useIngat, useJudul, useKonfirmasi } from '../../ui/dasar';
 import { ASPEK_KEPRIBADIAN, NILAI_KEPRIBADIAN } from '../../../shared/konstanta';
+import { PRATINJAU } from '../../lib/pratinjau';
 import { namaSemester, waktu } from '../../../shared/format';
 
 export interface BarisRaport {
@@ -104,7 +105,11 @@ export default function RaportKelas() {
               <Tombol ikon={<SlidersHorizontal />} onClick={() => setIsiMassal(true)} disabled={!data.daftar.some((d) => d.status === 'draf')}>
                 Isi kepribadian
               </Tombol>
-              <Tombol ikon={<Printer />} onClick={() => window.open(`/admin/raport/${data.kelas.id}/${data.periode.id}/cetak`, '_blank')} disabled={!data.daftar.length}>
+              <Tombol ikon={<Printer />} onClick={() => {
+                  const alamat = `/admin/raport/${data.kelas.id}/${data.periode.id}/cetak`;
+                  if (PRATINJAU) navigasi(alamat);
+                  else window.open(alamat, '_blank');
+                }} disabled={!data.daftar.length}>
                 Cetak semua
               </Tombol>
               {admin && (

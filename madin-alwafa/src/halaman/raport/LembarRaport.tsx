@@ -1,6 +1,7 @@
 import type { DataRaport } from '../../lib/tipe';
 import { Lambang, SudutHias } from '../../ui/Lambang';
 import { KodeQr } from './KodeQr';
+import { PRATINJAU } from '../../lib/pratinjau';
 import { hariIni, namaSemester, tanggalHijriah, tanggalPanjang } from '../../../shared/format';
 
 const titik = '........................';
@@ -8,7 +9,8 @@ const titik = '........................';
 /** Lembar raport A4. Dipakai pengurus (pratinjau/cetak) dan wali santri (lihat/unduh). */
 export function LembarRaport({ d }: { d: DataRaport }) {
   const tanggal = d.periode.tanggalRaport ?? (d.diterbitkan ? d.diterbitkan.slice(0, 10) : hariIni());
-  const alamatVerifikasi = d.kode ? `${location.origin}/verifikasi/${d.kode}` : '';
+  const alamatVerifikasi = !d.kode ? '' : PRATINJAU ? d.kode : `${location.origin}/verifikasi/${d.kode}`;
+  const alamatSitus = PRATINJAU ? 'alamat aplikasi madrasah' : location.host;
   const kurang = (m: DataRaport['mapel'][number]) => m.akhir !== null && m.akhir < m.kkm;
   const s = d.santri;
 
@@ -245,7 +247,7 @@ export function LembarRaport({ d }: { d: DataRaport }) {
                   Kode verifikasi <span className="kaki-raport__kode">{d.kode}</span>
                 </span>
                 <span>
-                  Pindai kode QR atau buka <b>{location.host}/verifikasi</b> untuk memastikan raport ini asli dan diterbitkan oleh {d.lembaga.singkatan}.
+                  Pindai kode QR atau buka <b>{alamatSitus}/verifikasi</b> untuk memastikan raport ini asli dan diterbitkan oleh {d.lembaga.singkatan}.
                 </span>
               </div>
             </>

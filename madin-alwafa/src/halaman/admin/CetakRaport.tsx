@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useParams } from 'react-router';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { Printer, X } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useSesi } from '../../lib/sesi';
@@ -12,6 +12,7 @@ import type { DaftarRaport } from './Raport';
 export default function CetakRaport() {
   const { kelasId, periodeId } = useParams();
   const { pengurus } = useSesi();
+  const navigasi = useNavigate();
   const [daftar, setDaftar] = useState<DataRaport[]>([]);
   const [total, setTotal] = useState(0);
   const [galat, setGalat] = useState('');
@@ -55,7 +56,7 @@ export default function CetakRaport() {
           {!selesai && <Bilah persen={total ? (daftar.length / total) * 100 : 5} />}
           {selesai && draf > 0 && <span className="kecil redup">{draf} raport masih draf dan dicetak dengan tanda DRAF.</span>}
         </div>
-        <Tombol ikon={<X />} onClick={() => window.close()}>
+        <Tombol ikon={<X />} onClick={() => (window.opener ? window.close() : navigasi(-1))}>
           Tutup
         </Tombol>
         <Tombol varian="utama" ikon={<Printer />} onClick={() => window.print()} disabled={!selesai}>

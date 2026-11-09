@@ -973,3 +973,33 @@ input[type='time'].masukan {
 .sakelar input:checked::after {
   transform: translateX(18px);
 }
+
+/* ——— Layar muat pratinjau mandiri ——— */
+.memuat-pratinjau {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+}
+.memuat-pratinjau b {
+  font-family: var(--f-display);
+  font-size: 26px;
+  font-weight: 600;
+}
+.memuat-pratinjau span {
+  color: var(--teks-2);
+  font-size: 14px;
+  max-width: 360px;
+}
+.memuat-pratinjau__cincin {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--emas-400);
+  animation: putar 0.9s linear infinite;
+  margin-bottom: 8px;
+}

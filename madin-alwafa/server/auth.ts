@@ -1,5 +1,3 @@
-import crypto from 'node:crypto';
-import { promisify } from 'node:util';
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { getConnInfo } from '@hono/node-server/conninfo';
@@ -7,9 +5,9 @@ import type { DB } from './db';
 import { config } from './config';
 import { GalatPengguna, sekarang } from './util';
 import type { PeranPengurus } from '../shared/konstanta';
+import { cocokSandi, hashSandi, hashToken, tokenAcak } from './kripto';
 
-const scrypt = promisify(crypto.scrypt) as (s: string, salt: Buffer, len: number, opt: crypto.ScryptOptions) => Promise<Buffer>;
-const OPSI_SCRYPT = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
+export { cocokSandi, hashSandi };
 export const NAMA_COOKIE = 'madin_sesi';
 
 export interface PengurusMasuk {
@@ -27,22 +25,6 @@ export interface WaliMasuk {
 export type VarPengurus = { pengurus: PengurusMasuk };
 export type VarWali = { wali: WaliMasuk };
 
-export async function hashSandi(sandi: string): Promise<string> {
-  const salt = crypto.randomBytes(16);
-  const kunci = await scrypt(sandi.normalize('NFKC'), salt, 32, OPSI_SCRYPT);
-  return `scrypt$${salt.toString('base64')}$${kunci.toString('base64')}`;
-}
-
-export async function cocokSandi(sandi: string, tersimpan: string): Promise<boolean> {
-  const [algo, saltB64, kunciB64] = tersimpan.split('$');
-  if (algo !== 'scrypt' || !saltB64 || !kunciB64) return false;
-  const harap = Buffer.from(kunciB64, 'base64');
-  const kunci = await scrypt(sandi.normalize('NFKC'), Buffer.from(saltB64, 'base64'), harap.length, OPSI_SCRYPT);
-  return crypto.timingSafeEqual(kunci, harap);
-}
-
-const hashToken = (t: string) => crypto.createHash('sha256').update(t).digest('hex');
-
 function cookieAman(c: Context) {
   if (config.cookieSecure !== 'otomatis') return config.cookieSecure;
   if (config.trustProxy && c.req.header('x-forwarded-proto') === 'https') return true;
@@ -50,7 +32,7 @@ function cookieAman(c: Context) {
 }
 
 export function buatSesi(c: Context, db: DB, jenis: 'pengurus' | 'wali', subjekId: number) {
-  const token = crypto.randomBytes(32).toString('base64url');
+  const token = tokenAcak();
   const kedaluwarsa = new Date(Date.now() + config.lamaSesiJam * 3600_000);
   db.prepare('DELETE FROM sesi WHERE kedaluwarsa < ?').run(sekarang());
   db.prepare('INSERT INTO sesi (token, jenis, subjek_id, kedaluwarsa) VALUES (?, ?, ?, ?)').run(

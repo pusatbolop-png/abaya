@@ -10,6 +10,15 @@ html {
   scrollbar-gutter: stable;
 }
 
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 40;
+  background: var(--bg);
+}
+
 body {
   margin: 0;
   min-height: 100dvh;
@@ -111,7 +120,7 @@ p {
   content: '';
   position: absolute;
   inset: -2px;
-  background-image: url('/pola.svg');
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MiIgaGVpZ2h0PSI5MiIgdmlld0JveD0iMCAwIDkyIDkyIiBmaWxsPSJub25lIiBzdHJva2U9IiNmM2RkYTQiIHN0cm9rZS13aWR0aD0iMSI+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDYgNDYpIj4KICAgIDxyZWN0IHg9Ii0xNyIgeT0iLTE3IiB3aWR0aD0iMzQiIGhlaWdodD0iMzQiLz4KICAgIDxyZWN0IHg9Ii0xNyIgeT0iLTE3IiB3aWR0aD0iMzQiIGhlaWdodD0iMzQiIHRyYW5zZm9ybT0icm90YXRlKDQ1KSIvPgogICAgPGNpcmNsZSByPSI4Ii8+CiAgPC9nPgogIDxwYXRoIGQ9Ik0wIDBsMTIgMTJNOTIgMEw4MCAxMk0wIDkybDEyLTEyTTkyIDkyTDgwIDgwTTQ2IDB2MTBNNDYgOTJWODJNMCA0NmgxME05MiA0Nkg4MiIvPgo8L3N2Zz4=');
   background-size: 92px 92px;
   opacity: 0.075;
   mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 85%);

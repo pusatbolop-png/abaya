@@ -54,6 +54,17 @@ Halaman masuk demo menampilkan akun contoh dan tombol *Isi otomatis*:
 pengurus `admin` / `demo-wafa-2026`, wali santri NIS yang ditampilkan / `wafa2026`.
 Semua nama dan angka demo adalah rekaan. `npm start` menolak memakai basis data demo, sehingga data contoh tidak terbawa ke data sungguhan.
 
+### Pratinjau tanpa server
+
+```bash
+npm run pratinjau     # hasil: dist/pratinjau/madin-alwafa-pratinjau.html (±3 MB)
+```
+
+Satu berkas HTML berisi aplikasi lengkap untuk ditunjukkan ke klien tanpa VPS. Server (Hono) dan basis data (SQLite versi
+JavaScript, sql.js) ikut berjalan di peramban, sehingga semua menu bisa dicoba: isi absensi, nilai, terbitkan raport, tambah santri.
+Data contoh dibuat saat halaman dibuka; perubahan hanya ada di tab itu dan hilang saat dimuat ulang. Cetak/PDF dimatikan di pratinjau.
+Bagian khusus Node diganti padanannya di `src/pratinjau/` lewat `vite.pratinjau.config.ts`; kode aplikasi dan server sama dengan versi terpasang.
+
 ### Pengembangan
 
 ```bash

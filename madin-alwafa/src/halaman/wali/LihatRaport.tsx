@@ -44,7 +44,7 @@ export default function LihatRaport() {
               <FileText /> Lembar raport
             </button>
           </div>
-          <Tombol varian="utama" ikon={<Download />} onClick={unduh}>
+          <Tombol varian="utama" ikon={<Download />} onClick={unduh} aria-label="Unduh PDF">
             <span className="sembunyi-ponsel">Unduh PDF</span>
           </Tombol>
         </div>

@@ -1,5 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router';
+import { createBrowserRouter, createMemoryRouter, Navigate, Outlet, RouterProvider } from 'react-router';
+import { PRATINJAU } from './lib/pratinjau';
 import { SesiProvider, useSesi } from './lib/sesi';
 import { ToastProvider } from './lib/toast';
 import { KonfirmasiProvider, Memuat } from './ui/dasar';
@@ -79,7 +80,7 @@ function Akar() {
   );
 }
 
-const router = createBrowserRouter([
+const router = (PRATINJAU ? createMemoryRouter : createBrowserRouter)([
   {
     element: <Akar />,
     children: [
