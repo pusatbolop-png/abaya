@@ -1,0 +1,75 @@
+/* Token desain Madin Al-Wafa: malam zamrud, kaca buram, dan aksen emas. */
+:root {
+  color-scheme: dark;
+
+  --f-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-display: 'Cormorant Garamond', 'Iowan Old Style', 'Times New Roman', serif;
+  --f-arab: 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
+
+  --bg: #03110d;
+  --bg-2: #061a14;
+  --zamrud-900: #042119;
+  --zamrud-800: #073326;
+  --zamrud-700: #0c4a38;
+  --zamrud-600: #117055;
+  --zamrud-500: #1a9c76;
+  --zamrud-400: #3cc79c;
+  --zamrud-300: #7fe6c4;
+  --emas-700: #8f6d24;
+  --emas-600: #b48b36;
+  --emas-500: #d6b061;
+  --emas-400: #e6c67f;
+  --emas-300: #f3dda4;
+  --emas-200: #faecc8;
+
+  --teks: #f2f6f3;
+  --teks-2: rgba(230, 241, 235, 0.76);
+  --teks-3: rgba(230, 241, 235, 0.54);
+  --teks-emas: var(--emas-300);
+
+  --kaca-1: rgba(255, 255, 255, 0.045);
+  --kaca-2: rgba(255, 255, 255, 0.075);
+  --kaca-3: rgba(255, 255, 255, 0.11);
+  --kaca-4: rgba(255, 255, 255, 0.16);
+  --kaca-gelap: rgba(3, 18, 14, 0.55);
+  --garis: rgba(255, 255, 255, 0.11);
+  --garis-2: rgba(255, 255, 255, 0.19);
+  --garis-emas: rgba(243, 221, 164, 0.34);
+
+  --kabur: blur(22px) saturate(155%);
+  --kabur-tipis: blur(12px) saturate(140%);
+  --bayang-1: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 18px 44px -24px rgba(0, 0, 0, 0.7);
+  --bayang-2: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 30px 80px -28px rgba(0, 0, 0, 0.85);
+  --cahaya-emas: 0 0 0 1px rgba(243, 221, 164, 0.4), 0 10px 30px -10px rgba(214, 176, 97, 0.55);
+
+  --ok: #6be3b7;
+  --ok-latar: rgba(107, 227, 183, 0.13);
+  --waspada: #f3c66f;
+  --waspada-latar: rgba(243, 198, 111, 0.14);
+  --bahaya: #ff958a;
+  --bahaya-latar: rgba(255, 149, 138, 0.14);
+  --info: #93c9ff;
+  --info-latar: rgba(147, 201, 255, 0.13);
+  --putra: #7fd8ff;
+  --putri: #f6b3cf;
+
+  --r-kecil: 10px;
+  --r: 14px;
+  --r-besar: 22px;
+  --r-xl: 30px;
+
+  --cepat: 160ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sedang: 320ms cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --lebar-sisi: 268px;
+  --tinggi-atas: 64px;
+  --tepi: clamp(16px, 3.4vw, 36px);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --kaca-1: rgba(12, 46, 36, 0.92);
+    --kaca-2: rgba(16, 56, 44, 0.94);
+    --kaca-3: rgba(22, 66, 52, 0.96);
+  }
+}

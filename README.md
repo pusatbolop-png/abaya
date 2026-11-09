@@ -1,5 +1,7 @@
 # Pasuruan Creative Center — sistem kerja
 
+> Folder [`madin-alwafa/`](madin-alwafa/README.md) berisi aplikasi terpisah: sistem informasi dan raport online Madrasah Diniyah Al-Wafa.
+
 Aplikasi web untuk ruang kreatif milik daerah. Isinya:
 
 - **Halaman publik**: beranda dengan maket 3D gedung, formulir pendaftaran UMKM (dengan unggah dokumen izin), dan cek status pendaftaran.

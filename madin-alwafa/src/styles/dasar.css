@@ -1,0 +1,306 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--teks);
+  font-family: var(--f-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+svg {
+  flex-shrink: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--emas-300);
+  text-decoration-color: rgba(243, 221, 164, 0.4);
+  text-underline-offset: 3px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0;
+}
+
+::selection {
+  background: rgba(214, 176, 97, 0.4);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--emas-300);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Latar: cahaya zamrud dan emas yang bergeser pelan di atas pola bintang delapan. */
+.latar {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(70vmax 60vmax at 8% -12%, rgba(26, 156, 118, 0.38), transparent 62%),
+    radial-gradient(60vmax 55vmax at 105% 4%, rgba(12, 74, 56, 0.75), transparent 60%),
+    radial-gradient(48vmax 42vmax at 78% 108%, rgba(214, 176, 97, 0.2), transparent 64%),
+    radial-gradient(55vmax 50vmax at -6% 104%, rgba(9, 72, 84, 0.42), transparent 62%),
+    linear-gradient(180deg, #03110d 0%, #05170f 55%, #03100c 100%);
+  pointer-events: none;
+}
+.latar::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background-image: url('/pola.svg');
+  background-size: 92px 92px;
+  opacity: 0.075;
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 85%);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 85%);
+}
+.latar__bola {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  will-change: transform;
+}
+.latar__bola--1 {
+  width: 38vmax;
+  height: 38vmax;
+  left: -8vmax;
+  top: 18vh;
+  background: radial-gradient(circle, rgba(60, 199, 156, 0.45), transparent 70%);
+  animation: melayang 26s ease-in-out infinite alternate;
+}
+.latar__bola--2 {
+  width: 30vmax;
+  height: 30vmax;
+  right: -6vmax;
+  top: 44vh;
+  background: radial-gradient(circle, rgba(214, 176, 97, 0.32), transparent 70%);
+  animation: melayang 32s ease-in-out -8s infinite alternate-reverse;
+}
+.latar__bola--3 {
+  width: 26vmax;
+  height: 26vmax;
+  left: 40vw;
+  top: -10vmax;
+  background: radial-gradient(circle, rgba(17, 112, 85, 0.6), transparent 70%);
+  animation: melayang 38s ease-in-out -14s infinite alternate;
+}
+.latar__butir {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+@keyframes melayang {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6vw, -4vh, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-3vw, 5vh, 0) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tipografi */
+.judul-hias {
+  font-family: var(--f-display);
+  font-variant-numeric: lining-nums;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+.arab {
+  font-family: var(--f-arab);
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.teks-emas {
+  background: linear-gradient(100deg, var(--emas-200) 0%, var(--emas-400) 38%, var(--emas-600) 62%, var(--emas-300) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.redup {
+  color: var(--teks-2);
+}
+.redup-2 {
+  color: var(--teks-3);
+}
+.kecil {
+  font-size: 13px;
+}
+.mikro {
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.angka {
+  font-variant-numeric: tabular-nums;
+}
+.tebal {
+  font-weight: 650;
+}
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.potong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Tata letak bantu */
+.baris {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.baris--antara {
+  justify-content: space-between;
+}
+.baris--bungkus {
+  flex-wrap: wrap;
+}
+.baris--atas {
+  align-items: flex-start;
+}
+.tumpuk {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.tumpuk--rapat {
+  gap: 8px;
+}
+.tumpuk--lebar {
+  gap: 24px;
+}
+.isi-penuh {
+  flex: 1;
+  min-width: 0;
+}
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 1100px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 860px) {
+  .grid-3,
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .grid-4 {
+    gap: 10px;
+  }
+}

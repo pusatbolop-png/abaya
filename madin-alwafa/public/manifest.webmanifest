@@ -1,0 +1,11 @@
+{
+  "name": "Madin Al-Wafa",
+  "short_name": "Al-Wafa",
+  "description": "Raport online, kehadiran, hafalan, dan syahriah santri Madrasah Diniyah Al-Wafa.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#03110d",
+  "theme_color": "#03110d",
+  "lang": "id",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
