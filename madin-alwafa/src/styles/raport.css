@@ -17,7 +17,7 @@
 
 .lembar {
   --tinta: #1c2622;
-  --hijau: #0b4634;
+  --hijau: #0b5750;
   --emas: #a47d2c;
   --emas-muda: #d9bf83;
   position: relative;
@@ -54,7 +54,8 @@
   width: 120mm;
   height: 120mm;
   transform: translate(-50%, -50%);
-  opacity: 0.05;
+  opacity: 0.06;
+  object-fit: contain;
   pointer-events: none;
 }
 .lembar__draf {
@@ -118,6 +119,7 @@
 .kop__lambang {
   width: 19mm;
   height: 19mm;
+  object-fit: contain;
 }
 .kop__tengah {
   text-align: center;
@@ -139,6 +141,13 @@
   text-transform: uppercase;
   line-height: 1.05;
   color: var(--hijau);
+}
+.kop__naungan {
+  font-size: 8.6pt;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #1a9a8d;
 }
 .kop__alamat {
   font-size: 8.4pt;

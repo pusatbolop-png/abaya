@@ -234,7 +234,7 @@ export default function RaportSantri() {
               ))}
             </div>
             {data.periode.semester === 2 && (
-              <Bidang label="Keputusan" bantu="Contoh: Naik ke kelas Ula 2 Putri / Tinggal di kelas Ula 1 Putri / Lulus.">
+              <Bidang label="Keputusan" bantu="Contoh: Naik ke kelas Sayyidah Khodijah / Tinggal di kelas Sayyidah Fatimah / Lulus.">
                 <input
                   className="masukan"
                   value={f.keputusan}

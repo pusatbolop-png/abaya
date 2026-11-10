@@ -41,6 +41,7 @@ test('pemasangan pertama, akun pengurus, dan perlindungan permintaan', async () 
   assert.equal((await a.post('/api/auth/pasang', { nama: 'Admin', username: 'admin', sandi: 'pendek' })).status, 400);
   assert.equal((await a.post('/api/auth/pasang', { nama: 'Admin', username: 'admin', sandi: 'sandi-rahasia-1' }, true)).status, 403, 'tanpa header x-madin ditolak');
   assert.equal((await a.post('/api/auth/pasang', { nama: 'Admin', username: 'admin', sandi: 'sandi-rahasia-1' })).status, 200);
+  assert.equal((await a.get('/api/admin/kelas')).data.daftar.length, 4, 'pemasangan pertama membuat empat kelas Al Wafa’');
   assert.equal((await a.post('/api/auth/pasang', { nama: 'Lain', username: 'lain', sandi: 'sandi-rahasia-2' })).status, 409, 'pemasangan kedua ditolak');
   const saya = await a.get('/api/auth/saya');
   assert.equal(saya.data.pengurus.peran, 'admin');
@@ -68,9 +69,10 @@ test('santri baru, akun wali, nilai, raport, dan verifikasi', async () => {
   const a = klien(app);
   await a.post('/api/auth/pasang', { nama: 'Ust. Admin', username: 'admin', sandi: 'sandi-rahasia-1' });
   await a.put('/api/admin/pengaturan', {
-    namaLembaga: 'Madrasah Diniyah Al-Wafa',
+    namaLembaga: 'Madrasah Diniyah Al Wafa’',
     namaArab: 'مدرسة الوفاء الدينية',
-    singkatan: 'Madin Al-Wafa',
+    singkatan: 'Madin Al Wafa’',
+    naungan: 'Al Wafa’ Islamic Center',
     slogan: '',
     alamat: 'Jl. Contoh',
     kota: 'Kota Contoh',
@@ -175,7 +177,11 @@ test('data demo konsisten: raport semester lalu terbit dengan kelas lama', async
   const a = klien(app);
   assert.equal((await a.post('/api/auth/masuk-pengurus', { username: 'admin', sandi: SANDI_DEMO })).status, 200);
   const ring = (await a.get('/api/admin/ringkasan')).data;
-  assert.equal(ring.santri.total, 48);
+  assert.equal(ring.santri.total, 40);
+  assert.deepEqual(
+    (await a.get('/api/admin/kelas')).data.daftar.map((k: any) => k.nama).sort(),
+    ['Sayyidah Fatimah', 'Sayyidah Khodijah', 'Sayyidina Hasan', 'Sayyidina Husein'],
+  );
   const w = klien(app);
   assert.equal((await w.post('/api/auth/masuk-wali', { nis: nisContoh, sandi: SANDI_WALI_DEMO })).status, 200);
   const r = (await w.get(`/api/wali/raport/${idLalu}`)).data;

@@ -4,7 +4,7 @@ import { BookOpenCheck, CalendarCheck2, Eye, EyeOff, KeyRound, LogIn, ScrollText
 import { api, GalatApi } from '../../lib/api';
 import { useSesi } from '../../lib/sesi';
 import { Bidang, Pesan, Tombol, useIngat, useJudul } from '../../ui/dasar';
-import { Lambang } from '../../ui/Lambang';
+import { LogoLengkap } from '../../ui/Lambang';
 import { PitaDemo } from '../../ui/PitaDemo';
 
 type Jenis = 'wali' | 'pengurus';
@@ -41,23 +41,17 @@ export function Masuk() {
     }
   };
 
-  const [awal, ...sisa] = lembaga.singkatan.split(' ');
-
   return (
     <>
       <PitaDemo />
       <main className="masuk">
         <section className="masuk__hero">
-          <Lambang className="masuk__lambang" />
+          <LogoLengkap className="masuk__logo" />
           <div className="tumpuk" style={{ gap: 10 }}>
             {lembaga.namaArab && <div className="masuk__arab">{lembaga.namaArab}</div>}
-            <h1 className="masuk__judul">
-              {awal} <span className="teks-emas">{sisa.join(' ') || ''}</span>
-            </h1>
-            <p className="masuk__slogan">
-              {lembaga.nama}. {lembaga.slogan && <>{lembaga.slogan}. </>}
-              Pantau perkembangan ananda — raport, kehadiran, hafalan, dan syahriah — dalam satu tempat.
-            </p>
+            <h1 className="masuk__judul">{lembaga.nama}</h1>
+            {lembaga.slogan && <p className="masuk__semboyan">{lembaga.slogan}</p>}
+            <p className="masuk__slogan">Pantau perkembangan ananda — raport, kehadiran, hafalan, dan syahriah — dalam satu tempat.</p>
           </div>
           <div className="masuk__fitur">
             <div>
@@ -110,7 +104,7 @@ export function Masuk() {
                   inputMode={jenis === 'wali' ? 'numeric' : 'text'}
                   autoCapitalize="none"
                   spellCheck={false}
-                  placeholder={jenis === 'wali' ? 'Contoh: 250009' : 'Nama pengguna'}
+                  placeholder={jenis === 'wali' ? 'NIS ananda' : 'Nama pengguna'}
                   required
                 />
               </div>

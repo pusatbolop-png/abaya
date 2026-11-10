@@ -23,12 +23,13 @@ export function ruteRaport(db: DB) {
       // Raport yang sudah terbit mengikuti kelas saat diterbitkan; yang belum terbit mengikuti kelas santri sekarang.
       `SELECT id, nis, nama, jk FROM santri s
         WHERE id IN (SELECT santri_id FROM raport WHERE periode_id = ? AND status = 'terbit' AND json_extract(snapshot, '$.kelas.id') = ?)
-           OR (kelas_id = ? AND status = 'aktif'
+           OR (kelas_id = ? AND status = 'aktif' AND (tanggal_masuk IS NULL OR tanggal_masuk <= ?)
                AND NOT EXISTS (SELECT 1 FROM raport r WHERE r.santri_id = s.id AND r.periode_id = ? AND r.status = 'terbit'))
         ORDER BY nama`,
       periode.id,
       kelas.id,
       kelas.id,
+      periode.selesai,
       periode.id,
     );
     const daftar = santri.map((s) => {

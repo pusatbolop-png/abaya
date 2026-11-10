@@ -26,7 +26,7 @@ export default function Verifikasi() {
         <Link to="/" className="merek">
           <Lambang className="merek__lambang" />
           <span className="merek__teks">
-            <span className="merek__nama">{data?.lembaga.singkatan ?? 'Madin Al-Wafa'}</span>
+            <span className="merek__nama">{data?.lembaga.singkatan ?? 'Madin Al Wafa’'}</span>
             <span className="merek__arab">{data?.lembaga.namaArab ?? 'مدرسة الوفاء الدينية'}</span>
           </span>
         </Link>

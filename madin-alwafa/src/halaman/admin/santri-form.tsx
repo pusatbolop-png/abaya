@@ -253,7 +253,7 @@ export function KartuAkun({ tutup }: { tutup: () => void }) {
                   {hasil.daftar.map((s) => (
                     <div key={s.id} className="kartu-akun">
                       <div className="kartu-akun__kepala">
-                        <Lambang warna="hijau" />
+                        <Lambang />
                         <div>
                           <b>Akun wali santri</b>
                           <div style={{ fontSize: '8pt' }}>{hasil.kelas}</div>

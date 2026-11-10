@@ -14,6 +14,7 @@ interface DataPengaturan {
     namaLembaga: string;
     namaArab: string;
     singkatan: string;
+    naungan: string;
     slogan: string;
     alamat: string;
     kota: string;
@@ -129,15 +130,20 @@ function TabMadrasah({ admin }: { admin: boolean }) {
               <input className="masukan angka" {...teks('telepon')} />
             </Bidang>
           </div>
-          <Bidang label="Slogan" galat={bidang.slogan}>
-            <input className="masukan" {...teks('slogan')} />
-          </Bidang>
+          <div className="grid-2">
+            <Bidang label="Lembaga induk" galat={bidang.naungan} bantu="Tampil di kop raport.">
+              <input className="masukan" {...teks('naungan')} />
+            </Bidang>
+            <Bidang label="Semboyan" galat={bidang.slogan}>
+              <input className="masukan" {...teks('slogan')} />
+            </Bidang>
+          </div>
           <Bidang label="Alamat" galat={bidang.alamat} bantu="Tampil di kop raport.">
             <textarea className="masukan" rows={2} {...teks('alamat')} />
           </Bidang>
           <div className="grid-2">
             <Bidang label="Kota penandatanganan" galat={bidang.kota}>
-              <input className="masukan" {...teks('kota')} placeholder="Mis. Pasuruan" />
+              <input className="masukan" {...teks('kota')} placeholder="Mis. Bangil" />
             </Bidang>
             <Bidang label="Kepala madrasah" galat={bidang.kepala}>
               <input className="masukan" {...teks('kepala')} />

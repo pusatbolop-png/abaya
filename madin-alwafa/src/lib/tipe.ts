@@ -3,6 +3,7 @@ export interface Lembaga {
   nama: string;
   namaArab: string;
   singkatan: string;
+  naungan: string;
   slogan: string;
   alamat: string;
   kota: string;

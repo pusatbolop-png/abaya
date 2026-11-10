@@ -13,7 +13,7 @@ const { jalankan } = await import('./index');
 
 const db = bukaDb(folder);
 const kosong = !(db.prepare('SELECT 1 FROM pengurus LIMIT 1').get());
-let nis = (db.prepare("SELECT s.nis FROM santri s JOIN kelas k ON k.id = s.kelas_id WHERE k.nama = 'Ula 2 Putri' ORDER BY s.id LIMIT 1").get() as { nis: string } | undefined)?.nis;
+let nis = (db.prepare("SELECT s.nis FROM santri s JOIN kelas k ON k.id = s.kelas_id WHERE k.nama = 'Sayyidah Khodijah' ORDER BY s.id LIMIT 1").get() as { nis: string } | undefined)?.nis;
 if (kosong) {
   console.log('Menyiapkan data contoh…');
   nis = (await isiDemo(db)).nisContoh;

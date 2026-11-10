@@ -9,7 +9,16 @@ export type StatusSantri = keyof typeof STATUS_SANTRI;
 export const BAGIAN_KELAS = { putra: 'Putra', putri: 'Putri', campur: 'Putra & putri' } as const;
 export type BagianKelas = keyof typeof BAGIAN_KELAS;
 
-export const JENJANG = ["Ula", 'Wustho', 'Ulya'] as const;
+export const JENJANG = ['Ula', 'Wustho', 'Ulya'] as const;
+
+/** Kelas Al Wafa’: putra Sayyidina Husein (1) dan Sayyidina Hasan (2), putri Sayyidah Fatimah (1) dan Sayyidah Khodijah (2). */
+export const KELAS_AWAL = [
+  { nama: 'Sayyidina Husein', jenjang: 'Ula', tingkat: 1, bagian: 'putra' },
+  { nama: 'Sayyidah Fatimah', jenjang: 'Ula', tingkat: 1, bagian: 'putri' },
+  { nama: 'Sayyidina Hasan', jenjang: 'Ula', tingkat: 2, bagian: 'putra' },
+  { nama: 'Sayyidah Khodijah', jenjang: 'Ula', tingkat: 2, bagian: 'putri' },
+] as const;
+
 
 export const STATUS_HADIR = { H: 'Hadir', I: 'Izin', S: 'Sakit', A: 'Alpa' } as const;
 export type StatusHadir = keyof typeof STATUS_HADIR;

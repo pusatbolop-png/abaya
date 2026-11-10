@@ -1,4 +1,4 @@
-// Data contoh Madin Al-Wafa. Semua nama, nomor, dan alamat adalah rekaan.
+// Data contoh Madin Al Wafa’. Semua nama, nomor, dan alamat adalah rekaan.
 // Tanggal disusun relatif terhadap hari ini, sehingga demo selalu tampak berjalan di semester yang sedang aktif.
 import type { DB } from './db';
 import { hashSandi } from './auth';
@@ -64,12 +64,10 @@ const PENGAJAR_PI: Record<string, string> = {
 };
 
 const KELAS = [
-  { nama: 'Ula 1 Putra', jenjang: 'Ula', tingkat: 1, bagian: 'putra', wali: 'Ust. Abdul Karim', ruang: 'Ruang 1' },
-  { nama: 'Ula 1 Putri', jenjang: 'Ula', tingkat: 1, bagian: 'putri', wali: 'Ustdz. Siti Maryam', ruang: 'Ruang 4' },
-  { nama: 'Ula 2 Putra', jenjang: 'Ula', tingkat: 2, bagian: 'putra', wali: 'Ust. M. Ridwan Hakim', ruang: 'Ruang 2' },
-  { nama: 'Ula 2 Putri', jenjang: 'Ula', tingkat: 2, bagian: 'putri', wali: 'Ustdz. Nur Aini', ruang: 'Ruang 5' },
-  { nama: 'Wustho 1 Putra', jenjang: 'Wustho', tingkat: 3, bagian: 'putra', wali: 'Ust. Ahmad Fauzi', ruang: 'Ruang 3' },
-  { nama: 'Wustho 1 Putri', jenjang: 'Wustho', tingkat: 3, bagian: 'putri', wali: 'Ustdz. Umi Kulsum', ruang: 'Ruang 6' },
+  { nama: 'Sayyidina Husein', jenjang: 'Ula', tingkat: 1, bagian: 'putra', wali: 'Ust. Abdul Karim', ruang: 'Ruang 1' },
+  { nama: 'Sayyidah Fatimah', jenjang: 'Ula', tingkat: 1, bagian: 'putri', wali: 'Ustdz. Siti Maryam', ruang: 'Ruang 3' },
+  { nama: 'Sayyidina Hasan', jenjang: 'Ula', tingkat: 2, bagian: 'putra', wali: 'Ust. M. Ridwan Hakim', ruang: 'Ruang 2' },
+  { nama: 'Sayyidah Khodijah', jenjang: 'Ula', tingkat: 2, bagian: 'putri', wali: 'Ustdz. Nur Aini', ruang: 'Ruang 4' },
 ] as const;
 
 const PUTRA = [
@@ -142,8 +140,6 @@ export async function isiDemo(db: DB) {
 
   simpanPengaturan(db, {
     mode: 'demo',
-    alamat: 'Jl. KH. Hasyim Asy\'ari No. 17, Ds. Karangrejo (alamat contoh)',
-    kota: 'Pasuruan',
     telepon: '0812-0000-1717',
     kepala: 'KH. Muhammad Nur Salim',
     syahriah_nominal: '25000',
@@ -205,7 +201,7 @@ export async function isiDemo(db: DB) {
   let iPi = 0;
   KELAS.forEach((k, kelasIdx) => {
     const jk = k.bagian === 'putra' ? 'L' : 'P';
-    for (let n = 0; n < 8; n++) {
+    for (let n = 0; n < 10; n++) {
       const nama = jk === 'L' ? PUTRA[iPa++] : PUTRI[iPi++];
       const tahunMasuk = tahunKini - (k.tingkat - 1);
       urutNis[tahunMasuk] = (urutNis[tahunMasuk] ?? 0) + 1;
@@ -245,7 +241,7 @@ export async function isiDemo(db: DB) {
     }
   });
 
-  // Santri contoh untuk masuk sebagai wali: anggota pertama Ula 2 Putri, sudah punya raport semester lalu.
+  // Santri contoh untuk masuk sebagai wali: anggota pertama Sayyidah Khodijah, sudah punya raport semester lalu.
   const contohWali = santri.find((s) => s.kelasIdx === 3)!;
 
   const libur: [string, string][] = [
@@ -367,7 +363,7 @@ export async function isiDemo(db: DB) {
   db.transaction(() => {
     for (const s of santri) {
       isiAbsensi(s, idKelas[s.kelasIdx], hariKini);
-      if (hariIniBelajar && s.kelasIdx < 4) isiAbsensi(s, idKelas[s.kelasIdx], [hari]);
+      if (hariIniBelajar && s.kelasIdx < 2) isiAbsensi(s, idKelas[s.kelasIdx], [hari]);
       if (komponen.harian) isiNilai(s, s.kelasIdx, idKini, komponen);
     }
   })();
@@ -416,7 +412,7 @@ export async function isiDemo(db: DB) {
   );
   p.run(
     "Setoran nadzom 'Aqidatul 'Awam",
-    "Santriwati Ula 1 Putri ditargetkan hafal bait 1–28 'Aqidatul 'Awam sampai akhir semester. Setoran setiap Ahad dan Selasa sebelum pelajaran dimulai.",
+    "Santriwati kelas Sayyidah Fatimah ditargetkan hafal bait 1–28 'Aqidatul 'Awam sampai akhir semester. Setoran setiap Ahad dan Selasa sebelum pelajaran dimulai.",
     `kelas:${idKelas[1]}`,
     0,
     `${tambahHari(hari, -9)}T02:00:00.000Z`,
@@ -442,12 +438,12 @@ export async function isiDemo(db: DB) {
   // Riwayat aktivitas.
   const log = db.prepare('INSERT INTO log_aktivitas (waktu, pelaku, aksi, detail) VALUES (?,?,?,?)');
   const jejak: [number, string, string, string][] = [
-    [-3, 'Ust. Ahmad Fauzi', 'Mengisi nilai', 'Wustho 1 Putra · Nahwu: 8 santri'],
+    [-3, 'Ust. Ahmad Fauzi', 'Mengisi nilai', 'Sayyidina Hasan · Fiqih: 10 santri'],
     [-2, 'Ustdz. Siti Maryam', 'Mencatat setoran hafalan', "Fatimah Az-Zahra: Surat Al-Kautsar"],
     [-2, 'Ust. Ahmad Fauzi', 'Menerbitkan pengumuman', `Ujian Akhir Semester ${sem}`],
-    [-1, 'Ustdz. Siti Maryam', 'Mengisi absensi', 'Ula 1 Putri: 8 hadir, 0 tidak hadir'],
+    [-1, 'Ustdz. Siti Maryam', 'Mengisi absensi', 'Sayyidah Fatimah: 10 hadir, 0 tidak hadir'],
     [-1, 'Ust. Ahmad Fauzi', 'Mencatat syahriah', 'Ahmad Zaki Mubarok: ' + new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(new Date())],
-    [0, 'Ust. Abdul Karim', 'Mengisi absensi', 'Ula 1 Putra: 7 hadir, 1 tidak hadir'],
+    [0, 'Ust. Abdul Karim', 'Mengisi absensi', 'Sayyidina Husein: 9 hadir, 1 tidak hadir'],
   ];
   for (const [d, siapa, aksi, detail] of jejak) log.run(`${tambahHari(hari, d)}T0${3 + Math.abs(d)}:10:00.000Z`, siapa, aksi, detail);
 

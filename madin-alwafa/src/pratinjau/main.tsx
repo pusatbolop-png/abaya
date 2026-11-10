@@ -4,7 +4,7 @@ import { nyalakan } from './mesin';
 const akar = document.getElementById('akar')!;
 akar.innerHTML =
   '<div class="memuat-pratinjau" role="status"><div class="memuat-pratinjau__cincin"></div>' +
-  '<b>Menyiapkan pratinjau Madin Al-Wafa…</b><span>Membuat data contoh santri, nilai, dan raport di peramban Anda.</span></div>';
+  '<b>Menyiapkan pratinjau Madin Al Wafa’…</b><span>Membuat data contoh santri, nilai, dan raport di peramban Anda.</span></div>';
 
 // Tempat terbit pratinjau tidak mengizinkan jendela cetak; jelaskan alih-alih diam.
 window.print = () => {

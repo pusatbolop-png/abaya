@@ -20,14 +20,15 @@ export function LembarRaport({ d }: { d: DataRaport }) {
       <SudutHias className="lembar__sudut lembar__sudut--2" />
       <SudutHias className="lembar__sudut lembar__sudut--3" />
       <SudutHias className="lembar__sudut lembar__sudut--4" />
-      <Lambang className="lembar__tanda-air" warna="hijau" />
+      <Lambang className="lembar__tanda-air" />
       {d.status !== 'terbit' && <div className="lembar__draf">DRAF</div>}
 
       <div className="lembar__isi">
         <header className="kop">
-          <Lambang className="kop__lambang" warna="hijau" />
+          <Lambang className="kop__lambang" />
           <div className="kop__tengah">
             {d.lembaga.namaArab && <div className="kop__arab">{d.lembaga.namaArab}</div>}
+            {d.lembaga.naungan && <div className="kop__naungan">{d.lembaga.naungan}</div>}
             <div className="kop__nama">{d.lembaga.nama}</div>
             <div className="kop__alamat">
               {[d.lembaga.alamat, d.lembaga.telepon && `Telp. ${d.lembaga.telepon}`].filter(Boolean).join(' · ') || 'Alamat madrasah belum diisi'}

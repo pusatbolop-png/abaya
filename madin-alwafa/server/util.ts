@@ -72,12 +72,13 @@ export const tanggalOpsional = () =>
 // Pengaturan lembaga --------------------------------------------------------------------------
 
 export const PENGATURAN_AWAL = {
-  nama_lembaga: 'Madrasah Diniyah Al-Wafa',
+  nama_lembaga: 'Madrasah Diniyah Al Wafa’',
   nama_arab: 'مدرسة الوفاء الدينية',
-  singkatan: 'Madin Al-Wafa',
-  slogan: 'Berilmu, berakhlak, dan menepati janji',
-  alamat: '',
-  kota: '',
+  singkatan: 'Madin Al Wafa’',
+  naungan: 'Al Wafa’ Islamic Center',
+  slogan: 'Aesthetic · Ethic · Logic',
+  alamat: 'Bangil, Pasuruan, Jawa Timur',
+  kota: 'Bangil',
   telepon: '',
   kepala: '',
   bobot_harian: '30',
@@ -113,6 +114,7 @@ export function lembaga(p: Pengaturan) {
     nama: p.nama_lembaga,
     namaArab: p.nama_arab,
     singkatan: p.singkatan,
+    naungan: p.naungan,
     slogan: p.slogan,
     alamat: p.alamat,
     kota: p.kota,

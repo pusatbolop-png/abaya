@@ -1,4 +1,4 @@
-/* Token desain Madin Al-Wafa: malam zamrud, kaca buram, dan aksen emas. */
+/* Token desain Madin Al Wafa’: hijau tosca, kaca buram, dan aksen emas. */
 :root {
   color-scheme: dark;
 
@@ -6,15 +6,15 @@
   --f-display: 'Cormorant Garamond', 'Iowan Old Style', 'Times New Roman', serif;
   --f-arab: 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
 
-  --bg: #03110d;
-  --bg-2: #061a14;
-  --zamrud-900: #042119;
-  --zamrud-800: #073326;
-  --zamrud-700: #0c4a38;
-  --zamrud-600: #117055;
-  --zamrud-500: #1a9c76;
-  --zamrud-400: #3cc79c;
-  --zamrud-300: #7fe6c4;
+  --bg: #0a564f;
+  --bg-2: #0c625a;
+  --tosca-900: #063c37;
+  --tosca-800: #08504a;
+  --tosca-700: #0b6b62;
+  --tosca-600: #0f8a7e;
+  --tosca-500: #17ad9e;
+  --tosca-400: #2fd0bf;
+  --tosca-300: #86ecdf;
   --emas-700: #8f6d24;
   --emas-600: #b48b36;
   --emas-500: #d6b061;
@@ -23,17 +23,17 @@
   --emas-200: #faecc8;
 
   --teks: #f2f6f3;
-  --teks-2: rgba(230, 241, 235, 0.76);
-  --teks-3: rgba(230, 241, 235, 0.54);
+  --teks-2: rgba(236, 250, 247, 0.84);
+  --teks-3: rgba(236, 250, 247, 0.68);
   --teks-emas: var(--emas-300);
 
   --kaca-1: rgba(255, 255, 255, 0.045);
   --kaca-2: rgba(255, 255, 255, 0.075);
   --kaca-3: rgba(255, 255, 255, 0.11);
   --kaca-4: rgba(255, 255, 255, 0.16);
-  --kaca-gelap: rgba(3, 18, 14, 0.55);
-  --garis: rgba(255, 255, 255, 0.11);
-  --garis-2: rgba(255, 255, 255, 0.19);
+  --kaca-gelap: rgba(4, 48, 44, 0.55);
+  --garis: rgba(255, 255, 255, 0.16);
+  --garis-2: rgba(255, 255, 255, 0.26);
   --garis-emas: rgba(243, 221, 164, 0.34);
 
   --kabur: blur(22px) saturate(155%);
@@ -68,8 +68,8 @@
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root {
-    --kaca-1: rgba(12, 46, 36, 0.92);
-    --kaca-2: rgba(16, 56, 44, 0.94);
-    --kaca-3: rgba(22, 66, 52, 0.96);
+    --kaca-1: rgba(14, 96, 88, 0.92);
+    --kaca-2: rgba(18, 108, 99, 0.94);
+    --kaca-3: rgba(24, 120, 110, 0.96);
   }
 }

@@ -52,12 +52,12 @@ try {
 
   // Absensi: kelas yang belum diabsen hari ini.
   await p.goto(`${ASAL}/admin/absensi`);
-  await p.getByLabel('Kelas').selectOption({ label: 'Wustho 1 Putra' });
+  await p.getByLabel('Kelas').selectOption({ label: 'Sayyidina Hasan' });
   await p.getByText('Belum disimpan').waitFor();
   await p.getByRole('group', { name: /^Kehadiran/ }).first().getByRole('button', { name: 'S' }).click();
   await p.getByLabel(/^Keterangan/).first().fill('Demam');
   await p.getByRole('button', { name: 'Simpan absensi' }).click();
-  await p.getByText(/Absensi Wustho 1 Putra tersimpan: 7 hadir/).waitFor();
+  await p.getByText(/Absensi Sayyidina Hasan tersimpan: 9 hadir/).waitFor();
   langkah('absensi disimpan');
 
   // Nilai: isi UAS satu mapel.
@@ -77,7 +77,7 @@ try {
   const dlg = p.getByRole('dialog');
   await dlg.getByLabel('Nama lengkap').fill('Zainab Uji Coba');
   await dlg.getByRole('radio', { name: 'Santriwati (putri)' }).click();
-  await dlg.getByLabel('Kelas').selectOption({ label: 'Ula 1 Putri' });
+  await dlg.getByLabel('Kelas').selectOption({ label: 'Sayyidah Fatimah' });
   await dlg.getByLabel('Nomor HP/WhatsApp wali').fill('081200001111');
   await dlg.getByRole('button', { name: 'Simpan' }).click();
   await p.getByRole('heading', { name: 'Akun wali santri' }).waitFor();
@@ -96,7 +96,7 @@ try {
     return r.json();
   };
   const kelasList = (await api('GET', '/api/admin/kelas')).daftar;
-  const ula2pi = kelasList.find((k) => k.nama === 'Ula 2 Putri');
+  const ula2pi = kelasList.find((k) => k.nama === 'Sayyidah Khodijah');
   const detail = await api('GET', `/api/admin/kelas/${ula2pi.id}`);
   const periodeAktif = (await api('GET', '/api/admin/periode')).daftar.find((x) => x.aktif);
   const nisDemo = (await api('GET', '/api/auth/saya')).demo.nis;
@@ -122,7 +122,7 @@ try {
   const dlg2 = p.getByRole('dialog');
   await dlg2.getByLabel('Judul').fill('Uji pengumuman kelas');
   await dlg2.getByLabel('Isi').fill('Isi pengumuman uji.');
-  await dlg2.getByLabel('Sasaran').selectOption({ label: 'Wali santri Ula 2 Putri' });
+  await dlg2.getByLabel('Sasaran').selectOption({ label: 'Wali santri Sayyidah Khodijah' });
   await dlg2.getByRole('button', { name: 'Terbitkan' }).click();
   await p.getByText('Pengumuman diterbitkan.').waitFor();
   langkah('pengumuman kelas diterbitkan');

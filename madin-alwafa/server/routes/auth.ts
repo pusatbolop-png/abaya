@@ -14,6 +14,7 @@ import {
   siapaMasuk,
   tokenSaatIni,
 } from '../auth';
+import { KELAS_AWAL } from '../../shared/konstanta';
 import { GalatPengguna, ambilPengaturan, bacaIsi, catatLog, lembaga, satu, sekarang, teksWajib } from '../util';
 
 const sandiBaru = z
@@ -41,7 +42,7 @@ export function ruteAuth(db: DB) {
       ? {
           username: 'admin',
           sandi: 'demo-wafa-2026',
-          nis: satu<{ nis: string }>(db, "SELECT s.nis FROM santri s JOIN kelas k ON k.id = s.kelas_id WHERE k.nama = 'Ula 2 Putri' ORDER BY s.id LIMIT 1")?.nis ?? '',
+          nis: satu<{ nis: string }>(db, "SELECT s.nis FROM santri s JOIN kelas k ON k.id = s.kelas_id WHERE k.nama = 'Sayyidah Khodijah' ORDER BY s.id LIMIT 1")?.nis ?? '',
           sandiWali: 'wafa2026',
         }
       : null;
@@ -75,6 +76,10 @@ export function ruteAuth(db: DB) {
           .run(isi.nama, isi.username.toLowerCase(), hash, sekarang()).lastInsertRowid,
       );
     })();
+    if (!satu(db, 'SELECT 1 FROM kelas LIMIT 1')) {
+      const st = db.prepare('INSERT INTO kelas (nama, jenjang, tingkat, bagian) VALUES (?, ?, ?, ?)');
+      for (const k of KELAS_AWAL) st.run(k.nama, k.jenjang, k.tingkat, k.bagian);
+    }
     catatLog(db, isi.nama, 'Membuat akun administrator pertama');
     buatSesi(c, db, 'pengurus', id);
     return c.json({ ok: true });

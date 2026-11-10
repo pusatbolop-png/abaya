@@ -1,6 +1,7 @@
-# Madin Al-Wafa — sistem informasi madrasah dan raport online
+# Madin Al Wafa’ — sistem informasi madrasah dan raport online
 
-Aplikasi web untuk Madrasah Diniyah Al-Wafa, dengan tampilan kaca (glassy) bernuansa zamrud dan emas.
+Aplikasi web untuk Madrasah Diniyah Al Wafa’ (Al Wafa’ Islamic Center, Bangil Pasuruan), dengan tampilan kaca (glassy)
+berlatar hijau tosca, aksen emas, dan logo Al Wafa’.
 Ada dua jenis akun:
 
 - **Wali santri** (masuk dengan NIS + sandi): beranda ananda, **raport online** (ringkasan di ponsel, lembar A4, unduh PDF), kehadiran per bulan, setoran hafalan, status syahriah, jadwal pelajaran, pengumuman, dan ganti sandi.
@@ -40,8 +41,10 @@ npm run build
 npm start                      # http://localhost:8080, data di ./data
 ```
 
-Saat pertama dibuka, aplikasi meminta pembuatan akun administrator. Setelah itu buka **Pengaturan** dan lengkapi:
-alamat dan kota madrasah, nama kepala madrasah, tahun ajaran/semester, lalu kelas, mata pelajaran, dan santri.
+Saat pertama dibuka, aplikasi meminta pembuatan akun administrator dan langsung membuat empat kelas:
+Sayyidina Husein (1) dan Sayyidina Hasan (2) untuk putra, Sayyidah Fatimah (1) dan Sayyidah Khodijah (2) untuk putri.
+Setelah itu buka **Pengaturan** dan lengkapi nama kepala madrasah, alamat lengkap, serta tahun ajaran/semester,
+lalu atur mata pelajaran tiap kelas dan masukkan santri. Nama lembaga, lembaga induk, dan kota (Bangil) sudah terisi dan bisa diubah.
 
 ### Mode demo
 

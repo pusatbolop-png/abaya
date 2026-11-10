@@ -354,7 +354,7 @@ export function Ornamen() {
 export function useJudul(judul: string) {
   useEffect(() => {
     const lama = document.title;
-    document.title = `${judul} · Madin Al-Wafa`;
+    document.title = `${judul} · Madin Al Wafa’`;
     return () => {
       document.title = lama;
     };

@@ -210,7 +210,7 @@
   padding: 0 14px;
   border-radius: 12px;
   border: 1px solid var(--garis-2);
-  background: rgba(2, 14, 10, 0.42);
+  background: rgba(4, 44, 40, 0.42);
   color: var(--teks);
   font-size: 15px;
   transition:
@@ -231,7 +231,7 @@
   box-shadow:
     0 0 0 3px rgba(214, 176, 97, 0.22),
     inset 0 1px 2px rgba(0, 0, 0, 0.25);
-  background: rgba(2, 14, 10, 0.6);
+  background: rgba(4, 44, 40, 0.6);
 }
 .masukan[aria-invalid='true'] {
   border-color: rgba(255, 149, 138, 0.7);
@@ -251,7 +251,7 @@ select.masukan {
   background-position: right 14px center;
 }
 select.masukan option {
-  background: #082119;
+  background: #0a564f;
   color: var(--teks);
 }
 input[type='date'].masukan,
@@ -307,7 +307,7 @@ input[type='time'].masukan {
   gap: 4px;
   padding: 4px;
   border-radius: 14px;
-  background: rgba(2, 14, 10, 0.4);
+  background: rgba(4, 44, 40, 0.4);
   border: 1px solid var(--garis);
   max-width: 100%;
   overflow-x: auto;
@@ -428,7 +428,7 @@ input[type='time'].masukan {
   font-size: calc(var(--ukuran) * 0.36);
   letter-spacing: 0.02em;
   color: #fff;
-  background: linear-gradient(140deg, #2bb58a, #0b5a73);
+  background: linear-gradient(140deg, #2fd0bf, #0b6f86);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
     0 0 0 2px rgba(255, 255, 255, 0.08);
@@ -464,7 +464,7 @@ input[type='time'].masukan {
   font-weight: 650;
   color: var(--teks-3);
   padding: 12px 14px;
-  background: rgba(4, 26, 20, 0.85);
+  background: rgba(7, 66, 60, 0.9);
   border-bottom: 1px solid var(--garis);
   white-space: nowrap;
 }
@@ -550,7 +550,7 @@ input[type='time'].masukan {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--zamrud-500), var(--zamrud-300));
+  background: linear-gradient(90deg, var(--tosca-500), var(--tosca-300));
   transition: width var(--sedang);
 }
 .bilah--emas > span {
@@ -674,7 +674,7 @@ input[type='time'].masukan {
   max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(170deg, rgba(14, 52, 41, 0.92), rgba(5, 25, 19, 0.94));
+  background: linear-gradient(170deg, rgba(16, 112, 102, 0.95), rgba(8, 72, 66, 0.96));
   border: 1px solid var(--garis-2);
   border-radius: var(--r-xl);
   box-shadow: var(--bayang-2);
@@ -778,7 +778,7 @@ input[type='time'].masukan {
   padding: 13px 16px;
   border-radius: 16px;
   font-size: 14px;
-  background: rgba(8, 36, 28, 0.92);
+  background: rgba(9, 80, 73, 0.92);
   border: 1px solid var(--garis-2);
   box-shadow: var(--bayang-2);
   backdrop-filter: var(--kabur);
@@ -813,7 +813,7 @@ input[type='time'].masukan {
   min-width: 220px;
   padding: 6px;
   border-radius: 16px;
-  background: rgba(8, 36, 28, 0.95);
+  background: rgba(9, 80, 73, 0.95);
   border: 1px solid var(--garis-2);
   box-shadow: var(--bayang-2);
   backdrop-filter: var(--kabur);
@@ -896,7 +896,7 @@ input[type='time'].masukan {
   gap: 4px;
   padding: 3px;
   border-radius: 12px;
-  background: rgba(2, 14, 10, 0.4);
+  background: rgba(4, 44, 40, 0.4);
   border: 1px solid var(--garis);
 }
 .pilih-hadir button {

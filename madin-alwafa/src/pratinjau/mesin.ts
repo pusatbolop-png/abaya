@@ -1,4 +1,4 @@
-// Mesin pratinjau: menjalankan server Madin Al-Wafa (Hono + SQLite) seluruhnya di peramban pengunjung.
+// Mesin pratinjau: menjalankan server Madin Al Wafa’ (Hono + SQLite) seluruhnya di peramban pengunjung.
 // Data contoh dibuat saat halaman dibuka; semua perubahan hanya ada di tab ini dan hilang saat dimuat ulang.
 import initSqlJs from 'sql.js/dist/sql-asm-memory-growth.js';
 import { DbPratinjau } from './sqlite';

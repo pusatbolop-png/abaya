@@ -109,11 +109,11 @@ p {
   z-index: -1;
   overflow: hidden;
   background:
-    radial-gradient(70vmax 60vmax at 8% -12%, rgba(26, 156, 118, 0.38), transparent 62%),
-    radial-gradient(60vmax 55vmax at 105% 4%, rgba(12, 74, 56, 0.75), transparent 60%),
-    radial-gradient(48vmax 42vmax at 78% 108%, rgba(214, 176, 97, 0.2), transparent 64%),
-    radial-gradient(55vmax 50vmax at -6% 104%, rgba(9, 72, 84, 0.42), transparent 62%),
-    linear-gradient(180deg, #03110d 0%, #05170f 55%, #03100c 100%);
+    radial-gradient(70vmax 60vmax at 8% -12%, rgba(64, 224, 208, 0.42), transparent 62%),
+    radial-gradient(60vmax 55vmax at 105% 4%, rgba(20, 150, 138, 0.6), transparent 60%),
+    radial-gradient(48vmax 42vmax at 78% 108%, rgba(214, 176, 97, 0.18), transparent 64%),
+    radial-gradient(55vmax 50vmax at -6% 104%, rgba(8, 92, 110, 0.5), transparent 62%),
+    linear-gradient(180deg, #0c665e 0%, #0a564f 55%, #084741 100%);
   pointer-events: none;
 }
 .latar::before {
@@ -138,7 +138,7 @@ p {
   height: 38vmax;
   left: -8vmax;
   top: 18vh;
-  background: radial-gradient(circle, rgba(60, 199, 156, 0.45), transparent 70%);
+  background: radial-gradient(circle, rgba(94, 234, 212, 0.38), transparent 70%);
   animation: melayang 26s ease-in-out infinite alternate;
 }
 .latar__bola--2 {
@@ -154,7 +154,7 @@ p {
   height: 26vmax;
   left: 40vw;
   top: -10vmax;
-  background: radial-gradient(circle, rgba(17, 112, 85, 0.6), transparent 70%);
+  background: radial-gradient(circle, rgba(15, 138, 126, 0.55), transparent 70%);
   animation: melayang 38s ease-in-out -14s infinite alternate;
 }
 .latar__butir {

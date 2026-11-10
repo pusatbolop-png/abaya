@@ -7,7 +7,7 @@ export function CincinHadir({ k, ukuran = 112 }: { k: { hadir: number; total: nu
     <svg viewBox="0 0 100 100" width={ukuran} height={ukuran} role="img" aria-label={`Kehadiran ${persen}%`} style={{ flex: 'none' }}>
       <defs>
         <linearGradient id="cincin" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#7fe6c4" />
+          <stop offset="0" stopColor="#86ecdf" />
           <stop offset="1" stopColor="#d6b061" />
         </linearGradient>
       </defs>
