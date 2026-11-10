@@ -278,8 +278,8 @@ function GrafikHadir({ tren }: { tren: Ringkasan['tren'] }) {
       <svg viewBox={`0 0 ${L} ${T}`} role="img">
         <defs>
           <linearGradient id="batang" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#f3dda4" />
-            <stop offset="1" stopColor="#b48b36" stopOpacity=".55" />
+            <stop offset="0" stopColor="#93f2e5" />
+            <stop offset="1" stopColor="#14a89f" stopOpacity=".55" />
           </linearGradient>
         </defs>
         {[100, 90, 80, 70].map((g) => (

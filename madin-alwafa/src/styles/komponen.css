@@ -1,8 +1,10 @@
 /* ——— Kaca ——— */
 .kaca {
   position: relative;
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.035) 60%, rgba(255, 255, 255, 0.05));
-  border: 1px solid var(--garis);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(255, 255, 255, 0.075), transparent 46%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025) 58%, rgba(52, 220, 201, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--r-besar);
   backdrop-filter: var(--kabur);
   -webkit-backdrop-filter: var(--kabur);
@@ -15,6 +17,21 @@
 .kaca--rapat {
   padding: 14px 16px;
 }
+/* Garis rambut bergradasi: terang di sudut kiri atas, memudar, lalu kilau tosca di kanan bawah. */
+.kaca::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06) 30%, rgba(255, 255, 255, 0.04) 65%, rgba(52, 220, 201, 0.28));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
 /* Bingkai emas tipis untuk kartu unggulan. */
 .kaca--emas::before {
   content: '';
@@ -22,7 +39,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(140deg, rgba(243, 221, 164, 0.7), rgba(243, 221, 164, 0.05) 35%, rgba(60, 199, 156, 0.1) 70%, rgba(243, 221, 164, 0.5));
+  background: linear-gradient(140deg, rgba(239, 220, 179, 0.8), rgba(239, 220, 179, 0.08) 32%, rgba(52, 220, 201, 0.12) 68%, rgba(239, 220, 179, 0.55));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -109,26 +126,26 @@
 }
 .tombol--utama {
   border: 0;
-  color: #1b1405;
-  background: linear-gradient(135deg, #fbe9b9 0%, #e6c67f 32%, #c9a04c 68%, #f0d692 100%);
+  color: #1d1609;
+  background: linear-gradient(135deg, #f7ead0 0%, #e4c891 30%, #c79e60 66%, #efdcb3 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.6),
     inset 0 -1px 0 rgba(120, 84, 20, 0.35),
-    0 10px 26px -12px rgba(214, 176, 97, 0.8);
+    0 12px 28px -14px rgba(207, 171, 110, 0.85);
 }
 .tombol--utama:hover {
-  background: linear-gradient(135deg, #fff1cc 0%, #efd38f 32%, #d4ab55 68%, #f6df9f 100%);
+  background: linear-gradient(135deg, #fbf1dc 0%, #ead2a0 30%, #d0a96c 66%, #f4e4c2 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.7),
     inset 0 -1px 0 rgba(120, 84, 20, 0.35),
-    0 14px 30px -12px rgba(214, 176, 97, 0.95);
+    0 16px 34px -14px rgba(207, 171, 110, 0.95);
 }
 .tombol--zamrud {
-  border: 1px solid rgba(127, 230, 196, 0.35);
-  background: linear-gradient(135deg, rgba(26, 156, 118, 0.55), rgba(12, 74, 56, 0.6));
+  border: 1px solid rgba(147, 242, 229, 0.35);
+  background: linear-gradient(135deg, rgba(20, 168, 159, 0.6), rgba(10, 90, 90, 0.65));
 }
 .tombol--zamrud:hover {
-  background: linear-gradient(135deg, rgba(26, 156, 118, 0.7), rgba(12, 74, 56, 0.7));
+  background: linear-gradient(135deg, rgba(20, 168, 159, 0.75), rgba(10, 90, 90, 0.75));
 }
 .tombol--hantu {
   background: transparent;
@@ -210,7 +227,7 @@
   padding: 0 14px;
   border-radius: 12px;
   border: 1px solid var(--garis-2);
-  background: rgba(4, 44, 40, 0.42);
+  background: rgba(2, 24, 26, 0.42);
   color: var(--teks);
   font-size: 15px;
   transition:
@@ -229,9 +246,9 @@
   outline: none;
   border-color: var(--emas-400);
   box-shadow:
-    0 0 0 3px rgba(214, 176, 97, 0.22),
+    0 0 0 3px rgba(207, 171, 110, 0.22),
     inset 0 1px 2px rgba(0, 0, 0, 0.25);
-  background: rgba(4, 44, 40, 0.6);
+  background: rgba(2, 24, 26, 0.6);
 }
 .masukan[aria-invalid='true'] {
   border-color: rgba(255, 149, 138, 0.7);
@@ -251,7 +268,7 @@ select.masukan {
   background-position: right 14px center;
 }
 select.masukan option {
-  background: #0a564f;
+  background: #06373a;
   color: var(--teks);
 }
 input[type='date'].masukan,
@@ -307,7 +324,7 @@ input[type='time'].masukan {
   gap: 4px;
   padding: 4px;
   border-radius: 14px;
-  background: rgba(4, 44, 40, 0.4);
+  background: rgba(2, 24, 26, 0.4);
   border: 1px solid var(--garis);
   max-width: 100%;
   overflow-x: auto;
@@ -344,9 +361,9 @@ input[type='time'].masukan {
 .segmen [aria-checked='true'],
 .segmen [aria-current='page'],
 .segmen .aktif {
-  color: #1b1405;
-  background: linear-gradient(135deg, #f7e3ad, #d6b061);
-  box-shadow: 0 6px 16px -8px rgba(214, 176, 97, 0.8);
+  color: #1d1609;
+  background: linear-gradient(135deg, #f4e6c8, #d2ad72);
+  box-shadow: 0 6px 16px -8px rgba(207, 171, 110, 0.8);
 }
 .segmen svg {
   width: 16px;
@@ -393,7 +410,7 @@ input[type='time'].masukan {
   border-color: rgba(147, 201, 255, 0.28);
 }
 .lencana--emas {
-  background: rgba(214, 176, 97, 0.16);
+  background: rgba(207, 171, 110, 0.16);
   color: var(--emas-300);
   border-color: var(--garis-emas);
 }
@@ -428,7 +445,7 @@ input[type='time'].masukan {
   font-size: calc(var(--ukuran) * 0.36);
   letter-spacing: 0.02em;
   color: #fff;
-  background: linear-gradient(140deg, #2fd0bf, #0b6f86);
+  background: linear-gradient(140deg, #3fe0cc, #0a6f7a);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
     0 0 0 2px rgba(255, 255, 255, 0.08);
@@ -464,7 +481,7 @@ input[type='time'].masukan {
   font-weight: 650;
   color: var(--teks-3);
   padding: 12px 14px;
-  background: rgba(7, 66, 60, 0.9);
+  background: rgba(4, 40, 42, 0.92);
   border-bottom: 1px solid var(--garis);
   white-space: nowrap;
 }
@@ -518,7 +535,7 @@ input[type='time'].masukan {
   border-radius: 11px;
   display: grid;
   place-items: center;
-  background: rgba(214, 176, 97, 0.14);
+  background: rgba(207, 171, 110, 0.14);
   color: var(--emas-300);
   border: 1px solid var(--garis-emas);
   flex: none;
@@ -550,7 +567,8 @@ input[type='time'].masukan {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--tosca-500), var(--tosca-300));
+  background: linear-gradient(90deg, var(--tosca-600), var(--tosca-400) 70%, var(--tosca-300));
+  box-shadow: 0 0 12px rgba(52, 220, 201, 0.45);
   transition: width var(--sedang);
 }
 .bilah--emas > span {
@@ -674,7 +692,7 @@ input[type='time'].masukan {
   max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(170deg, rgba(16, 112, 102, 0.95), rgba(8, 72, 66, 0.96));
+  background: linear-gradient(170deg, rgba(11, 72, 73, 0.96), rgba(4, 34, 36, 0.97));
   border: 1px solid var(--garis-2);
   border-radius: var(--r-xl);
   box-shadow: var(--bayang-2);
@@ -778,7 +796,7 @@ input[type='time'].masukan {
   padding: 13px 16px;
   border-radius: 16px;
   font-size: 14px;
-  background: rgba(9, 80, 73, 0.92);
+  background: rgba(6, 48, 50, 0.92);
   border: 1px solid var(--garis-2);
   box-shadow: var(--bayang-2);
   backdrop-filter: var(--kabur);
@@ -813,7 +831,7 @@ input[type='time'].masukan {
   min-width: 220px;
   padding: 6px;
   border-radius: 16px;
-  background: rgba(9, 80, 73, 0.95);
+  background: rgba(6, 48, 50, 0.95);
   border: 1px solid var(--garis-2);
   box-shadow: var(--bayang-2);
   backdrop-filter: var(--kabur);
@@ -862,7 +880,7 @@ input[type='time'].masukan {
   content: '';
   height: 1px;
   flex: 1;
-  background: linear-gradient(90deg, transparent, rgba(243, 221, 164, 0.45), transparent);
+  background: linear-gradient(90deg, transparent, rgba(239, 220, 179, 0.45), transparent);
 }
 .ornamen svg {
   width: 16px;
@@ -880,8 +898,8 @@ input[type='time'].masukan {
   padding: 7px 16px;
   font-size: 12.5px;
   font-weight: 600;
-  color: #1b1405;
-  background: linear-gradient(90deg, #e6c67f, #f7e3ad, #e6c67f);
+  color: #1d1609;
+  background: linear-gradient(90deg, #dcc08a, #f4e6c8, #dcc08a);
   text-align: center;
 }
 .pita-demo svg {
@@ -896,7 +914,7 @@ input[type='time'].masukan {
   gap: 4px;
   padding: 3px;
   border-radius: 12px;
-  background: rgba(4, 44, 40, 0.4);
+  background: rgba(2, 24, 26, 0.4);
   border: 1px solid var(--garis);
 }
 .pilih-hadir button {

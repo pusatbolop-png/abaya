@@ -50,7 +50,7 @@
   gap: 10px;
   padding: 18px 14px;
   border-right: 1px solid var(--garis);
-  background: linear-gradient(180deg, rgba(8, 78, 71, 0.62), rgba(5, 52, 48, 0.7));
+  background: linear-gradient(180deg, rgba(5, 46, 48, 0.62), rgba(3, 32, 34, 0.7));
   backdrop-filter: var(--kabur);
   -webkit-backdrop-filter: var(--kabur);
   z-index: 20;
@@ -102,8 +102,8 @@
 }
 .sisi__tautan.active {
   color: var(--teks);
-  background: linear-gradient(90deg, rgba(214, 176, 97, 0.2), rgba(214, 176, 97, 0.04));
-  box-shadow: inset 0 0 0 1px rgba(243, 221, 164, 0.22);
+  background: linear-gradient(90deg, rgba(207, 171, 110, 0.2), rgba(207, 171, 110, 0.04));
+  box-shadow: inset 0 0 0 1px rgba(239, 220, 179, 0.22);
 }
 .sisi__tautan.active svg {
   color: var(--emas-300);
@@ -142,7 +142,7 @@
   height: var(--tinggi-atas);
   padding: 0 var(--tepi);
   border-bottom: 1px solid var(--garis);
-  background: rgba(5, 52, 48, 0.7);
+  background: rgba(3, 32, 34, 0.7);
   backdrop-filter: var(--kabur);
   -webkit-backdrop-filter: var(--kabur);
 }
@@ -169,7 +169,7 @@
     transform: translateX(-104%);
     transition: transform var(--sedang);
     box-shadow: var(--bayang-2);
-    background: linear-gradient(180deg, rgba(10, 88, 80, 0.98), rgba(7, 66, 60, 0.98));
+    background: linear-gradient(180deg, rgba(7, 56, 58, 0.98), rgba(3, 30, 32, 0.98));
   }
   .sisi--buka {
     transform: none;
@@ -271,7 +271,7 @@
   top: env(safe-area-inset-top, 0px);
   z-index: 20;
   border-bottom: 1px solid var(--garis);
-  background: rgba(5, 52, 48, 0.62);
+  background: rgba(3, 32, 34, 0.62);
   backdrop-filter: var(--kabur);
   -webkit-backdrop-filter: var(--kabur);
 }
@@ -290,7 +290,7 @@
   margin: 0 auto;
   padding: 4px;
   border-radius: 16px;
-  background: rgba(4, 44, 40, 0.35);
+  background: rgba(2, 24, 26, 0.35);
   border: 1px solid var(--garis);
 }
 .nav-wali a {
@@ -318,8 +318,8 @@
   background: var(--kaca-1);
 }
 .nav-wali a.active {
-  color: #1b1405;
-  background: linear-gradient(135deg, #f7e3ad, #d6b061);
+  color: #1d1609;
+  background: linear-gradient(135deg, #f4e6c8, #d2ad72);
 }
 .tab-bawah {
   display: none;
@@ -395,7 +395,7 @@
     grid-template-columns: repeat(5, 1fr);
     padding: 6px;
     border-radius: 22px;
-    background: rgba(7, 70, 64, 0.82);
+    background: rgba(4, 36, 38, 0.82);
     border: 1px solid var(--garis-2);
     box-shadow: var(--bayang-2);
     backdrop-filter: var(--kabur);
@@ -418,7 +418,7 @@
   }
   .tab-bawah a.active {
     color: var(--emas-200);
-    background: linear-gradient(180deg, rgba(214, 176, 97, 0.26), rgba(214, 176, 97, 0.08));
+    background: linear-gradient(180deg, rgba(207, 171, 110, 0.26), rgba(207, 171, 110, 0.08));
   }
   .konten-wali {
     padding-bottom: 120px;

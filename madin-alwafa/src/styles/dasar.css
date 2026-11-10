@@ -56,7 +56,7 @@ button {
 
 a {
   color: var(--emas-300);
-  text-decoration-color: rgba(243, 221, 164, 0.4);
+  text-decoration-color: rgba(239, 220, 179, 0.4);
   text-underline-offset: 3px;
 }
 
@@ -75,7 +75,7 @@ p {
 }
 
 ::selection {
-  background: rgba(214, 176, 97, 0.4);
+  background: rgba(207, 171, 110, 0.4);
   color: #fff;
 }
 
@@ -109,11 +109,12 @@ p {
   z-index: -1;
   overflow: hidden;
   background:
-    radial-gradient(70vmax 60vmax at 8% -12%, rgba(64, 224, 208, 0.42), transparent 62%),
-    radial-gradient(60vmax 55vmax at 105% 4%, rgba(20, 150, 138, 0.6), transparent 60%),
-    radial-gradient(48vmax 42vmax at 78% 108%, rgba(214, 176, 97, 0.18), transparent 64%),
-    radial-gradient(55vmax 50vmax at -6% 104%, rgba(8, 92, 110, 0.5), transparent 62%),
-    linear-gradient(180deg, #0c665e 0%, #0a564f 55%, #084741 100%);
+    radial-gradient(72vmax 58vmax at -6% -10%, rgba(64, 232, 214, 0.55), transparent 60%),
+    radial-gradient(58vmax 46vmax at 106% -6%, rgba(10, 186, 181, 0.4), transparent 62%),
+    radial-gradient(90vmax 52vmax at 50% 122%, rgba(20, 168, 159, 0.55), transparent 66%),
+    radial-gradient(46vmax 40vmax at 62% 46%, rgba(20, 168, 159, 0.16), transparent 70%),
+    radial-gradient(38vmax 32vmax at 94% 98%, rgba(207, 171, 110, 0.16), transparent 66%),
+    linear-gradient(165deg, #0d5a5a 0%, #083f40 46%, #052c30 100%);
   pointer-events: none;
 }
 .latar::before {
@@ -122,9 +123,18 @@ p {
   inset: -2px;
   background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MiIgaGVpZ2h0PSI5MiIgdmlld0JveD0iMCAwIDkyIDkyIiBmaWxsPSJub25lIiBzdHJva2U9IiNmM2RkYTQiIHN0cm9rZS13aWR0aD0iMSI+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDYgNDYpIj4KICAgIDxyZWN0IHg9Ii0xNyIgeT0iLTE3IiB3aWR0aD0iMzQiIGhlaWdodD0iMzQiLz4KICAgIDxyZWN0IHg9Ii0xNyIgeT0iLTE3IiB3aWR0aD0iMzQiIGhlaWdodD0iMzQiIHRyYW5zZm9ybT0icm90YXRlKDQ1KSIvPgogICAgPGNpcmNsZSByPSI4Ii8+CiAgPC9nPgogIDxwYXRoIGQ9Ik0wIDBsMTIgMTJNOTIgMEw4MCAxMk0wIDkybDEyLTEyTTkyIDkyTDgwIDgwTTQ2IDB2MTBNNDYgOTJWODJNMCA0NmgxME05MiA0Nkg4MiIvPgo8L3N2Zz4=');
   background-size: 92px 92px;
-  opacity: 0.075;
+  opacity: 0.055;
   mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 85%);
   -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, rgba(0, 0, 0, 0.55) 45%, transparent 85%);
+}
+.latar::after {
+  /* vinyet dan berkas cahaya diagonal yang sangat tipis */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(118deg, transparent 32%, rgba(255, 255, 255, 0.035) 44%, transparent 56%),
+    radial-gradient(140% 110% at 50% 35%, transparent 58%, rgba(0, 12, 14, 0.42) 100%);
 }
 .latar__bola {
   position: absolute;
@@ -138,7 +148,7 @@ p {
   height: 38vmax;
   left: -8vmax;
   top: 18vh;
-  background: radial-gradient(circle, rgba(94, 234, 212, 0.38), transparent 70%);
+  background: radial-gradient(circle, rgba(64, 232, 214, 0.36), transparent 70%);
   animation: melayang 26s ease-in-out infinite alternate;
 }
 .latar__bola--2 {
@@ -146,7 +156,7 @@ p {
   height: 30vmax;
   right: -6vmax;
   top: 44vh;
-  background: radial-gradient(circle, rgba(214, 176, 97, 0.32), transparent 70%);
+  background: radial-gradient(circle, rgba(207, 171, 110, 0.22), transparent 70%);
   animation: melayang 32s ease-in-out -8s infinite alternate-reverse;
 }
 .latar__bola--3 {
@@ -154,7 +164,7 @@ p {
   height: 26vmax;
   left: 40vw;
   top: -10vmax;
-  background: radial-gradient(circle, rgba(15, 138, 126, 0.55), transparent 70%);
+  background: radial-gradient(circle, rgba(10, 186, 181, 0.32), transparent 70%);
   animation: melayang 38s ease-in-out -14s infinite alternate;
 }
 .latar__butir {
