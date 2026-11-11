@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import {
   BookOpenCheck,
   CalendarCheck2,
+  ClipboardCheck,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -35,7 +36,8 @@ const MENU = [
     kelompok: 'Kegiatan belajar',
     isi: [
       { ke: '/admin/absensi', label: 'Absensi', ikon: CalendarCheck2 },
-      { ke: '/admin/nilai', label: 'Nilai', ikon: NotebookPen },
+      { ke: '/admin/harian', label: 'Nilai harian', ikon: ClipboardCheck },
+      { ke: '/admin/nilai', label: 'Nilai semester', ikon: NotebookPen },
       { ke: '/admin/raport', label: 'Raport', ikon: ScrollText },
       { ke: '/admin/hafalan', label: 'Hafalan', ikon: BookOpenCheck },
     ],

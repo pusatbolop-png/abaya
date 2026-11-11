@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import { Activity, BookOpenCheck, CalendarCheck2, ChevronRight, NotebookPen, ScrollText, Smartphone, Users, Wallet } from 'lucide-react';
+import { useEffect } from 'react';
 import { usePakai } from '../../lib/pakai';
+import { sisaWaktu, type Pelajaran } from './NilaiHarian';
 import { useSesi } from '../../lib/sesi';
 import { Bilah, GalatMuat, KepalaHalaman, Lencana, Memuat, Pesan, Stat, TautanTombol, useJudul } from '../../ui/dasar';
 import { namaBulan, namaSemester, rupiah, tanggalHari, tanggalHijriah, tanggalPendek, waktu } from '../../../shared/format';
@@ -18,6 +20,7 @@ interface Ringkasan {
   hafalanPekan: number;
   akunWali: { aktif: number; total: number };
   aktivitas: { waktu: string; pelaku: string; aksi: string; detail: string | null }[];
+  inputHarian: { tanggal: string; batas: string; libur: boolean; jamSekarang: string; lengkap: number; pelajaran: Pelajaran[] };
 }
 
 const persen = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
@@ -31,6 +34,16 @@ export default function Dasbor() {
   useJudul('Dasbor');
   const { pengurus } = useSesi();
   const { data: d, galat, muatUlang } = usePakai<Ringkasan>('/api/admin/ringkasan');
+  // Dasbor menyegarkan diri setiap menit dan saat jendela dibuka kembali, sehingga input guru langsung terlihat.
+  useEffect(() => {
+    const segar = () => document.visibilityState === 'visible' && muatUlang();
+    const t = setInterval(segar, 60_000);
+    document.addEventListener('visibilitychange', segar);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', segar);
+    };
+  }, [muatUlang]);
 
   if (galat) return <GalatMuat galat={galat} ulang={muatUlang} />;
   if (!d)
@@ -117,6 +130,8 @@ export default function Dasbor() {
           sub={d.raport?.terbit ? `${d.raport.dibaca} sudah dibuka wali` : 'Semester ini belum ada raport terbit'}
         />
       </div>
+
+      {d.inputHarian.pelajaran.length > 0 && <InputHarian h={d.inputHarian} />}
 
       <div className="dasbor-grid">
         <section className="kaca kaca--pad">
@@ -315,5 +330,44 @@ function GrafikHadir({ tren }: { tren: Ringkasan['tren'] }) {
         Rata-rata <b className="teks-emas">{rata}%</b> santri hadir. Sumbu dimulai dari 60%.
       </figcaption>
     </figure>
+  );
+}
+
+function InputHarian({ h }: { h: Ringkasan['inputHarian'] }) {
+  const sisa = sisaWaktu(h.jamSekarang, h.batas);
+  const belum = h.pelajaran.filter((p) => !p.lengkap);
+  return (
+    <section className="kaca kaca--pad tumpuk" aria-labelledby="judul-input-harian">
+      <div className="kartu-judul" style={{ marginBottom: 0 }}>
+        <h2 id="judul-input-harian">Input nilai harian hari ini</h2>
+        <Link to="/admin/harian" className="kecil">
+          Buka
+        </Link>
+      </div>
+      <div className="baris baris--bungkus" style={{ gap: 8 }}>
+        <Lencana jenis={h.lengkap === h.pelajaran.length ? 'ok' : 'waspada'}>
+          {h.lengkap} dari {h.pelajaran.length} pelajaran lengkap
+        </Lencana>
+        <Lencana jenis={sisa ? 'emas' : 'bahaya'}>{sisa ? `Batas ${h.batas.replace(':', '.')} WIB · ${sisa}` : `Batas ${h.batas.replace(':', '.')} WIB sudah lewat`}</Lencana>
+        <span className="redup-2 kecil">Diperbarui otomatis setiap menit</span>
+      </div>
+      <Bilah persen={persen(h.lengkap, h.pelajaran.length)} jenis={h.lengkap === h.pelajaran.length ? 'emas' : 'waspada'} label="Pelajaran yang nilai hariannya lengkap" />
+      <ul className="daftar-input-harian">
+        {[...belum, ...h.pelajaran.filter((p) => p.lengkap)].map((p) => (
+          <li key={`${p.kelasId}-${p.mapelId}`}>
+            <span className={`titik-status ${p.lengkap ? 'titik-status--ok' : ''}`} aria-hidden />
+            <span className="isi-penuh potong">
+              <b>{p.mapel}</b> <span className="redup-2">· {p.kelas}</span>
+            </span>
+            <span className="redup kecil potong sembunyi-ponsel" style={{ maxWidth: 180 }}>
+              {p.pengajar ?? '–'}
+            </span>
+            <span className="angka kecil" style={{ minWidth: 44, textAlign: 'right' }}>
+              {p.terisi}/{p.wajib}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

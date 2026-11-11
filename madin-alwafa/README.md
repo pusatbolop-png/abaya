@@ -46,21 +46,30 @@ Ada dua jenis akun:
   yang hanya menampilkan nama, NIS, kelas, dan status aktif (tanpa foto dan alamat).
 - **Tata tertib** di balik kartu masih **draf** dan bisa diganti di *Pengaturan › Kartu santri*, dengan pratinjau langsung.
 
+### Nilai harian per pertemuan
+
+- Menu **Nilai harian**: guru membuka pelajaran yang diajarkannya hari itu (sesuai jadwal), mengisi nilai santri yang hadir,
+  lalu menyimpan. Batas input bawaan **21:00 WIB**. Santri yang izin/sakit/alpa tidak wajib dinilai.
+- Nilai harian semester (di *Nilai semester* dan raport) dihitung otomatis dari rata-rata nilai pertemuan dan tidak bisa ditimpa manual.
+- Dasbor menampilkan kelengkapan input hari ini per pelajaran dan menyegarkan diri setiap menit.
+
 ### Pesan WhatsApp otomatis
 
-- **Laporan harian guru** (bawaan 18:00 WIB): setiap guru yang punya nomor HP menerima rekap kelas yang diajarnya
-  (sebagai wali kelas atau pengajar): hadir, izin, sakit, alpa beserta namanya, dan setoran hafalan. Administrator menerima semua kelas,
-  ditambah syahriah yang masuk hari itu dan pendaftaran wali yang menunggu. Hari tanpa pelajaran tidak dikirimi laporan.
-- **Pengingat syahriah**: wali yang syahriahnya belum tercatat (lewat tanggal jatuh tempo, bawaan tanggal 10) diingatkan
-  **setiap 3 hari** (bawaan 09:00 WIB) sampai lunas. Jeda hari, jam, dan tanggal jatuh tempo bisa diatur.
+Semua pesan berbahasa santun, menyapa nama penerima, dan dikirim **sekali per penerima per hari** (tidak berulang/spam).
+
+| Pesan | Bawaan | Penerima |
+|---|---|---|
+| Pengingat input guru | 20:00 WIB | Hanya guru yang nilai harian atau absensi kelas walinya belum lengkap, sebelum batas 21:00 |
+| Pengingat jam pulang | 19:05 WIB (10 menit sebelum 19:15) | Wali santri yang kelasnya belajar hari itu; santri izin/sakit/alpa dilewati; kakak-beradik satu pesan |
+| Pengingat syahriah | 17:00 WIB, setiap 3 hari | Wali yang syahriahnya belum tercatat; berhenti sendiri begitu pengurus mencatat lunas |
+| Rekap harian | 21:00 WIB | Administrator (bisa juga semua guru): kehadiran, kelengkapan nilai, syahriah masuk |
+
+- Jam, jeda, tanggal jatuh tempo, dan nomor WhatsApp madrasah diatur di *Pesan otomatis › Pengaturan*. Mode **Libur** menghentikan semua pesan sampai tanggal tertentu; hari tanpa jadwal pelajaran otomatis tidak dikirimi pengingat guru dan jam pulang.
+- Bila server mati saat jadwal, pesan hari itu dilewati (tidak dikirim terlambat di jam yang tidak pantas).
 - **Cara kirim**:
-  - *Manual* (bawaan): pesan dibuat otomatis sesuai jadwal dan menunggu di *Pesan otomatis › Kotak keluar*. Admin mengetuk
-    **Kirim via WhatsApp** dan pesan terbuka di WhatsApp siap dikirim. Tidak perlu biaya atau akun tambahan.
-  - *Otomatis* lewat [Fonnte](https://fonnte.com): daftar, hubungkan nomor WhatsApp madrasah dengan memindai QR di dasbor Fonnte,
-    lalu salin token perangkat ke *Pesan otomatis › Pengaturan*. Pesan terkirim sendiri tanpa disentuh. Gunakan nomor khusus madrasah,
-    bukan nomor pribadi.
-- Jadwal hanya berjalan bila server menyala terus (VPS). Pratinjau tanpa server tidak bisa mengirim pesan terjadwal; tombol
-  *Buat laporan hari ini* dan *Proses pengingat sekarang* tetap bisa dicoba di sana.
+  - *Manual* (bawaan): pesan menunggu di *Kotak keluar*; admin mengetuk **Kirim via WhatsApp**.
+  - *Otomatis* lewat [Fonnte](https://fonnte.com): hubungkan nomor WhatsApp madrasah di dasbor Fonnte, lalu isi tokennya di Pengaturan.
+- Jadwal hanya berjalan bila server menyala terus (VPS). Di pratinjau tanpa server, tombol "sekarang" di setiap kartu tetap bisa dicoba.
 
 ## Menjalankan
 

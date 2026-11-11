@@ -297,7 +297,8 @@ try {
       ['Data santri', '/admin/santri'],
       ['Kelas & pelajaran', '/admin/kelas'],
       ['Absensi', '/admin/absensi'],
-      ['Nilai', '/admin/nilai'],
+      ['Nilai harian', '/admin/harian'],
+      ['Nilai semester', '/admin/nilai'],
       ['Raport', '/admin/raport'],
       ['Hafalan', '/admin/hafalan'],
       ['Syahriah', '/admin/syahriah'],
@@ -791,6 +792,25 @@ try {
     await p.getByText('Menambah akun pengurus').first().waitFor();
   });
 
+  bagian = 'Admin › Nilai harian';
+  await cek('nilai harian: pilih pelajaran, isi yang kosong, simpan, dasbor ikut berubah', async () => {
+    await p.goto(ASAL + '/admin/harian');
+    await p.getByRole('heading', { name: 'Nilai harian', level: 1 }).waitFor();
+    const kartu = p.locator('.kartu-pelajaran').filter({ hasText: 'Belum lengkap' }).first();
+    if (!(await kartu.count())) return; // hari tanpa pelajaran (Jum'at) atau semua sudah lengkap
+    const judul = await kartu.locator('b').first().innerText();
+    await kartu.getByRole('button', { name: /Isi nilai/ }).click();
+    await p.getByLabel('Nilai untuk semua santri yang hadir').fill('85');
+    await p.getByRole('button', { name: 'Isi yang kosong' }).click();
+    await p.getByRole('button', { name: 'Simpan nilai' }).click();
+    await toast(p, 'Nilai harian semester ikut diperbarui');
+    await aksesibel(p, 'isi nilai harian');
+    await p.getByRole('button', { name: 'Semua pelajaran' }).first().click();
+    await p.locator('.kartu-pelajaran').filter({ hasText: judul }).first().getByText('Lengkap', { exact: true }).waitFor();
+    await p.goto(ASAL + '/admin');
+    await p.getByRole('heading', { name: 'Input nilai harian hari ini' }).waitFor();
+  });
+
   bagian = 'Admin › Pendaftaran wali';
   await cek('nomor berbeda: muncul di Data santri, diperiksa lalu disetujui', async () => {
     const calon = (await (await fetch(`${ASAL}/api/auth/saya`)).json()).demo.daftarNis;
@@ -821,10 +841,23 @@ try {
     await ctxAdmin.route('https://wa.me/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: 'wa' }));
     await p.locator('.sisi').getByRole('link', { name: /Pesan otomatis/ }).click();
     await p.waitForURL('**/admin/pesan');
-    await p.getByRole('button', { name: 'Buat laporan hari ini' }).click();
-    await toast(p, /laporan harian dibuat|Tidak ada laporan/);
+    await p.getByRole('button', { name: 'Ingatkan sekarang' }).click();
+    await toast(p, /guru diingatkan|Tidak ada pengingat baru/);
+    await p.getByRole('button', { name: 'Kirim rekap sekarang' }).click();
+    await toast(p, /Rekap harian dibuat|Tidak ada rekap baru/);
     await p.getByRole('button', { name: 'Proses pengingat sekarang' }).click();
     await toast(p, /pengingat/i);
+  });
+  await cek('pengaturan: jam pulang, libur, nomor madrasah tersimpan', async () => {
+    await p.getByRole('button', { name: 'Pengaturan', exact: true }).click();
+    await dialog(p).getByLabel('Nomor WhatsApp madrasah (pengirim)').fill('0812-0000-1717');
+    await dialog(p).getByLabel('Pengingat pukul').fill('21:30');
+    await dialog(p).getByRole('button', { name: 'Simpan' }).click();
+    await toast(p, 'sebelum batas');
+    await dialog(p).getByLabel('Pengingat pukul').fill('20:00');
+    await dialog(p).getByRole('button', { name: 'Simpan' }).click();
+    await toast(p, 'disimpan');
+    await p.getByText('dari 0812-0000-1717').waitFor();
   });
   await cek('pengaturan: gateway butuh token, pesan uji masuk kotak keluar', async () => {
     await p.getByRole('button', { name: 'Pengaturan', exact: true }).click();
@@ -902,7 +935,7 @@ try {
   for (const lebar of [1440, 1024, 768, 390, 320]) {
     await cek(`semua halaman pengurus muat di ${lebar}px`, async () => {
       await p.setViewportSize({ width: lebar, height: 860 });
-      for (const alamat of ['/admin', '/admin/santri', '/admin/kelas', '/admin/absensi', '/admin/nilai', '/admin/raport', '/admin/hafalan', '/admin/syahriah', '/admin/pengumuman', '/admin/pesan', '/admin/pengaturan', '/admin/akun']) {
+      for (const alamat of ['/admin', '/admin/santri', '/admin/kelas', '/admin/absensi', '/admin/nilai', '/admin/raport', '/admin/hafalan', '/admin/syahriah', '/admin/pengumuman', '/admin/pesan', '/admin/harian', '/admin/pengaturan', '/admin/akun']) {
         await p.goto(ASAL + alamat);
         await p.locator('.kepala-halaman h1').first().waitFor();
         await tunggu(150);

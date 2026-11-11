@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { CalendarClock, ClipboardList, MessageCircle, RefreshCw, Send, Settings2, Trash2, Wallet, Zap } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { CalendarClock, ClipboardCheck, ClipboardList, Home, MessageCircle, PauseCircle, RefreshCw, Send, Settings2, Trash2, Wallet, Zap } from 'lucide-react';
 import { kirim } from '../../lib/api';
 import { useKirim, usePakai } from '../../lib/pakai';
 import { useToast } from '../../lib/toast';
@@ -7,7 +7,8 @@ import { Bidang, GalatMuat, KepalaHalaman, Kosong, Lencana, Memuat, Modal, Pesan
 import { rupiah, tanggalPanjang, tautanWa, waktu } from '../../../shared/format';
 
 type Status = 'antre' | 'terkirim' | 'gagal';
-type Jenis = 'laporan' | 'tagihan' | 'uji';
+type Jenis = 'laporan' | 'rekap' | 'pengingat' | 'tagihan' | 'pulang' | 'uji';
+type Tugas = 'pengingat' | 'pulang' | 'rekap' | 'tagihan';
 
 interface Data {
   daftar: { id: number; jenis: Jenis; tujuan: string; hp: string; isi: string; santriId: number | null; status: Status; galat: string | null; dibuat: string; dikirim: string | null }[];
@@ -16,15 +17,36 @@ interface Data {
     penyedia: 'manual' | 'fonnte';
     tokenTerisi: boolean;
     gatewayAktif: boolean;
+    nomor: string;
+    batasInput: string;
+    pengingatAktif: boolean;
+    pengingatJam: string;
     laporanAktif: boolean;
     laporanJam: string;
+    rekapKeGuru: boolean;
+    pulangAktif: boolean;
+    jamPulang: string;
+    pulangMenit: number;
+    jamKirimPulang: string;
     tagihanAktif: boolean;
     tagihanJam: string;
     tagihanJeda: number;
     jatuhTempo: number;
     syahriahNominal: number;
+    jedaSampai: string | null;
   };
-  jadwal: { jamSekarang: string; laporanTerakhir: string | null; tagihanTerakhir: string | null };
+  jadwal: {
+    hariIni: string;
+    jamSekarang: string;
+    libur: boolean;
+    adaPelajaran: boolean;
+    tagihanTerakhir: string | null;
+    pengingatHariIni: number;
+    pulangHariIni: number;
+    rekapHariIni: number;
+  };
+  belumInput: { nama: string; punyaHp: boolean; nilai: number; absensi: number }[];
+  pulang: { penerima: number };
   penerimaLaporan: { id: number; nama: string; peran: string; hp: string | null; punyaHp: boolean }[];
   tunggakan: { santri: number; tanpaNomor: number; jumlah: number };
 }
@@ -41,12 +63,69 @@ function FormatWa({ teks }: { teks: string }) {
   );
 }
 
-const NAMA_JENIS: Record<Jenis, string> = { laporan: 'Laporan harian', tagihan: 'Pengingat syahriah', uji: 'Pesan uji' };
+const jamTeks = (j: string) => j.replace(':', '.');
+const NAMA_JENIS: Record<Jenis, string> = {
+  laporan: 'Laporan harian',
+  rekap: 'Rekap harian',
+  pengingat: 'Pengingat input guru',
+  tagihan: 'Pengingat syahriah',
+  pulang: 'Pengingat jam pulang',
+  uji: 'Pesan uji',
+};
+const IKON_JENIS: Record<Jenis, ReactNode> = {
+  laporan: <ClipboardList />,
+  rekap: <ClipboardList />,
+  pengingat: <ClipboardCheck />,
+  tagihan: <Wallet />,
+  pulang: <Home />,
+  uji: <Send />,
+};
 const STATUS: Record<Status, { label: string; jenis: 'waspada' | 'ok' | 'bahaya' }> = {
   antre: { label: 'Menunggu dikirim', jenis: 'waspada' },
   terkirim: { label: 'Terkirim', jenis: 'ok' },
   gagal: { label: 'Gagal', jenis: 'bahaya' },
 };
+
+function KartuJadwal({
+  ikon,
+  judul,
+  aktif,
+  jam,
+  children,
+  info,
+  tombol,
+  sibuk,
+  jalankan,
+  nonaktif,
+}: {
+  ikon: ReactNode;
+  judul: string;
+  aktif: boolean;
+  jam: string;
+  children: ReactNode;
+  info?: ReactNode;
+  tombol: string;
+  sibuk: boolean;
+  jalankan: () => void;
+  nonaktif?: boolean;
+}) {
+  return (
+    <section className="kaca kaca--pad kartu-jadwal">
+      <div className="kartu-jadwal__kepala">
+        <span className="stat__ikon">{ikon}</span>
+        <Lencana jenis={aktif ? 'ok' : undefined} titik>
+          {aktif ? `Aktif · ${jam} WIB` : 'Mati'}
+        </Lencana>
+      </div>
+      <h2>{judul}</h2>
+      <p className="redup kecil">{children}</p>
+      {info && <div className="redup-2 kecil">{info}</div>}
+      <Tombol ikon={<Zap />} sibuk={sibuk} onClick={jalankan} disabled={nonaktif}>
+        {tombol}
+      </Tombol>
+    </section>
+  );
+}
 
 export default function PesanOtomatis() {
   useJudul('Pesan otomatis');
@@ -56,23 +135,29 @@ export default function PesanOtomatis() {
   const [jenis, setJenis] = useState<'' | Jenis>('');
   const { data, galat, muatUlang } = usePakai<Data>(`/api/admin/pesan?${new URLSearchParams({ ...(status && { status }), ...(jenis && { jenis }) })}`);
   const [atur, setAtur] = useState(false);
-  const [sibuk, setSibuk] = useState<'' | 'laporan' | 'tagihan'>('');
+  const [sibuk, setSibuk] = useState<'' | Tugas>('');
   const [buka, setBuka] = useState<number | null>(null);
 
   if (galat) return <GalatMuat galat={galat} ulang={muatUlang} />;
   if (!data) return <Memuat baris={4} tinggi={90} />;
   const p = data.pengaturan;
+  const j = data.jadwal;
 
-  const jalankan = async (apa: 'laporan' | 'tagihan') => {
+  const jalankan = async (apa: Tugas) => {
+    if (apa === 'pulang' && !(await tanya({ judul: 'Kirim pengingat jam pulang sekarang?', pesan: `${data.pulang.penerima} wali santri akan menerima pesan bahwa ananda selesai belajar pukul ${jamTeks(p.jamPulang)} WIB. Setiap wali hanya menerima satu pesan per hari.`, ya: 'Buat pesan' }))) return;
     setSibuk(apa);
     try {
-      const r = await kirim<{ dibuat: number; terkirim: number; gagal: number; dilewati?: number; tanpaNomor?: string[] }>('POST', `/api/admin/pesan/${apa}`);
-      if (apa === 'laporan') {
-        toast.tampil(r.dibuat ? `${r.dibuat} laporan harian dibuat${r.terkirim ? `, ${r.terkirim} terkirim` : ''}.` : 'Tidak ada laporan: hari ini tidak ada pelajaran atau guru belum punya nomor HP.');
-      } else {
-        const lewat = r.dilewati ? ` ${r.dilewati} wali sudah diingatkan dalam ${p.tagihanJeda} hari terakhir.` : '';
-        toast.tampil(r.dibuat ? `${r.dibuat} pengingat syahriah dibuat.${lewat}` : `Tidak ada pengingat baru.${lewat}`);
-      }
+      const r = await kirim<{ dibuat: number; terkirim: number; gagal: number; dilewati?: number }>('POST', `/api/admin/pesan/${apa}`);
+      const terkirim = r.terkirim ? `, ${r.terkirim} terkirim` : '';
+      const pesan: Record<Tugas, string> = {
+        pengingat: r.dibuat ? `${r.dibuat} guru diingatkan${terkirim}.` : 'Tidak ada pengingat baru: semua guru sudah lengkap, atau sudah diingatkan hari ini.',
+        pulang: r.dibuat ? `${r.dibuat} pengingat jam pulang dibuat${terkirim}.` : 'Tidak ada pesan baru: hari ini tidak ada pelajaran, atau wali sudah menerimanya.',
+        rekap: r.dibuat ? `Rekap harian dibuat${terkirim}.` : 'Tidak ada rekap baru: hari ini tidak ada pelajaran, atau rekap sudah dibuat.',
+        tagihan: r.dibuat
+          ? `${r.dibuat} pengingat syahriah dibuat${terkirim}.${r.dilewati ? ` ${r.dilewati} wali sudah diingatkan dalam ${p.tagihanJeda} hari terakhir.` : ''}`
+          : `Tidak ada pengingat baru.${r.dilewati ? ` ${r.dilewati} wali sudah diingatkan dalam ${p.tagihanJeda} hari terakhir.` : ''}`,
+      };
+      toast.tampil(pesan[apa]);
       muatUlang();
     } catch (e) {
       toast.galat(e);
@@ -117,7 +202,7 @@ export default function PesanOtomatis() {
       <KepalaHalaman
         kecil="Madrasah"
         judul="Pesan otomatis"
-        sub={`Laporan santri untuk setiap guru pukul ${p.laporanJam} WIB, dan pengingat syahriah setiap ${p.tagihanJeda} hari sampai lunas.`}
+        sub="Pesan WhatsApp yang santun untuk guru dan wali santri, sekali per penerima per hari."
         aksi={
           <Tombol ikon={<Settings2 />} onClick={() => setAtur(true)}>
             Pengaturan
@@ -125,78 +210,96 @@ export default function PesanOtomatis() {
         }
       />
 
-      {!p.gatewayAktif && (
-        <Pesan judul="Pengiriman masih manual">
-          Pesan dibuat otomatis sesuai jadwal lalu menunggu di kotak keluar. Ketuk <b>Kirim via WhatsApp</b> untuk mengirim dari ponsel ini. Agar terkirim sendiri tanpa disentuh, isi token
-          gateway WhatsApp (Fonnte) di <b>Pengaturan</b>.
+      {j.libur ? (
+        <Pesan jenis="waspada" judul="Libur: pesan otomatis dihentikan">
+          Semua pesan terjadwal berhenti sampai {tanggalPanjang(p.jedaSampai)}. Ubah di <b>Pengaturan</b>.
         </Pesan>
+      ) : (
+        !p.gatewayAktif && (
+          <Pesan judul="Pengiriman masih manual">
+            Pesan dibuat otomatis sesuai jadwal lalu menunggu di kotak keluar. Ketuk <b>Kirim via WhatsApp</b> untuk mengirim dari ponsel ini. Agar terkirim sendiri dari nomor WhatsApp
+            madrasah, isi token gateway (Fonnte) di <b>Pengaturan</b>.
+          </Pesan>
+        )
       )}
 
-      <div className="grid-3">
-        <section className="kaca kaca--pad kartu-jadwal">
-          <div className="kartu-jadwal__kepala">
-            <span className="stat__ikon">
-              <ClipboardList />
-            </span>
-            <Lencana jenis={p.laporanAktif ? 'ok' : undefined} titik>
-              {p.laporanAktif ? 'Aktif' : 'Mati'}
-            </Lencana>
-          </div>
-          <h2>Laporan harian guru</h2>
-          <p className="redup kecil">
-            Setiap hari pukul <b>{p.laporanJam} WIB</b>: kehadiran, izin, sakit, alpa, dan setoran hafalan per kelas yang diajar.
-          </p>
-          <div className="redup-2 kecil">
-            Terakhir: {data.jadwal.laporanTerakhir ? tanggalPanjang(data.jadwal.laporanTerakhir) : 'belum pernah'} · {data.penerimaLaporan.length - tanpaHp.length} guru penerima
-          </div>
-          <Tombol ikon={<Zap />} sibuk={sibuk === 'laporan'} onClick={() => jalankan('laporan')}>
-            Buat laporan hari ini
-          </Tombol>
-        </section>
-        <section className="kaca kaca--pad kartu-jadwal">
-          <div className="kartu-jadwal__kepala">
-            <span className="stat__ikon">
-              <Wallet />
-            </span>
-            <Lencana jenis={p.tagihanAktif ? 'ok' : undefined} titik>
-              {p.tagihanAktif ? 'Aktif' : 'Mati'}
-            </Lencana>
-          </div>
-          <h2>Pengingat syahriah</h2>
-          <p className="redup kecil">
-            Setiap <b>{p.tagihanJeda} hari</b> pukul {p.tagihanJam} WIB untuk wali yang belum membayar; jatuh tempo tanggal {p.jatuhTempo} setiap bulan.
-          </p>
-          <div className="redup-2 kecil">
-            {p.syahriahNominal
-              ? `${data.tunggakan.santri} santri menunggak · ${rupiah(data.tunggakan.jumlah)}${data.tunggakan.tanpaNomor ? ` · ${data.tunggakan.tanpaNomor} tanpa nomor wali` : ''}`
-              : 'Isi nominal syahriah di Pengaturan agar pengingat bisa dibuat.'}
-          </div>
-          <Tombol ikon={<Zap />} sibuk={sibuk === 'tagihan'} onClick={() => jalankan('tagihan')} disabled={!p.syahriahNominal}>
-            Proses pengingat sekarang
-          </Tombol>
-        </section>
-        <section className="kaca kaca--pad kartu-jadwal">
-          <div className="kartu-jadwal__kepala">
-            <span className="stat__ikon">
-              <MessageCircle />
-            </span>
-            <Lencana jenis={p.gatewayAktif ? 'ok' : 'waspada'} titik>
-              {p.gatewayAktif ? 'Otomatis' : 'Manual'}
-            </Lencana>
-          </div>
-          <h2>Pengiriman WhatsApp</h2>
-          <p className="redup kecil">{p.gatewayAktif ? 'Pesan dikirim langsung lewat gateway Fonnte dari nomor madrasah.' : 'Pesan dikirim admin dengan sekali ketuk lewat aplikasi WhatsApp.'}</p>
-          <div className="baris baris--bungkus" style={{ gap: 6 }}>
-            <Lencana jenis="waspada">{data.hitung.antre} menunggu</Lencana>
-            <Lencana jenis="ok">{data.hitung.terkirim} terkirim</Lencana>
-            {data.hitung.gagal > 0 && <Lencana jenis="bahaya">{data.hitung.gagal} gagal</Lencana>}
-          </div>
-        </section>
+      <div className="baris baris--bungkus" style={{ gap: 8 }}>
+        <Lencana jenis={p.gatewayAktif ? 'ok' : 'waspada'} titik>
+          {p.gatewayAktif ? 'Terkirim otomatis' : 'Kirim manual'}
+          {p.nomor && ` · dari ${p.nomor}`}
+        </Lencana>
+        <Lencana jenis="waspada">{data.hitung.antre} menunggu</Lencana>
+        <Lencana jenis="ok">{data.hitung.terkirim} terkirim</Lencana>
+        {data.hitung.gagal > 0 && <Lencana jenis="bahaya">{data.hitung.gagal} gagal</Lencana>}
+      </div>
+
+      <div className="grid-jadwal">
+        <KartuJadwal
+          ikon={<ClipboardCheck />}
+          judul="Pengingat input guru"
+          aktif={p.pengingatAktif}
+          jam={jamTeks(p.pengingatJam)}
+          tombol="Ingatkan sekarang"
+          sibuk={sibuk === 'pengingat'}
+          jalankan={() => jalankan('pengingat')}
+          info={
+            !j.adaPelajaran
+              ? 'Hari ini tidak ada pelajaran.'
+              : data.belumInput.length
+                ? `Belum lengkap: ${data.belumInput.map((g) => g.nama).join(', ')}`
+                : 'Semua guru sudah melengkapi input hari ini.'
+          }
+        >
+          Hanya untuk guru yang nilai harian atau absensinya belum lengkap, sebelum batas pukul <b>{jamTeks(p.batasInput)} WIB</b>.
+          {j.pengingatHariIni > 0 && ` Hari ini sudah ${j.pengingatHariIni} guru diingatkan.`}
+        </KartuJadwal>
+        <KartuJadwal
+          ikon={<Home />}
+          judul="Pengingat jam pulang"
+          aktif={p.pulangAktif}
+          jam={jamTeks(p.jamKirimPulang)}
+          tombol="Buat pesan hari ini"
+          sibuk={sibuk === 'pulang'}
+          jalankan={() => jalankan('pulang')}
+          nonaktif={!j.adaPelajaran}
+          info={j.adaPelajaran ? `${data.pulang.penerima} wali santri · ${j.pulangHariIni ? `${j.pulangHariIni} sudah dibuat hari ini` : 'belum dikirim hari ini'}` : 'Hari ini tidak ada pelajaran.'}
+        >
+          {p.pulangMenit} menit sebelum pulang pukul <b>{jamTeks(p.jamPulang)} WIB</b>, satu pesan per wali per hari. Santri yang izin, sakit, atau alpa dilewati.
+        </KartuJadwal>
+        <KartuJadwal
+          ikon={<Wallet />}
+          judul="Pengingat syahriah"
+          aktif={p.tagihanAktif}
+          jam={jamTeks(p.tagihanJam)}
+          tombol="Proses pengingat sekarang"
+          sibuk={sibuk === 'tagihan'}
+          jalankan={() => jalankan('tagihan')}
+          nonaktif={!p.syahriahNominal}
+          info={
+            p.syahriahNominal
+              ? `${data.tunggakan.santri} santri belum lunas · ${rupiah(data.tunggakan.jumlah)}${data.tunggakan.tanpaNomor ? ` · ${data.tunggakan.tanpaNomor} tanpa nomor wali` : ''}`
+              : 'Isi nominal syahriah di Pengaturan agar pengingat bisa dibuat.'
+          }
+        >
+          Setiap <b>{p.tagihanJeda} hari</b> dengan sapaan nama wali, sejak tanggal {p.jatuhTempo} setiap bulan. Berhenti sendiri begitu pengurus mencatatnya lunas.
+        </KartuJadwal>
+        <KartuJadwal
+          ikon={<ClipboardList />}
+          judul="Rekap harian"
+          aktif={p.laporanAktif}
+          jam={jamTeks(p.laporanJam)}
+          tombol="Kirim rekap sekarang"
+          sibuk={sibuk === 'rekap'}
+          jalankan={() => jalankan('rekap')}
+          info={p.rekapKeGuru ? 'Untuk administrator dan semua guru (kelas masing-masing).' : 'Untuk administrator.'}
+        >
+          Setelah batas input: kehadiran, kelengkapan nilai harian per pelajaran, syahriah yang masuk, dan pendaftaran yang menunggu.
+        </KartuJadwal>
       </div>
 
       {tanpaHp.length > 0 && (
-        <Pesan jenis="waspada" judul="Guru tanpa nomor HP">
-          {tanpaHp.map((g) => g.nama).join(', ')} belum menerima laporan harian. Isi nomor HP di Pengaturan › Akun pengurus.
+        <Pesan jenis="waspada" judul="Guru tanpa nomor WhatsApp">
+          {tanpaHp.map((g) => g.nama).join(', ')} tidak bisa menerima pengingat. Isi nomornya di Pengaturan › Akun pengurus.
         </Pesan>
       )}
 
@@ -209,7 +312,9 @@ export default function PesanOtomatis() {
           <div className="baris baris--bungkus" style={{ gap: 8 }}>
             <select className="masukan masukan--kecil" style={{ width: 'auto' }} value={jenis} onChange={(e) => setJenis(e.target.value as '' | Jenis)} aria-label="Jenis pesan">
               <option value="">Semua jenis</option>
-              <option value="laporan">Laporan harian</option>
+              <option value="pengingat">Pengingat guru</option>
+              <option value="rekap">Rekap harian</option>
+              <option value="pulang">Jam pulang</option>
               <option value="tagihan">Pengingat syahriah</option>
               <option value="uji">Pesan uji</option>
             </select>
@@ -236,7 +341,7 @@ export default function PesanOtomatis() {
             {data.daftar.map((m) => (
               <li key={m.id} className={`daftar-pesan__item daftar-pesan__item--${m.status}`}>
                 <div className="daftar-pesan__kepala">
-                  <span className="stat__ikon">{m.jenis === 'tagihan' ? <Wallet /> : m.jenis === 'laporan' ? <ClipboardList /> : <Send />}</span>
+                  <span className="stat__ikon">{IKON_JENIS[m.jenis]}</span>
                   <div className="isi-penuh" style={{ minWidth: 0 }}>
                     <b className="potong" style={{ display: 'block' }}>
                       {m.tujuan}
@@ -294,8 +399,17 @@ function PengaturanPesan({ awal, tutup, selesai }: { awal: Data['pengaturan']; t
     penyedia: awal.penyedia,
     token: '',
     hapusToken: false,
+    nomor: awal.nomor,
+    batasInput: awal.batasInput,
+    pengingatAktif: awal.pengingatAktif,
+    pengingatJam: awal.pengingatJam,
     laporanAktif: awal.laporanAktif,
     laporanJam: awal.laporanJam,
+    rekapKeGuru: awal.rekapKeGuru,
+    pulangAktif: awal.pulangAktif,
+    jamPulang: awal.jamPulang,
+    pulangMenit: String(awal.pulangMenit),
+    jedaSampai: awal.jedaSampai ?? '',
     tagihanAktif: awal.tagihanAktif,
     tagihanJam: awal.tagihanJam,
     tagihanJeda: String(awal.tagihanJeda),
@@ -306,7 +420,7 @@ function PengaturanPesan({ awal, tutup, selesai }: { awal: Data['pengaturan']; t
 
   const simpan = () =>
     jalankan(async () => {
-      await kirim('PUT', '/api/admin/pesan/pengaturan', { ...f, tagihanJeda: Number(f.tagihanJeda), jatuhTempo: Number(f.jatuhTempo), token: f.token || undefined });
+      await kirim('PUT', '/api/admin/pesan/pengaturan', { ...f, tagihanJeda: Number(f.tagihanJeda), jatuhTempo: Number(f.jatuhTempo), pulangMenit: Number(f.pulangMenit), jedaSampai: f.jedaSampai || null, token: f.token || undefined });
       toast.tampil('Pengaturan pesan otomatis disimpan.');
       selesai();
     }).catch(toast.galat);
@@ -373,17 +487,41 @@ function PengaturanPesan({ awal, tutup, selesai }: { awal: Data['pengaturan']; t
             )}
           </div>
         )}
+        <Bidang label="Nomor WhatsApp madrasah (pengirim)" galat={bidang.nomor} bantu="Nomor yang terhubung ke gateway dan dicantumkan di pesan untuk wali yang ingin bertanya.">
+          <input className="masukan angka" type="tel" inputMode="tel" placeholder="0812-…" value={f.nomor} onChange={(e) => setF({ ...f, nomor: e.target.value })} />
+        </Bidang>
         <div className="grid-2">
           <div className="panel tumpuk" style={{ padding: 16 }}>
             <div className="baris baris--antara">
               <b className="baris" style={{ gap: 8 }}>
-                <CalendarClock className="teks-ikon" /> Laporan harian guru
+                <ClipboardCheck className="teks-ikon" /> Input harian guru
               </b>
-              <Sakelar nyala={f.laporanAktif} ubah={(v) => setF({ ...f, laporanAktif: v })} label="Laporan harian aktif" />
+              <Sakelar nyala={f.pengingatAktif} ubah={(v) => setF({ ...f, pengingatAktif: v })} label="Pengingat input guru aktif" />
             </div>
-            <Bidang label="Dikirim pukul (WIB)" galat={bidang.laporanJam}>
-              <input className="masukan angka" type="time" value={f.laporanJam} onChange={(e) => setF({ ...f, laporanJam: e.target.value })} />
-            </Bidang>
+            <div className="grid-2">
+              <Bidang label="Pengingat pukul" galat={bidang.pengingatJam}>
+                <input className="masukan angka" type="time" value={f.pengingatJam} onChange={(e) => setF({ ...f, pengingatJam: e.target.value })} />
+              </Bidang>
+              <Bidang label="Batas input" galat={bidang.batasInput}>
+                <input className="masukan angka" type="time" value={f.batasInput} onChange={(e) => setF({ ...f, batasInput: e.target.value })} />
+              </Bidang>
+            </div>
+          </div>
+          <div className="panel tumpuk" style={{ padding: 16 }}>
+            <div className="baris baris--antara">
+              <b className="baris" style={{ gap: 8 }}>
+                <Home className="teks-ikon" /> Jam pulang
+              </b>
+              <Sakelar nyala={f.pulangAktif} ubah={(v) => setF({ ...f, pulangAktif: v })} label="Pengingat jam pulang aktif" />
+            </div>
+            <div className="grid-2">
+              <Bidang label="Pulang pukul" galat={bidang.jamPulang}>
+                <input className="masukan angka" type="time" value={f.jamPulang} onChange={(e) => setF({ ...f, jamPulang: e.target.value })} />
+              </Bidang>
+              <Bidang label="Menit sebelumnya" galat={bidang.pulangMenit}>
+                <input className="masukan angka" type="number" min={5} max={120} value={f.pulangMenit} onChange={(e) => setF({ ...f, pulangMenit: e.target.value })} />
+              </Bidang>
+            </div>
           </div>
           <div className="panel tumpuk" style={{ padding: 16 }}>
             <div className="baris baris--antara">
@@ -404,6 +542,29 @@ function PengaturanPesan({ awal, tutup, selesai }: { awal: Data['pengaturan']; t
               <input className="masukan angka" type="time" value={f.tagihanJam} onChange={(e) => setF({ ...f, tagihanJam: e.target.value })} />
             </Bidang>
           </div>
+          <div className="panel tumpuk" style={{ padding: 16 }}>
+            <div className="baris baris--antara">
+              <b className="baris" style={{ gap: 8 }}>
+                <CalendarClock className="teks-ikon" /> Rekap harian
+              </b>
+              <Sakelar nyala={f.laporanAktif} ubah={(v) => setF({ ...f, laporanAktif: v })} label="Rekap harian aktif" />
+            </div>
+            <Bidang label="Dikirim pukul (WIB)" galat={bidang.laporanJam}>
+              <input className="masukan angka" type="time" value={f.laporanJam} onChange={(e) => setF({ ...f, laporanJam: e.target.value })} />
+            </Bidang>
+            <label className="baris kecil" style={{ gap: 8 }}>
+              <input type="checkbox" checked={f.rekapKeGuru} onChange={(e) => setF({ ...f, rekapKeGuru: e.target.checked })} />
+              Kirim juga ke semua guru (kelas masing-masing)
+            </label>
+          </div>
+        </div>
+        <div className="panel tumpuk" style={{ padding: 16 }}>
+          <b className="baris" style={{ gap: 8 }}>
+            <PauseCircle className="teks-ikon" /> Libur
+          </b>
+          <Bidang label="Hentikan semua pesan otomatis sampai tanggal" galat={bidang.jedaSampai} bantu="Kosongkan bila tidak sedang libur. Pada hari tanpa jadwal pelajaran, pengingat guru dan jam pulang tidak dikirim.">
+            <input className="masukan angka" type="date" value={f.jedaSampai} onChange={(e) => setF({ ...f, jedaSampai: e.target.value })} />
+          </Bidang>
         </div>
         <div className="panel tumpuk" style={{ padding: 16 }}>
           <b>Kirim pesan uji</b>

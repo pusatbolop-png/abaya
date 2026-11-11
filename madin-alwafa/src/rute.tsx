@@ -17,6 +17,7 @@ const DetailSantri = lazy(() => import('./halaman/admin/DetailSantri'));
 const Kelas = lazy(() => import('./halaman/admin/Kelas'));
 const Absensi = lazy(() => import('./halaman/admin/Absensi'));
 const Nilai = lazy(() => import('./halaman/admin/Nilai'));
+const NilaiHarian = lazy(() => import('./halaman/admin/NilaiHarian'));
 const RaportKelas = lazy(() => import('./halaman/admin/Raport'));
 const RaportSantri = lazy(() => import('./halaman/admin/RaportSantri'));
 const CetakRaport = lazy(() => import('./halaman/admin/CetakRaport'));
@@ -104,6 +105,7 @@ const router = (PRATINJAU ? createMemoryRouter : createBrowserRouter)([
           { path: 'kelas', element: tunda(<Kelas />) },
           { path: 'absensi', element: tunda(<Absensi />) },
           { path: 'nilai', element: tunda(<Nilai />) },
+          { path: 'harian', element: tunda(<NilaiHarian />) },
           { path: 'raport', element: tunda(<RaportKelas />) },
           { path: 'raport/:santriId/:periodeId', element: tunda(<RaportSantri />) },
           { path: 'hafalan', element: tunda(<Hafalan />) },

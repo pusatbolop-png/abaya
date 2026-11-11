@@ -20,7 +20,7 @@ interface DataNilai {
   mapel: { id: number; nama: string; namaArab: string | null; kkm: number; pengajar: string | null };
   periode: { id: number; tahunAjaran: string; semester: number };
   bobot: Bobot;
-  daftar: { santriId: number; nis: string; nama: string; jk: string; fotoVersi: string | null; harian: number | null; uts: number | null; uas: number | null; akhir: number | null; terkunci: boolean }[];
+  daftar: { santriId: number; nis: string; nama: string; jk: string; fotoVersi: string | null; harian: number | null; uts: number | null; uas: number | null; akhir: number | null; terkunci: boolean; jumlahHarian: number }[];
 }
 
 const KOMPONEN = [
@@ -289,7 +289,9 @@ function InputNilai({ kelasId, mapelId, periodeId, kembali }: { kelasId: string;
                           inputMode="numeric"
                           data-kolom={k.k}
                           value={v[k.k]}
-                          disabled={d.terkunci}
+                          // Nilai harian semester dihitung dari nilai per pertemuan (menu Nilai harian).
+                          disabled={d.terkunci || (k.k === 'harian' && d.jumlahHarian > 0)}
+                          title={k.k === 'harian' && d.jumlahHarian > 0 ? `Rata-rata ${d.jumlahHarian} pertemuan; ubah lewat menu Nilai harian` : undefined}
                           aria-invalid={salah(v[k.k]) || undefined}
                           aria-label={`${k.label} ${d.nama}`}
                           onFocus={(e) => e.currentTarget.select()}
