@@ -91,6 +91,15 @@ async function lebarAman(page, label) {
 }
 
 async function aksesibel(page, label) {
+  // Tunggu transisi yang sedang berjalan (mis. tab baru diklik) agar kontras tidak diukur di tengah animasi.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  );
   await page.addScriptTag({ content: AXE });
   const pelanggaran = await page.evaluate(async () => {
     const r = await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa'], resultTypes: ['violations'] });
@@ -122,6 +131,18 @@ try {
       await page.locator('.masuk__logo').waitFor();
       const lebar = await page.locator('.masuk__logo').evaluate((img) => img.naturalWidth);
       harus(lebar > 0, 'logo tidak termuat');
+    });
+    await cek('latar tosca tetap tampil walau halaman pembungkus memberi latar putih', async () => {
+      // Pratinjau untuk klien dibungkus kerangka lain yang bisa memberi body latar putih.
+      const tag = await page.addStyleTag({ content: 'html,body{background:#fff}' });
+      const [html, body, isolasi] = await page.evaluate(() => {
+        const b = getComputedStyle(document.body);
+        return [getComputedStyle(document.documentElement).backgroundColor, b.backgroundColor, b.isolation];
+      });
+      harus(html !== 'rgb(255, 255, 255)' && body !== 'rgb(255, 255, 255)', `latar berubah putih: ${html} / ${body}`);
+      // body harus konteks tumpukan sendiri, kalau tidak warna dasarnya menutupi lapisan cahaya .latar
+      harus(isolasi === 'isolate', 'body bukan konteks tumpukan: lapisan latar tertutup');
+      await tag.evaluate((el) => el.remove());
     });
     await cek('tab pengurus/wali mengganti label isian', async () => {
       await page.getByRole('tab', { name: 'Pengurus' }).click();
