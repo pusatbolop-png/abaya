@@ -3,7 +3,6 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import {
   BookOpenCheck,
   CalendarCheck2,
-  KeyRound,
   LayoutDashboard,
   LogOut,
   Megaphone,
@@ -90,14 +89,15 @@ export default function KerangkaAdmin() {
             ))}
           </nav>
           <div className="sisi__akun">
-            <Avatar nama={pengurus.nama} emas ukuran={38} />
-            <div className="isi-penuh" style={{ display: 'grid', lineHeight: 1.25 }}>
-              <span className="potong tebal" style={{ fontSize: 14 }}>
-                {pengurus.nama}
+            <NavLink to="/admin/akun" className="sisi__akun-tautan" title="Akun saya">
+              <Avatar nama={pengurus.nama} emas ukuran={38} />
+              <span className="isi-penuh" style={{ display: 'grid', lineHeight: 1.25 }}>
+                <span className="potong tebal" style={{ fontSize: 14 }}>
+                  {pengurus.nama}
+                </span>
+                <span className="redup-2 kecil">{PERAN_PENGURUS[pengurus.peran]}</span>
               </span>
-              <span className="redup-2 kecil">{PERAN_PENGURUS[pengurus.peran]}</span>
-            </div>
-            <Tombol varian="hantu" ukuran="kecil" ikon={<KeyRound />} onClick={() => navigasi('/admin/akun')} aria-label="Akun saya" title="Akun saya" />
+            </NavLink>
             <Tombol
               varian="hantu"
               ukuran="kecil"

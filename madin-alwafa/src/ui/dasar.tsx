@@ -1,5 +1,7 @@
 import {
+  cloneElement,
   createContext,
+  isValidElement,
   useCallback,
   useContext,
   useEffect,
@@ -7,6 +9,7 @@ import {
   useRef,
   useState,
   type ButtonHTMLAttributes,
+  type ReactElement,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -85,21 +88,39 @@ export function Bidang({
       )}
     </span>
   );
-  const kaki = galat ? <span className="bidang__galat">{galat}</span> : bantu ? <span className="bidang__bantu">{bantu}</span> : null;
+  const idKaki = `${id}-k`;
+  const kaki = galat ? (
+    <span className="bidang__galat" id={idKaki} role="alert">
+      {galat}
+    </span>
+  ) : bantu ? (
+    <span className="bidang__bantu" id={idKaki}>
+      {bantu}
+    </span>
+  ) : null;
   if (grup)
     return (
-      <div className={`bidang ${className ?? ''}`} role="group" aria-labelledby={`${id}-l`}>
+      <div className={`bidang ${className ?? ''}`} role="group" aria-labelledby={`${id}-l`} aria-describedby={kaki ? idKaki : undefined}>
         {judul}
         {children}
         {kaki}
       </div>
     );
+  const anak =
+    isValidElement(children) && typeof children.type === 'string' && ['input', 'select', 'textarea'].includes(children.type)
+      ? cloneElement(children as ReactElement<Record<string, unknown>>, {
+          'aria-describedby': kaki ? idKaki : undefined,
+          'aria-invalid': galat ? true : undefined,
+        })
+      : children;
   return (
-    <label className={`bidang ${className ?? ''}`}>
-      {judul}
-      {children}
+    <div className={`bidang ${className ?? ''}`}>
+      <label className="bidang__bungkus">
+        {judul}
+        {anak}
+      </label>
       {kaki}
-    </label>
+    </div>
   );
 }
 
@@ -148,7 +169,7 @@ export function Modal({
           <h2>{judul}</h2>
           {sub && <p>{sub}</p>}
         </div>
-        <Tombol varian="hantu" ukuran="kecil" ikon={<X />} onClick={tutup} aria-label="Tutup" />
+        <Tombol varian="hantu" ukuran="kecil" ikon={<X />} onClick={tutup} aria-label="Tutup jendela" title="Tutup (Esc)" />
       </div>
       <div className="modal__isi">{children}</div>
       {kaki && <div className="modal__kaki">{kaki}</div>}
@@ -310,10 +331,17 @@ export function Stat({ ikon, label, nilai, sub, children, emas }: { ikon: ReactN
   );
 }
 
-export function Bilah({ persen, jenis }: { persen: number; jenis?: 'emas' | 'waspada' }) {
+export function Bilah({ persen, jenis, label }: { persen: number; jenis?: 'emas' | 'waspada'; label: string }) {
   const p = Math.max(0, Math.min(100, persen));
   return (
-    <div className={`bilah ${jenis ? `bilah--${jenis}` : ''}`} role="progressbar" aria-valuenow={Math.round(p)} aria-valuemin={0} aria-valuemax={100}>
+    <div
+      className={`bilah ${jenis ? `bilah--${jenis}` : ''}`}
+      role="progressbar"
+      aria-label={label}
+      aria-valuenow={Math.round(p)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <span style={{ width: `${p}%` }} />
     </div>
   );
@@ -331,7 +359,11 @@ export function KepalaHalaman({ kecil, judul, sub, aksi }: { kecil?: ReactNode; 
   return (
     <header className="kepala-halaman">
       <div className="kepala-halaman__teks">
-        {kecil && <div className="kepala-halaman__kecil">{kecil}</div>}
+        {kecil && (
+          <div className={`kepala-halaman__kecil ${typeof kecil === 'string' && /[\u0600-\u06FF]/.test(kecil) ? 'kepala-halaman__kecil--arab' : ''}`} lang={typeof kecil === 'string' && /[\u0600-\u06FF]/.test(kecil) ? 'ar' : undefined}>
+            {kecil}
+          </div>
+        )}
         <h1>{judul}</h1>
         {sub && <p className="kepala-halaman__sub">{sub}</p>}
       </div>

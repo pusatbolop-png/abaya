@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { ArrowRightLeft, IdCard, Search, UserPlus, Users, X } from 'lucide-react';
 import { kirim } from '../../lib/api';
 import { usePakai } from '../../lib/pakai';
+import { useSaringan } from '../../lib/saringan';
 import { useSesi } from '../../lib/sesi';
 import { useToast } from '../../lib/toast';
 import type { Kelas, Santri } from '../../lib/tipe';
@@ -17,18 +18,16 @@ export default function DaftarSantri() {
   const admin = pengurus?.peran === 'admin';
   const toast = useToast();
   const navigasi = useNavigate();
-  const [param, setParam] = useSearchParams();
+  const [param, aturParam] = useSaringan();
   const q = param.get('q') ?? '';
   const kelas = param.get('kelas') ?? '';
   const jk = param.get('jk') ?? '';
   const status = param.get('status') ?? 'aktif';
-  const atur = (k: string, v: string) => {
-    const p = new URLSearchParams(param);
-    if (v) p.set(k, v);
-    else p.delete(k);
-    setParam(p, { replace: true });
-  };
+  const disaring = !!(q || kelas || jk || status !== 'aktif');
+  const atur = (k: string, v: string) => aturParam({ [k]: v });
   const [cari, setCari] = useState(q);
+  // Selaraskan kotak cari bila alamat berubah dari luar (tombol kembali, tautan).
+  useEffect(() => setCari(q), [q]);
 
   const url = `/api/admin/santri?${new URLSearchParams({ q, kelas, jk, status }).toString()}`;
   const { data, galat, memuat, muatUlang } = usePakai<{ daftar: Santri[]; hitung: { total: number; putra: number; putri: number } }>(url);
@@ -166,11 +165,11 @@ export default function DaftarSantri() {
         ) : daftar.length === 0 ? (
           <Kosong
             ikon={<Users />}
-            judul={q || kelas || jk ? 'Tidak ada santri yang cocok' : 'Belum ada santri'}
-            pesan={q || kelas || jk ? 'Ubah kata kunci atau saringan.' : admin ? 'Tambahkan santri pertama. Akun wali santri dibuat otomatis.' : undefined}
+            judul={disaring ? 'Tidak ada santri yang cocok' : 'Belum ada santri'}
+            pesan={disaring ? 'Ubah kata kunci atau saringan.' : admin ? 'Tambahkan santri pertama. Akun wali santri dibuat otomatis.' : undefined}
             aksi={
               admin &&
-              !q && (
+              !disaring && (
                 <Tombol varian="utama" ikon={<UserPlus />} onClick={() => setForm('baru')}>
                   Tambah santri
                 </Tombol>

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 import { BookOpenCheck, Plus, Save, Trash2 } from 'lucide-react';
 import { kirim } from '../../lib/api';
 import { useKirim, usePakai } from '../../lib/pakai';
+import { useSaringan } from '../../lib/saringan';
 import { useToast } from '../../lib/toast';
 import type { Hafalan as THafalan, Kelas, Santri } from '../../lib/tipe';
 import { Avatar, Bidang, GalatMuat, KepalaHalaman, Kosong, Lencana, Memuat, Modal, Stat, Tombol, useJudul, useKonfirmasi } from '../../ui/dasar';
@@ -15,7 +16,7 @@ export default function Hafalan() {
   useJudul('Hafalan');
   const toast = useToast();
   const tanya = useKonfirmasi();
-  const [param, setParam] = useSearchParams();
+  const [param, aturParam] = useSaringan();
   const santriParam = param.get('santri');
   const [kelas, setKelas] = useState('');
   const [jenis, setJenis] = useState('');
@@ -62,11 +63,7 @@ export default function Hafalan() {
             {namaSantri ?? 'Santri terpilih'}{' '}
             <button
               className="tombol-tutup-lencana"
-              onClick={() => {
-                const p = new URLSearchParams(param);
-                p.delete('santri');
-                setParam(p, { replace: true });
-              }}
+              onClick={() => aturParam({ santri: null })}
               aria-label="Hapus saringan santri"
             >
               ×
@@ -98,7 +95,11 @@ export default function Hafalan() {
             <Memuat baris={6} />
           </div>
         ) : !data.daftar.length ? (
-          <Kosong ikon={<BookOpenCheck />} judul="Belum ada setoran" pesan="Catat setoran hafalan pertama." />
+          <Kosong
+            ikon={<BookOpenCheck />}
+            judul={kelas || jenis || santriParam ? 'Tidak ada setoran yang cocok' : 'Belum ada setoran'}
+            pesan={kelas || jenis ? 'Ubah saringan kelas atau jenis hafalan.' : 'Catat setoran hafalan pertama.'}
+          />
         ) : (
           <div className="tabel-bungkus">
             <table className="tabel tabel--responsif">

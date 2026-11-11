@@ -100,7 +100,7 @@ export default function Dasbor() {
           nilai={tercatat ? `${persen(hadir, tercatat)}%` : '–'}
           sub={`${sudahAbsen.length} dari ${d.absenHariIni.length} kelas sudah diabsen`}
         >
-          <Bilah persen={persen(sudahAbsen.length, d.absenHariIni.length)} />
+          <Bilah persen={persen(sudahAbsen.length, d.absenHariIni.length)} label="Kelas yang sudah diabsen hari ini" />
         </Stat>
         <Stat
           ikon={<NotebookPen />}
@@ -108,7 +108,7 @@ export default function Dasbor() {
           nilai={d.nilai ? `${persen(d.nilai.lengkap, d.nilai.harus)}%` : '–'}
           sub={d.nilai ? `${d.nilai.lengkap} dari ${d.nilai.harus} nilai mapel santri` : 'Belum ada semester'}
         >
-          <Bilah persen={d.nilai ? persen(d.nilai.lengkap, d.nilai.harus) : 0} jenis="emas" />
+          <Bilah persen={d.nilai ? persen(d.nilai.lengkap, d.nilai.harus) : 0} jenis="emas" label="Nilai mapel santri yang sudah lengkap" />
         </Stat>
         <Stat
           ikon={<ScrollText />}
@@ -179,7 +179,11 @@ export default function Dasbor() {
                     </span>
                     <b className="angka">{persen(d.nilai![k], d.nilai!.harus)}%</b>
                   </div>
-                  <Bilah persen={persen(d.nilai![k], d.nilai!.harus)} jenis={persen(d.nilai![k], d.nilai!.harus) < 100 ? 'waspada' : undefined} />
+                  <Bilah
+                    persen={persen(d.nilai![k], d.nilai!.harus)}
+                    jenis={persen(d.nilai![k], d.nilai!.harus) < 100 ? 'waspada' : undefined}
+                    label={`Pengisian nilai ${k === 'harian' ? 'harian' : k.toUpperCase()}`}
+                  />
                 </div>
               ))}
           </section>
@@ -207,7 +211,7 @@ export default function Dasbor() {
               </b>{' '}
               wali sudah memakai aplikasi
               <div style={{ marginTop: 6 }}>
-                <Bilah persen={persen(d.akunWali.aktif, d.akunWali.total)} />
+                <Bilah persen={persen(d.akunWali.aktif, d.akunWali.total)} label="Wali yang sudah memakai aplikasi" />
               </div>
             </div>
           </div>
@@ -233,7 +237,7 @@ export default function Dasbor() {
                 </div>
               </div>
             </div>
-            <Bilah persen={persen(d.syahriah.jumlah, d.santri.total)} jenis="emas" />
+            <Bilah persen={persen(d.syahriah.jumlah, d.santri.total)} jenis="emas" label="Santri yang sudah membayar syahriah bulan ini" />
           </section>
         )}
       </div>
@@ -275,7 +279,7 @@ function GrafikHadir({ tren }: { tren: Ringkasan['tren'] }) {
   const rata = Math.round(tren.reduce((s, t) => s + (t.total ? (t.hadir / t.total) * 100 : 0), 0) / tren.length);
   return (
     <figure className="grafik" aria-label={`Rata-rata kehadiran ${rata}%`}>
-      <svg viewBox={`0 0 ${L} ${T}`} role="img">
+      <svg viewBox={`0 0 ${L} ${T}`} role="img" aria-label={`Grafik kehadiran ${tren.length} hari belajar terakhir, rata-rata ${rata}% santri hadir`}>
         <defs>
           <linearGradient id="batang" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#93f2e5" />

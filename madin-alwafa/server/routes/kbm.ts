@@ -131,11 +131,18 @@ export function ruteNilai(db: DB) {
          FROM santri s
          LEFT JOIN nilai n ON n.santri_id = s.id AND n.periode_id = ? AND n.mapel_id = ?
          LEFT JOIN raport r ON r.santri_id = s.id AND r.periode_id = ?
-        WHERE s.kelas_id = ? AND s.status = 'aktif' ORDER BY s.nama`,
+        -- Raport yang sudah terbit mengikuti kelas saat diterbitkan; selebihnya anggota kelas sekarang
+        -- yang sudah masuk sebelum semester itu berakhir.
+        WHERE (r.status = 'terbit' AND json_extract(r.snapshot, '$.kelas.id') = ?)
+           OR (s.kelas_id = ? AND s.status = 'aktif' AND (s.tanggal_masuk IS NULL OR s.tanggal_masuk <= ?)
+               AND COALESCE(r.status, 'draf') != 'terbit')
+        ORDER BY s.nama`,
       periode.id,
       mapel.id,
       periode.id,
       kelas.id,
+      kelas.id,
+      periode.selesai,
     ).map(({ status, ...d }) => ({ ...d, akhir: nilaiAkhir(d, bobot), terkunci: status === 'terbit' }));
     return c.json({
       kelas,

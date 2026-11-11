@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate } from 'react-router';
+import { useSaringan } from '../../lib/saringan';
 import { BadgeCheck, Eye, Printer, ScrollText, Send, SlidersHorizontal } from 'lucide-react';
 import { kirim } from '../../lib/api';
 import { usePakai } from '../../lib/pakai';
@@ -39,7 +40,7 @@ export default function RaportKelas() {
   const toast = useToast();
   const tanya = useKonfirmasi();
   const navigasi = useNavigate();
-  const [param, setParam] = useSearchParams();
+  const [param, aturParam] = useSaringan();
   const [kelasIngat, setKelasIngat] = useIngat('kelas-raport', '');
   const { data: kelas } = usePakai<{ daftar: Kelas[] }>('/api/admin/kelas');
   const { data: periode } = usePakai<{ daftar: Periode[] }>('/api/admin/periode');
@@ -51,9 +52,7 @@ export default function RaportKelas() {
   }, [kelasId, kelasAktif, setKelasIngat]);
   const atur = (k: string, v: string) => {
     if (k === 'kelas') setKelasIngat(v);
-    const p = new URLSearchParams(param);
-    p.set(k, v);
-    setParam(p, { replace: true });
+    aturParam({ [k]: v });
   };
 
   const { data, galat, muatUlang } = usePakai<DaftarRaport>(kelasId && periodeId ? `/api/admin/raport?kelas=${kelasId}&periode=${periodeId}` : null);

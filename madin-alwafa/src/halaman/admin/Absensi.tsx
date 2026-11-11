@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router';
 import { CalendarCheck2, CalendarRange, CheckCheck, Save } from 'lucide-react';
 import { kirim } from '../../lib/api';
 import { usePakai } from '../../lib/pakai';
+import { useSaringan } from '../../lib/saringan';
 import { useToast } from '../../lib/toast';
 import type { Kelas } from '../../lib/tipe';
 import { Avatar, GalatMuat, KepalaHalaman, Kosong, Lencana, Memuat, Tombol, useIngat, useJudul } from '../../ui/dasar';
@@ -24,7 +24,7 @@ interface Rekap {
 
 export default function Absensi() {
   useJudul('Absensi');
-  const [param, setParam] = useSearchParams();
+  const [param, aturParam] = useSaringan();
   const [kelasIngat, setKelasIngat] = useIngat('kelas-absen', '');
   const kelasId = param.get('kelas') ?? kelasIngat;
   const [mode, setMode] = useState<'isi' | 'rekap'>('isi');
@@ -39,9 +39,7 @@ export default function Absensi() {
 
   const pilihKelas = (v: string) => {
     setKelasIngat(v);
-    const p = new URLSearchParams(param);
-    p.set('kelas', v);
-    setParam(p, { replace: true });
+    aturParam({ kelas: v });
   };
 
   return (

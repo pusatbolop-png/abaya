@@ -53,7 +53,7 @@ export default function CetakRaport() {
           <b>
             Raport {kelas} · {daftar.length}/{total || '…'}
           </b>
-          {!selesai && <Bilah persen={total ? (daftar.length / total) * 100 : 5} />}
+          {!selesai && <Bilah persen={total ? (daftar.length / total) * 100 : 5} label="Raport yang sudah disiapkan untuk dicetak" />}
           {selesai && draf > 0 && <span className="kecil redup">{draf} raport masih draf dan dicetak dengan tanda DRAF.</span>}
         </div>
         <Tombol ikon={<X />} onClick={() => (window.opener ? window.close() : navigasi(-1))}>

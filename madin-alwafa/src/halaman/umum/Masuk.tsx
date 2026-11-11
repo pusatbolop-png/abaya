@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { BookOpenCheck, CalendarCheck2, Eye, EyeOff, KeyRound, LogIn, ScrollText, ShieldCheck, UserRound, Users } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, LogIn, ShieldCheck, UserRound, Users } from 'lucide-react';
 import { api, GalatApi } from '../../lib/api';
 import { useSesi } from '../../lib/sesi';
 import { Bidang, Pesan, Tombol, useIngat, useJudul } from '../../ui/dasar';
@@ -51,25 +51,12 @@ export function Masuk() {
             {lembaga.namaArab && <div className="masuk__arab">{lembaga.namaArab}</div>}
             <h1 className="masuk__judul">{lembaga.nama}</h1>
             {lembaga.slogan && <p className="masuk__semboyan">{lembaga.slogan}</p>}
-            <p className="masuk__slogan">Pantau perkembangan ananda — raport, kehadiran, hafalan, dan syahriah — dalam satu tempat.</p>
+            <p className="masuk__slogan">Raport, kehadiran, hafalan, dan syahriah ananda, bisa dilihat kapan saja dari ponsel.</p>
           </div>
-          <div className="masuk__fitur">
-            <div>
-              <ScrollText />
-              <b>Raport online</b>
-              Lihat, unduh, dan cetak raport bersegel QR.
-            </div>
-            <div>
-              <CalendarCheck2 />
-              <b>Kehadiran</b>
-              Rekap hadir, izin, dan sakit setiap hari.
-            </div>
-            <div>
-              <BookOpenCheck />
-              <b>Hafalan</b>
-              Setoran Al-Qur'an, nadzom, dan do'a.
-            </div>
-          </div>
+          <p className="masuk__tanda">
+            © {new Date().getFullYear()} {lembaga.naungan || lembaga.nama}
+            {lembaga.kota && <> · {lembaga.kota}</>}
+          </p>
         </section>
 
         <section className="kaca kaca--emas kaca--kilau masuk__kartu" aria-labelledby="judul-masuk">

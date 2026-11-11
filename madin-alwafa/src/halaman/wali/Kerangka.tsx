@@ -66,7 +66,7 @@ export default function KerangkaWali() {
             ))}
           </nav>
           <div className="akun-wali" ref={ref}>
-            <button onClick={() => setMenu(!menu)} aria-expanded={menu} aria-haspopup="menu">
+            <button onClick={() => setMenu(!menu)} aria-expanded={menu} aria-haspopup="menu" aria-label={`Menu akun wali ${wali.nama}`}>
               <Avatar nama={wali.nama} jk={wali.jk} ukuran={34} />
               <span className="akun-wali__nama potong" style={{ maxWidth: 140, fontWeight: 600, fontSize: 14 }}>
                 {wali.nama.split(' ')[0]}

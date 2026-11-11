@@ -1,5 +1,5 @@
-import emblem from '../aset/logo-emblem.webp';
-import lengkap from '../aset/logo-lengkap.webp';
+import emblem from '../aset/logo-emblem.svg';
+import lengkap from '../aset/logo-lengkap.svg';
 
 /** Emblem Al Wafa’ Islamic Center (buku terbuka dan tiga tetes: Aesthetic, Ethic, Logic). */
 export function Lambang({ className }: { className?: string }) {

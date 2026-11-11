@@ -103,7 +103,7 @@ export default function LihatRaport() {
                     </div>
                   </div>
                   <div className="nilai-wali__bilah">
-                    <Bilah persen={m.akhir ?? 0} jenis={m.tuntas === false ? 'waspada' : 'emas'} />
+                    <Bilah persen={m.akhir ?? 0} jenis={m.tuntas === false ? 'waspada' : 'emas'} label={`Nilai ${m.nama}`} />
                     <span className="nilai-wali__kkm" style={{ left: `${m.kkm}%` }} title={`KKM ${m.kkm}`} />
                   </div>
                   <div className="redup-2 kecil">

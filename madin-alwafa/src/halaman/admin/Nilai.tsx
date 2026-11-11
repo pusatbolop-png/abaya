@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { useSearchParams } from 'react-router';
+import { useSaringan } from '../../lib/saringan';
 import { ArrowLeft, Lock, NotebookPen, Save } from 'lucide-react';
 import { kirim } from '../../lib/api';
 import { usePakai } from '../../lib/pakai';
@@ -30,20 +30,14 @@ const KOMPONEN = [
 
 export default function Nilai() {
   useJudul('Nilai');
-  const [param, setParam] = useSearchParams();
+  const [param, aturParam] = useSaringan();
   const kelas = param.get('kelas');
   const mapel = param.get('mapel');
   const periodeParam = param.get('periode');
   const { data: periode } = usePakai<{ daftar: Periode[] }>('/api/admin/periode');
   const periodeId = periodeParam ?? String(periode?.daftar.find((p) => p.aktif)?.id ?? periode?.daftar[0]?.id ?? '');
-  const atur = (v: Record<string, string | null>) => {
-    const p = new URLSearchParams(param);
-    for (const [k, x] of Object.entries(v)) {
-      if (x) p.set(k, x);
-      else p.delete(k);
-    }
-    setParam(p);
-  };
+  // Masuk/keluar tabel nilai dicatat di riwayat agar tombol kembali peramban berfungsi.
+  const atur = (v: Record<string, string | null>) => aturParam(v, { ganti: false });
 
   return (
     <>
@@ -128,7 +122,7 @@ function InputNilai({ kelasId, mapelId, periodeId, kembali }: { kelasId: string;
   const toast = useToast();
   const { data, galat, muatUlang } = usePakai<DataNilai>(`/api/admin/nilai?kelas=${kelasId}&mapel=${mapelId}&periode=${periodeId}`);
   const { data: detailKelas } = usePakai<{ mapel: { mapelId: number; nama: string }[] }>(`/api/admin/kelas/${kelasId}`);
-  const [, setParam] = useSearchParams();
+  const [, aturParam] = useSaringan();
   const [isian, setIsian] = useState<Isian>({});
   const [berubah, setBerubah] = useState(false);
   const [sibuk, setSibuk] = useState(false);
@@ -213,7 +207,7 @@ function InputNilai({ kelasId, mapelId, periodeId, kembali }: { kelasId: string;
           className="masukan masukan--kecil"
           style={{ width: 'auto' }}
           value={mapelId}
-          onChange={(e) => setParam((p) => (p.set('mapel', e.target.value), p))}
+          onChange={(e) => aturParam({ mapel: e.target.value })}
           aria-label="Pelajaran"
         >
           {(detailKelas?.mapel ?? [{ mapelId: data.mapel.id, nama: data.mapel.nama }]).map((m) => (
@@ -332,7 +326,7 @@ function InputNilai({ kelasId, mapelId, periodeId, kembali }: { kelasId: string;
             <span className="kecil redup">
               {statistik?.jumlah ?? 0} dari {data.daftar.length} santri punya nilai akhir
             </span>
-            <Bilah persen={((statistik?.jumlah ?? 0) / Math.max(1, data.daftar.length)) * 100} />
+            <Bilah persen={((statistik?.jumlah ?? 0) / Math.max(1, data.daftar.length)) * 100} label="Santri yang sudah punya nilai akhir" />
           </div>
           <div className="baris">
             {berubah && <Lencana jenis="waspada">Belum disimpan</Lencana>}
