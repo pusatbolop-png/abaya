@@ -22,7 +22,7 @@
 .kartu-balik__isi {
   display: grid;
   transform-style: preserve-3d;
-  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 640ms cubic-bezier(0.65, 0, 0.35, 1);
 }
 .kartu-balik--belakang .kartu-balik__isi {
   transform: rotateY(180deg);
@@ -31,26 +31,37 @@
   grid-area: 1 / 1;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  /* Sisi yang membelakangi disembunyikan tepat saat kartu tegak lurus (separuh durasi), sehingga tepinya
+     tidak membayang di sudut sisi yang tampak. */
+  transition: visibility 0s linear 320ms;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 26px 60px rgba(0, 14, 16, 0.55),
-    0 8px 18px rgba(0, 14, 16, 0.35);
+    0 30px 60px -12px rgba(0, 14, 16, 0.6),
+    0 10px 22px -6px rgba(0, 14, 16, 0.4);
 }
 .kartu-balik__isi > .kartu--belakang-wadah {
   transform: rotateY(180deg);
 }
+.kartu-balik:not(.kartu-balik--belakang) .kartu--belakang-wadah,
+.kartu-balik--belakang .kartu--depan-wadah {
+  visibility: hidden;
+}
 @media (prefers-reduced-motion: reduce) {
-  .kartu-balik__isi {
+  .kartu-balik__isi,
+  .kartu-balik__isi > .kartu {
     transition: none;
   }
 }
 
 .kartu {
+  /* Radius sudut kartu CR80 asli: 3,18 mm dari lebar 54 mm ≈ 5,9% */
+  --r-kartu: 5.9cqw;
+  --tepi-bingkai: 2.6cqw;
   container-type: inline-size;
   width: 100%;
   aspect-ratio: 54 / 85.6;
-  border-radius: 5cqw;
+  border-radius: var(--r-kartu);
   overflow: hidden;
+  clip-path: inset(0 round var(--r-kartu));
   position: relative;
   display: block;
   text-align: left;
@@ -60,9 +71,11 @@
 .kartu__sisi {
   position: absolute;
   inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 6cqw 6.5cqw 5.5cqw;
+  padding: 7cqw 7.4cqw 7.4cqw;
   font-family: var(--f-sans);
   line-height: 1.3;
 }
@@ -85,12 +98,23 @@
   -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 55%);
 }
 .kartu__depan::after {
-  /* garis sampanye tipis di tepi kartu */
+  /* garis sampanye tipis sejajar tepi kartu (sudutnya konsentris dengan sudut kartu) */
   content: '';
   position: absolute;
-  inset: 2.6cqw;
-  border-radius: 3.4cqw;
-  border: 0.35cqw solid rgba(239, 220, 179, 0.32);
+  inset: var(--tepi-bingkai);
+  border-radius: calc(var(--r-kartu) - var(--tepi-bingkai));
+  border: 0.28cqw solid rgba(239, 220, 179, 0.26);
+  pointer-events: none;
+}
+.kartu__depan::before {
+  /* kilau tipis di tepi atas, seperti tepi kartu yang terkena cahaya */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0.3cqw 0 rgba(255, 255, 255, 0.12),
+    inset 0 -0.3cqw 0 rgba(0, 0, 0, 0.22);
   pointer-events: none;
 }
 .kartu__kepala {
@@ -222,7 +246,7 @@
 }
 .kartu__qr {
   flex: none;
-  width: 17cqw;
+  width: 16cqw;
   padding: 1.4cqw;
   border-radius: 2cqw;
   background: #fbf7ec;
@@ -259,9 +283,19 @@
 .kartu__belakang::after {
   content: '';
   position: absolute;
-  inset: 2.6cqw;
-  border-radius: 3.4cqw;
-  border: 0.35cqw solid rgba(138, 106, 53, 0.35);
+  inset: var(--tepi-bingkai);
+  border-radius: calc(var(--r-kartu) - var(--tepi-bingkai));
+  border: 0.28cqw solid rgba(138, 106, 53, 0.3);
+  pointer-events: none;
+}
+.kartu__belakang::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0.3cqw 0 rgba(255, 255, 255, 0.7),
+    inset 0 -0.3cqw 0 rgba(120, 92, 40, 0.18);
   pointer-events: none;
 }
 .kartu__kepala-belakang {
@@ -309,7 +343,8 @@
 }
 .kartu__aturan ol {
   margin: 0;
-  padding-left: 4.6cqw;
+  /* cukup lebar untuk nomor dua digit (10., 11., …) tanpa terpotong */
+  padding-left: 6.2cqw;
   display: grid;
   gap: 0.9cqw;
   font-size: 3.05cqw;
@@ -318,6 +353,7 @@
 .kartu__aturan li::marker {
   color: #0d6a66;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 .kartu__kaki-belakang {
   border-top: 0.3cqw solid rgba(138, 106, 53, 0.35);
@@ -359,7 +395,6 @@
   }
   .kartu--cetak {
     width: 54mm;
-    border-radius: 3mm;
     outline: 0.2mm dashed #9aa69f;
     outline-offset: 1.5mm;
   }
@@ -369,4 +404,9 @@
     color: #4b5f5b;
     margin-top: 8mm;
   }
+}
+
+/* Halaman kartu di portal wali: kartu berdiri sendiri di atas latar, tanpa panel kaca. */
+.kartu-halaman {
+  padding: 8px 0 24px;
 }
