@@ -90,7 +90,18 @@ const IBU = [
   'Siti Aminah', 'Nur Hayati', 'Khoiriyah', 'Musyarofah', 'Siti Fatimah', 'Lilik Masruroh', 'Zubaidah', 'Umi Salamah', 'Nurul Huda',
   'Rodiyah', 'Mutmainnah', 'Sri Wahyuni', 'Hanifah', 'Juwariyah', 'Istiqomah', 'Maslahah', 'Faridah', 'Robi\'ah',
 ];
-const DESA = ['Ds. Karangrejo', 'Ds. Sukorejo', 'Ds. Wonosari', 'Ds. Kedungrejo', 'Ds. Pandean', 'Ds. Tambakrejo', 'Ds. Ngembe', 'Ds. Bendungan'];
+// Desa, kecamatan, dan kode wilayah Kemendagri di Kabupaten Pasuruan.
+const DESA: [string, string, string][] = [
+  ['Kalirejo', 'Bangil', '35.14.14'],
+  ['Kersikan', 'Bangil', '35.14.14'],
+  ['Kolursari', 'Bangil', '35.14.14'],
+  ['Pogar', 'Bangil', '35.14.14'],
+  ['Gununggangsir', 'Beji', '35.14.13'],
+  ['Kedungringin', 'Beji', '35.14.13'],
+  ['Pejangkungan', 'Rembang', '35.14.15'],
+  ['Pukul', 'Kraton', '35.14.16'],
+];
+const DUSUN = ['Krajan', 'Sumberejo', 'Karangan', 'Kauman', 'Tegalan', 'Gempeng'];
 const TEMPAT = ['Pasuruan', 'Pasuruan', 'Pasuruan', 'Probolinggo', 'Malang', 'Sidoarjo'];
 
 const SURAT = [
@@ -192,6 +203,11 @@ export async function isiDemo(db: DB) {
     });
   }
 
+  /** desa, kecamatan, kabupaten, provinsi, kode wilayah */
+  const wilayahAcak = () => {
+    const [desa, kec, kode] = pilih(DESA);
+    return [desa, kec, 'Kabupaten Pasuruan', 'Jawa Timur', kode] as const;
+  };
   // Santri: 8 per kelas. Kemampuan dasar menentukan pola nilai, kehadiran, dan hafalan.
   interface S { id: number; jk: 'L' | 'P'; kelasIdx: number; mampu: number; rajin: number; tahunMasuk: number }
   const santri: S[] = [];
@@ -214,8 +230,9 @@ export async function isiDemo(db: DB) {
       const id = Number(
         db
           .prepare(
-            `INSERT INTO santri (nis, nama, jk, tempat_lahir, tanggal_lahir, alamat, nama_ayah, nama_ibu, nama_wali, hp_wali, kelas_id, status,
-               tanggal_masuk, sandi, sandi_diganti, masuk_terakhir, dibuat) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+            `INSERT INTO santri (nis, nama, jk, tempat_lahir, tanggal_lahir, alamat, desa, kecamatan, kabupaten, provinsi, kode_wilayah,
+               nama_ayah, nama_ibu, nama_wali, hp_wali, kelas_id, status,
+               tanggal_masuk, sandi, sandi_diganti, masuk_terakhir, dibuat) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           )
           .run(
             nis,
@@ -223,7 +240,8 @@ export async function isiDemo(db: DB) {
             jk,
             pilih(TEMPAT),
             lahir,
-            `${pilih(DESA)} RT 0${antara(1, 6)}/RW 0${antara(1, 4)}, Kab. Pasuruan`,
+            `Dusun ${pilih(DUSUN)} RT 0${antara(1, 6)}/RW 0${antara(1, 4)}`,
+            ...wilayahAcak(),
             ayah,
             pilih(IBU),
             ayah,

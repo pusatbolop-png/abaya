@@ -6,6 +6,7 @@ import { config } from './config';
 import { bukaDb, type DB } from './db';
 import { buatApp } from './app';
 import { ambilPengaturan } from './util';
+import { detakJadwal } from './domain/pesan';
 
 export function jalankan(db: DB, keterangan: string) {
   const app = buatApp(db);
@@ -26,6 +27,13 @@ export function jalankan(db: DB, keterangan: string) {
   serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {
     console.log(`Madin Al Wafa’ berjalan di http://localhost:${info.port} (${keterangan})`);
   });
+
+  // Laporan harian guru (18:00 WIB) dan pengingat syahriah: diperiksa setiap menit.
+  if (config.penjadwal) {
+    const detak = () => detakJadwal(db).catch((e) => console.error('Penjadwal pesan:', e));
+    setTimeout(detak, 15_000);
+    setInterval(detak, 60_000).unref();
+  }
 }
 
 // Berkas ini juga diimpor oleh server/demo.ts; jalankan langsung hanya bila menjadi titik masuk.

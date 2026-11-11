@@ -25,4 +25,7 @@ export const config = {
   demo: true,
   lamaSesiJam: 24 * 7,
   trustProxy: false,
+  waFonnteUrl: 'https://api.fonnte.com/send',
+  waJedaMs: 0,
+  penjadwal: false,
 };

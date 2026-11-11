@@ -2,8 +2,9 @@ import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { secureHeaders } from 'hono/secure-headers';
 import type { DB } from './db';
-import { wajibPengurus, wajibWali, type VarPengurus, type VarWali } from './auth';
-import { GalatPengguna } from './util';
+import { siapaMasuk, wajibPengurus, wajibWali, type VarPengurus, type VarWali } from './auth';
+import { GalatPengguna, idParam, satu } from './util';
+import { ambilFoto } from './domain/foto';
 import { ruteAuth } from './routes/auth';
 import { rutePublik } from './routes/publik';
 import { ruteSantri } from './routes/santri';
@@ -12,6 +13,8 @@ import { ruteAbsensi, ruteHafalan, ruteNilai } from './routes/kbm';
 import { ruteRaport } from './routes/raport';
 import { ruteLog, rutePengaturan, rutePengumuman, rutePengurus, ruteRingkasan, ruteSyahriah } from './routes/lembaga';
 import { ruteWali } from './routes/wali';
+import { rutePendaftaran } from './routes/pendaftaran';
+import { rutePesan } from './routes/pesan';
 
 export function buatApp(db: DB) {
   const app = new Hono();
@@ -43,7 +46,8 @@ export function buatApp(db: DB) {
       throw new GalatPengguna(403, 'Permintaan ditolak karena tidak berasal dari aplikasi madrasah. Muat ulang halaman lalu coba lagi.');
     }
     await next();
-    c.header('Cache-Control', 'no-store');
+    // Respons API tidak disimpan peramban, kecuali yang menetapkan aturannya sendiri (foto berversi).
+    if (!c.res.headers.get('Cache-Control')) c.header('Cache-Control', 'no-store');
   });
 
   app.use(
@@ -57,6 +61,18 @@ export function buatApp(db: DB) {
   );
 
   app.route('/api/publik', rutePublik(db));
+
+  // Foto santri: pengurus melihat semua, wali hanya foto anaknya sendiri. Alamat berversi (?v=) sehingga aman disimpan lama.
+  app.get('/api/foto/santri/:id', (c) => {
+    const id = idParam(c);
+    const { pengurus, wali } = siapaMasuk(c, db);
+    if (!pengurus && wali?.santriId !== id) throw new GalatPengguna(pengurus || wali ? 404 : 401, 'Foto tidak ditemukan.');
+    const foto = ambilFoto(db, id);
+    if (!foto) throw new GalatPengguna(404, 'Foto tidak ditemukan.');
+    c.header('Cache-Control', 'private, max-age=31536000, immutable');
+    c.header('Content-Type', foto.jenis);
+    return c.body(foto.data as Uint8Array<ArrayBuffer>);
+  });
   app.route('/api/auth', ruteAuth(db));
 
   const pengurus = new Hono<{ Variables: VarPengurus }>();
@@ -75,6 +91,15 @@ export function buatApp(db: DB) {
   pengurus.route('/pengurus', rutePengurus(db));
   pengurus.route('/ringkasan', ruteRingkasan(db));
   pengurus.route('/log', ruteLog(db));
+  pengurus.route('/pendaftaran', rutePendaftaran(db));
+  pengurus.route('/pesan', rutePesan(db));
+  // Angka kecil di menu samping: pendaftaran wali yang menunggu dan pesan yang belum terkirim.
+  pengurus.get('/lencana', (c) =>
+    c.json({
+      pendaftaran: satu<{ n: number }>(db, "SELECT COUNT(*) AS n FROM pendaftaran_wali WHERE status = 'menunggu'")!.n,
+      pesanAntre: satu<{ n: number }>(db, "SELECT COUNT(*) AS n FROM pesan_keluar WHERE status = 'antre'")!.n,
+    }),
+  );
   app.route('/api/admin', pengurus);
 
   const wali = new Hono<{ Variables: VarWali }>();

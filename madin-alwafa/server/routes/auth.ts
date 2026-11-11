@@ -15,7 +15,8 @@ import {
   tokenSaatIni,
 } from '../auth';
 import { KELAS_AWAL } from '../../shared/konstanta';
-import { GalatPengguna, ambilPengaturan, bacaIsi, catatLog, lembaga, satu, sekarang, teksWajib } from '../util';
+import { GalatPengguna, ambilPengaturan, bacaIsi, catatLog, hpValid, lembaga, normalHp, satu, sekarang, skemaAlamat, teksWajib } from '../util';
+import { terapkanWali } from '../domain/pendaftaran';
 
 const sandiBaru = z
   .string({ error: 'Sandi baru wajib diisi.' })
@@ -34,16 +35,25 @@ export function ruteAuth(db: DB) {
     const perluPasang = !satu(db, "SELECT 1 FROM pengurus WHERE peran = 'admin' AND aktif = 1");
     let santri = null;
     if (wali) {
-      santri = satu<{ sandi_diganti: number; jk: string }>(db, 'SELECT sandi_diganti, jk FROM santri WHERE id = ?', wali.santriId);
+      santri = satu<{ sandi_diganti: number; jk: string; foto_versi: string | null }>(db, 'SELECT sandi_diganti, jk, foto_versi FROM santri WHERE id = ?', wali.santriId);
     }
     const lmb = lembaga(ambilPengaturan(db));
     // Mode demo: tampilkan akun contoh di halaman masuk agar mudah dicoba.
+    // Contoh pendaftaran: santri yang walinya belum punya akun aktif, beserta nomor WhatsApp yang tercatat.
+    const contohDaftar = lmb.demo
+      ? satu<{ nis: string; hp_wali: string }>(
+          db,
+          "SELECT nis, hp_wali FROM santri WHERE status = 'aktif' AND sandi_diganti = 0 AND hp_wali IS NOT NULL ORDER BY kelas_id, id LIMIT 1",
+        )
+      : undefined;
     const demo = lmb.demo
       ? {
           username: 'admin',
           sandi: 'demo-wafa-2026',
           nis: satu<{ nis: string }>(db, "SELECT s.nis FROM santri s JOIN kelas k ON k.id = s.kelas_id WHERE k.nama = 'Sayyidah Khodijah' ORDER BY s.id LIMIT 1")?.nis ?? '',
           sandiWali: 'wafa2026',
+          daftarNis: contohDaftar?.nis ?? '',
+          daftarHp: contohDaftar?.hp_wali ?? '',
         }
       : null;
     return c.json({
@@ -51,7 +61,7 @@ export function ruteAuth(db: DB) {
       demo,
       perluPasang,
       pengurus: pengurus ?? null,
-      wali: wali ? { ...wali, jk: santri?.jk, sandiDiganti: !!santri?.sandi_diganti } : null,
+      wali: wali ? { ...wali, jk: santri?.jk, sandiDiganti: !!santri?.sandi_diganti, fotoVersi: santri?.foto_versi ?? null } : null,
     });
   });
 
@@ -113,13 +123,77 @@ export function ruteAuth(db: DB) {
     const cocok = await cocokSandi(isi.sandi.trim(), s?.sandi ?? (await tiruan()));
     if (!s || !cocok) {
       catatGagal(kunci);
-      throw new GalatPengguna(401, 'NIS atau sandi salah. Sandi awal diberikan oleh pengurus madrasah.');
+      // Wali yang baru mendaftar dan masih menunggu pemeriksaan diberi tahu statusnya, bukan sekadar "sandi salah".
+      const tunggu = s && satu<{ sandi: string }>(db, "SELECT sandi FROM pendaftaran_wali WHERE santri_id = ? AND status = 'menunggu' ORDER BY id DESC LIMIT 1", s.id);
+      if (tunggu && (await cocokSandi(isi.sandi.trim(), tunggu.sandi))) {
+        throw new GalatPengguna(403, 'Pendaftaran Anda sedang diperiksa pengurus madrasah. Anda akan dihubungi lewat WhatsApp setelah disetujui.');
+      }
+      throw new GalatPengguna(401, 'NIS atau sandi salah. Belum punya akun? Pilih Daftar, atau minta sandi kepada pengurus madrasah.');
     }
     if (s.status === 'keluar') throw new GalatPengguna(403, 'Akun santri ini sudah tidak aktif. Hubungi pengurus madrasah.');
     bersihkanBatas(kunci);
     db.prepare('UPDATE santri SET masuk_terakhir = ? WHERE id = ?').run(sekarang(), s.id);
     buatSesi(c, db, 'wali', s.id);
     return c.json({ ok: true });
+  });
+
+  // Pendaftaran akun wali dari ponsel: NIS + nomor WhatsApp aktif + alamat + sandi pilihan sendiri.
+  r.post('/daftar-wali', async (c) => {
+    const isi = await bacaIsi(
+      c,
+      z.object({
+        nis: teksWajib('NIS', 40),
+        hp: teksWajib('Nomor WhatsApp', 20).refine(hpValid, 'Nomor WhatsApp tidak valid. Contoh: 0812-3456-7890.'),
+        namaWali: teksWajib('Nama orang tua/wali', 100),
+        hubungan: z.enum(['Ayah', 'Ibu', 'Wali'], { error: 'Pilih hubungan dengan santri.' }),
+        ...skemaAlamat,
+        kecamatan: teksWajib('Kecamatan', 80),
+        sandi: sandiBaru,
+      }),
+    );
+    const kunci = `d:${alamatIp(c)}`;
+    periksaBatas(kunci);
+    const s = satu<{ id: number; nama: string; nis: string; status: string; sandi_diganti: number; hp_wali: string | null }>(
+      db,
+      'SELECT id, nama, nis, status, sandi_diganti, hp_wali FROM santri WHERE nis = ?',
+      isi.nis.trim(),
+    );
+    if (!s || s.status === 'keluar') {
+      catatGagal(kunci);
+      throw new GalatPengguna(404, 'NIS tidak ditemukan. Periksa kembali NIS di kartu atau raport ananda, atau hubungi pengurus madrasah.', { nis: 'NIS tidak ditemukan.' });
+    }
+    if (s.sandi_diganti) {
+      throw new GalatPengguna(409, 'NIS ini sudah memiliki akun wali yang aktif. Silakan masuk. Lupa sandi? Minta pengurus madrasah membuat sandi baru.', {
+        nis: 'Sudah terdaftar.',
+      });
+    }
+    const hash = await hashSandi(isi.sandi.trim());
+    const waktu = sekarang();
+    const data = { ...isi, hp: normalHp(isi.hp) };
+    if (s.hp_wali && normalHp(s.hp_wali) === data.hp) {
+      // Nomor WhatsApp sama dengan data madrasah: akun langsung aktif.
+      db.transaction(() => {
+        terapkanWali(db, s.id, data, hash, waktu);
+        db.prepare("UPDATE pendaftaran_wali SET status = 'ditolak', alasan = 'Diganti pendaftaran yang terverifikasi', diputus = ? WHERE santri_id = ? AND status = 'menunggu'").run(waktu, s.id);
+      })();
+      bersihkanBatas(kunci);
+      hapusSemuaSesi(db, 'wali', s.id);
+      catatLog(db, `Wali ${s.nama}`, 'Mendaftar akun wali dari ponsel', `${s.nama} (${s.nis}) · nomor cocok, langsung aktif`);
+      db.prepare('UPDATE santri SET masuk_terakhir = ? WHERE id = ?').run(waktu, s.id);
+      buatSesi(c, db, 'wali', s.id);
+      return c.json({ status: 'aktif' as const, nama: s.nama });
+    }
+    // Nomor berbeda atau belum tercatat: pengurus memeriksa lebih dulu. Satu pendaftaran menunggu per santri.
+    db.transaction(() => {
+      db.prepare("DELETE FROM pendaftaran_wali WHERE santri_id = ? AND status = 'menunggu'").run(s.id);
+      db.prepare(
+        `INSERT INTO pendaftaran_wali (santri_id, nama_wali, hubungan, hp, alamat, desa, kecamatan, kabupaten, provinsi, kode_wilayah, sandi, dibuat)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      ).run(s.id, isi.namaWali, isi.hubungan, data.hp, isi.alamat, isi.desa, isi.kecamatan, isi.kabupaten, isi.provinsi, isi.kodeWilayah, hash, waktu);
+    })();
+    catatGagal(kunci); // pengajuan yang belum terverifikasi ikut dibatasi agar tidak bisa dibanjiri
+    catatLog(db, `Wali ${s.nama}`, 'Mengajukan pendaftaran akun wali', `${s.nama} (${s.nis}) · nomor ${s.hp_wali ? 'berbeda dari data madrasah' : 'belum tercatat'}`);
+    return c.json({ status: 'menunggu' as const, nama: s.nama });
   });
 
   r.post('/keluar', (c) => {

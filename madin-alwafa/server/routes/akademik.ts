@@ -57,7 +57,7 @@ export function ruteKelas(db: DB) {
         WHERE j.kelas_id = ? ORDER BY j.hari, j.jam_mulai`,
       id,
     );
-    const santri = semua(db, "SELECT id, nis, nama, jk FROM santri WHERE kelas_id = ? AND status = 'aktif' ORDER BY nama", id);
+    const santri = semua(db, "SELECT id, nis, nama, jk, foto_versi AS fotoVersi FROM santri WHERE kelas_id = ? AND status = 'aktif' ORDER BY nama", id);
     return c.json({ kelas, mapel, jadwal, santri });
   });
 

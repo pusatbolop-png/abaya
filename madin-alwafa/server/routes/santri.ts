@@ -13,10 +13,13 @@ import {
   satu,
   semua,
   sekarang,
+  skemaAlamat,
   tanggalOpsional,
   teksOpsional,
   teksWajib,
 } from '../util';
+import { hapusFoto, simpanFoto } from '../domain/foto';
+import { dataKartu } from '../domain/kartu';
 import { ambilPeriode, rekapKehadiran } from '../domain/raport';
 import { bulanTahunAjaran, hariIni } from '../../shared/format';
 
@@ -31,7 +34,7 @@ const skemaSantri = z.object({
   jk: z.enum(['L', 'P'], { error: 'Pilih santri putra atau santriwati.' }),
   tempatLahir: teksOpsional(80),
   tanggalLahir: tanggalOpsional(),
-  alamat: teksOpsional(300),
+  ...skemaAlamat,
   namaAyah: teksOpsional(120),
   namaIbu: teksOpsional(120),
   namaWali: teksOpsional(120),
@@ -59,6 +62,13 @@ export interface SantriBaris {
   sandi_diganti: number;
   masuk_terakhir: string | null;
   dibuat: string;
+  desa: string | null;
+  kecamatan: string | null;
+  kabupaten: string | null;
+  provinsi: string | null;
+  kode_wilayah: string | null;
+  foto_versi: string | null;
+  daftar_mandiri: string | null;
 }
 
 export const keSantri = (s: SantriBaris & { kelas_nama?: string | null }) => ({
@@ -69,6 +79,13 @@ export const keSantri = (s: SantriBaris & { kelas_nama?: string | null }) => ({
   tempatLahir: s.tempat_lahir,
   tanggalLahir: s.tanggal_lahir,
   alamat: s.alamat,
+  desa: s.desa,
+  kecamatan: s.kecamatan,
+  kabupaten: s.kabupaten,
+  provinsi: s.provinsi,
+  kodeWilayah: s.kode_wilayah,
+  fotoVersi: s.foto_versi,
+  daftarMandiri: s.daftar_mandiri,
   namaAyah: s.nama_ayah,
   namaIbu: s.nama_ibu,
   namaWali: s.nama_wali,
@@ -158,8 +175,8 @@ export function ruteSantri(db: DB) {
     const id = Number(
       db
         .prepare(
-          `INSERT INTO santri (nis, nama, jk, tempat_lahir, tanggal_lahir, alamat, nama_ayah, nama_ibu, nama_wali, hp_wali,
-             kelas_id, status, tanggal_masuk, sandi, dibuat) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          `INSERT INTO santri (nis, nama, jk, tempat_lahir, tanggal_lahir, alamat, desa, kecamatan, kabupaten, provinsi, kode_wilayah,
+             nama_ayah, nama_ibu, nama_wali, hp_wali, kelas_id, status, tanggal_masuk, sandi, dibuat) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
         )
         .run(
           nis,
@@ -168,6 +185,11 @@ export function ruteSantri(db: DB) {
           isi.tempatLahir,
           isi.tanggalLahir,
           isi.alamat,
+          isi.desa,
+          isi.kecamatan,
+          isi.kabupaten,
+          isi.provinsi,
+          isi.kodeWilayah,
           isi.namaAyah,
           isi.namaIbu,
           isi.namaWali,
@@ -235,8 +257,8 @@ export function ruteSantri(db: DB) {
       throw new GalatPengguna(409, `NIS ${nis} sudah dipakai santri lain.`, { nis: 'NIS sudah dipakai.' });
     }
     db.prepare(
-      `UPDATE santri SET nis=?, nama=?, jk=?, tempat_lahir=?, tanggal_lahir=?, alamat=?, nama_ayah=?, nama_ibu=?, nama_wali=?,
-         hp_wali=?, kelas_id=?, status=?, tanggal_masuk=? WHERE id = ?`,
+      `UPDATE santri SET nis=?, nama=?, jk=?, tempat_lahir=?, tanggal_lahir=?, alamat=?, desa=?, kecamatan=?, kabupaten=?, provinsi=?,
+         kode_wilayah=?, nama_ayah=?, nama_ibu=?, nama_wali=?, hp_wali=?, kelas_id=?, status=?, tanggal_masuk=? WHERE id = ?`,
     ).run(
       nis,
       isi.nama,
@@ -244,6 +266,11 @@ export function ruteSantri(db: DB) {
       isi.tempatLahir,
       isi.tanggalLahir,
       isi.alamat,
+      isi.desa,
+      isi.kecamatan,
+      isi.kabupaten,
+      isi.provinsi,
+      isi.kodeWilayah,
       isi.namaAyah,
       isi.namaIbu,
       isi.namaWali,
@@ -275,6 +302,28 @@ export function ruteSantri(db: DB) {
     catatLog(db, pelaku(c), 'Menghapus santri', `${s.nama} (${s.nis})`);
     return c.json({ ok: true });
   });
+
+  // Foto santri: diambil dari kamera ponsel atau galeri, sudah dipotong 3:4 dan dikompres di peramban.
+  r.put('/:id/foto', async (c) => {
+    const id = idParam(c);
+    const s = satu<{ nama: string; nis: string }>(db, 'SELECT nama, nis FROM santri WHERE id = ?', id);
+    if (!s) throw new GalatPengguna(404, 'Santri tidak ditemukan.');
+    const { data } = await bacaIsi(c, z.object({ data: z.string().max(900_000, 'Ukuran foto terlalu besar.') }));
+    const fotoVersi = simpanFoto(db, id, data, pelaku(c));
+    catatLog(db, pelaku(c), 'Memperbarui foto santri', `${s.nama} (${s.nis})`);
+    return c.json({ fotoVersi });
+  });
+
+  r.delete('/:id/foto', (c) => {
+    const id = idParam(c);
+    const s = satu<{ nama: string; nis: string }>(db, 'SELECT nama, nis FROM santri WHERE id = ?', id);
+    if (!s) throw new GalatPengguna(404, 'Santri tidak ditemukan.');
+    hapusFoto(db, id);
+    catatLog(db, pelaku(c), 'Menghapus foto santri', `${s.nama} (${s.nis})`);
+    return c.json({ ok: true });
+  });
+
+  r.get('/:id/kartu', (c) => c.json({ ...dataKartu(db, idParam(c)), alamatAplikasi: asal(c) }));
 
   // Sandi baru untuk wali santri; sesi lama di perangkat lain diakhiri.
   r.post('/:id/sandi', async (c) => {

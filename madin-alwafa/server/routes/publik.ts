@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { DB } from '../db';
 import { ambilPengaturan, lembaga, satu } from '../util';
 import type { DataRaport } from '../domain/raport';
+import { periksaKartu } from '../domain/kartu';
 
 export function rutePublik(db: DB) {
   const r = new Hono();
@@ -40,6 +41,9 @@ export function rutePublik(db: DB) {
       },
     });
   });
+
+  // Pemeriksaan kartu santri dari QR di kartu.
+  r.get('/kartu/:kode', (c) => c.json(periksaKartu(db, c.req.param('kode'))));
 
   return r;
 }

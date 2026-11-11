@@ -18,10 +18,10 @@ export function ruteRaport(db: DB) {
     const periode = ambilPeriode(db, c.req.query('periode') ? Number(c.req.query('periode')) : null);
     const bobot = bobotNilai(ambilPengaturan(db));
     const { peringkat } = peringkatKelas(db, kelas.id, periode.id, bobot);
-    const santri = semua<{ id: number; nis: string; nama: string; jk: string }>(
+    const santri = semua<{ id: number; nis: string; nama: string; jk: string; foto_versi: string | null }>(
       db,
       // Raport yang sudah terbit mengikuti kelas saat diterbitkan; yang belum terbit mengikuti kelas santri sekarang.
-      `SELECT id, nis, nama, jk FROM santri s
+      `SELECT id, nis, nama, jk, foto_versi FROM santri s
         WHERE id IN (SELECT santri_id FROM raport WHERE periode_id = ? AND status = 'terbit' AND json_extract(snapshot, '$.kelas.id') = ?)
            OR (kelas_id = ? AND status = 'aktif' AND (tanggal_masuk IS NULL OR tanggal_masuk <= ?)
                AND NOT EXISTS (SELECT 1 FROM raport r WHERE r.santri_id = s.id AND r.periode_id = ? AND r.status = 'terbit'))
@@ -45,6 +45,7 @@ export function ruteRaport(db: DB) {
         nis: s.nis,
         nama: s.nama,
         jk: s.jk,
+        fotoVersi: s.foto_versi,
         rataRata: d.rataRata,
         peringkat: d.status === 'terbit' ? d.peringkat : (peringkat.get(s.id) ?? null),
         status: d.status,
@@ -73,7 +74,8 @@ export function ruteRaport(db: DB) {
   r.get('/:santriId/:periodeId', (c) => {
     const santriId = idParam(c, 'santriId');
     const periodeId = idParam(c, 'periodeId');
-    return c.json(bacaRaport(db, santriId, periodeId));
+    const foto = satu<{ foto_versi: string | null }>(db, 'SELECT foto_versi FROM santri WHERE id = ?', santriId);
+    return c.json({ ...bacaRaport(db, santriId, periodeId), fotoVersi: foto?.foto_versi ?? null });
   });
 
   // Isian wali kelas (kepribadian, catatan, keputusan) untuk satu atau banyak santri.

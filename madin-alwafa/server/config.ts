@@ -17,4 +17,10 @@ export const config = {
   demo: process.env.MADIN_DEMO === '1',
   lamaSesiJam: 24 * 7,
   trustProxy: process.env.TRUST_PROXY === '1',
+  /** Alamat API gateway WhatsApp Fonnte (bisa diganti untuk pengujian). */
+  waFonnteUrl: process.env.WA_FONNTE_URL ?? 'https://api.fonnte.com/send',
+  /** Jeda antarpesan WhatsApp agar nomor pengirim tidak dianggap spam. */
+  waJedaMs: Number(process.env.WA_JEDA_MS ?? 4000),
+  /** Penjadwal laporan harian dan pengingat syahriah (matikan dengan PENJADWAL=0). */
+  penjadwal: process.env.PENJADWAL !== '0',
 };

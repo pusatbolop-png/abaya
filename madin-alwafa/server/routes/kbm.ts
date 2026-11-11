@@ -21,9 +21,9 @@ export function ruteAbsensi(db: DB) {
     const kelas = ambilKelas(db, c.req.query('kelas'));
     const tgl = c.req.query('tanggal') ?? hariIni();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(tgl)) throw new GalatPengguna(400, 'Tanggal tidak valid.');
-    const daftar = semua<{ santriId: number; nis: string; nama: string; jk: string; status: string | null; keterangan: string | null }>(
+    const daftar = semua<{ santriId: number; nis: string; nama: string; jk: string; fotoVersi: string | null; status: string | null; keterangan: string | null }>(
       db,
-      `SELECT s.id AS santriId, s.nis, s.nama, s.jk, a.status, a.keterangan
+      `SELECT s.id AS santriId, s.nis, s.nama, s.jk, s.foto_versi AS fotoVersi, a.status, a.keterangan
          FROM santri s LEFT JOIN absensi a ON a.santri_id = s.id AND a.tanggal = ?
         WHERE (s.kelas_id = ? AND s.status = 'aktif') OR (a.kelas_id = ? AND a.tanggal = ?)
         ORDER BY s.nama`,
@@ -127,7 +127,7 @@ export function ruteNilai(db: DB) {
     const bobot = bobotNilai(ambilPengaturan(db));
     const daftar = semua<{ santriId: number; nis: string; nama: string; jk: string; harian: number | null; uts: number | null; uas: number | null; status: string | null }>(
       db,
-      `SELECT s.id AS santriId, s.nis, s.nama, s.jk, n.harian, n.uts, n.uas, r.status
+      `SELECT s.id AS santriId, s.nis, s.nama, s.jk, s.foto_versi AS fotoVersi, n.harian, n.uts, n.uas, r.status
          FROM santri s
          LEFT JOIN nilai n ON n.santri_id = s.id AND n.periode_id = ? AND n.mapel_id = ?
          LEFT JOIN raport r ON r.santri_id = s.id AND r.periode_id = ?
@@ -240,7 +240,7 @@ export function ruteHafalan(db: DB) {
     }
     const daftar = semua(
       db,
-      `SELECT h.id, h.santri_id AS santriId, s.nama, s.nis, s.jk, k.nama AS kelas, h.tanggal, h.jenis, h.materi, h.predikat, h.catatan, h.penyimak
+      `SELECT h.id, h.santri_id AS santriId, s.nama, s.nis, s.jk, s.foto_versi AS fotoVersi, k.nama AS kelas, h.tanggal, h.jenis, h.materi, h.predikat, h.catatan, h.penyimak
          FROM hafalan h JOIN santri s ON s.id = h.santri_id LEFT JOIN kelas k ON k.id = s.kelas_id
         ${syarat.length ? 'WHERE ' + syarat.join(' AND ') : ''}
         ORDER BY h.tanggal DESC, h.id DESC LIMIT 200`,

@@ -20,6 +20,7 @@ import {
   teksWajib,
 } from '../util';
 import { ambilPeriode } from '../domain/raport';
+import { uraiAturan } from '../domain/kartu';
 import { bulanIni, bulanTahunAjaran, hariIni, namaBulan } from '../../shared/format';
 
 export function ruteSyahriah(db: DB) {
@@ -36,9 +37,9 @@ export function ruteSyahriah(db: DB) {
     const tahunAjaran = c.req.query('tahunAjaran') ?? ambilPeriode(db).tahun_ajaran;
     if (!/^\d{4}\/\d{4}$/.test(tahunAjaran)) throw new GalatPengguna(400, 'Tahun ajaran tidak valid.');
     const bulan = bulanTahunAjaran(tahunAjaran);
-    const santri = semua<{ id: number; nis: string; nama: string; jk: string; hp_wali: string | null }>(
+    const santri = semua<{ id: number; nis: string; nama: string; jk: string; hp_wali: string | null; foto_versi: string | null }>(
       db,
-      "SELECT id, nis, nama, jk, hp_wali FROM santri WHERE kelas_id = ? AND status = 'aktif' ORDER BY nama",
+      "SELECT id, nis, nama, jk, hp_wali, foto_versi FROM santri WHERE kelas_id = ? AND status = 'aktif' ORDER BY nama",
       kelas.id,
     );
     const bayar = semua<{ id: number; santri_id: number; bulan: string; nominal: number; tanggal_bayar: string; metode: string; catatan: string | null }>(
@@ -53,6 +54,7 @@ export function ruteSyahriah(db: DB) {
       nis: s.nis,
       nama: s.nama,
       jk: s.jk,
+      fotoVersi: s.foto_versi,
       hp: s.hp_wali,
       bayar: Object.fromEntries(
         bayar.filter((b) => b.santri_id === s.id).map((b) => [b.bulan, { id: b.id, nominal: b.nominal, tanggal: b.tanggal_bayar, metode: b.metode, catatan: b.catatan }]),
@@ -192,9 +194,26 @@ export function rutePengaturan(db: DB) {
         bobot: bobotNilai(p),
         syahriahNominal: Number(p.syahriah_nominal) || 0,
         tampilPeringkat: p.tampil_peringkat === '1',
+        tataTertib: p.tata_tertib,
+        kartuBerlaku: p.kartu_berlaku,
       },
       lengkapi,
     });
+  });
+
+  // Isi sisi belakang kartu santri.
+  r.put('/kartu', async (c) => {
+    hanyaAdmin(c);
+    const isi = await bacaIsi(
+      c,
+      z.object({
+        tataTertib: teksWajib('Tata tertib', 3000).refine((t) => uraiAturan(t).length > 0, 'Tulis paling sedikit satu butir tata tertib.'),
+        kartuBerlaku: teksWajib('Masa berlaku', 80),
+      }),
+    );
+    simpanPengaturan(db, { tata_tertib: isi.tataTertib, kartu_berlaku: isi.kartuBerlaku });
+    catatLog(db, pelaku(c), 'Mengubah tata tertib kartu santri');
+    return c.json({ ok: true, aturan: uraiAturan(isi.tataTertib) });
   });
 
   r.put('/', async (c) => {

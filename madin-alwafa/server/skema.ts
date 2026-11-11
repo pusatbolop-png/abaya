@@ -180,6 +180,63 @@ export const MIGRASI: string[] = [
     detail TEXT
   );
   `,
+
+  /* 2: alamat terstruktur, foto, kartu santri, pendaftaran wali mandiri, pesan WhatsApp otomatis */ `
+  ALTER TABLE santri ADD COLUMN desa TEXT;
+  ALTER TABLE santri ADD COLUMN kecamatan TEXT;
+  ALTER TABLE santri ADD COLUMN kabupaten TEXT;
+  ALTER TABLE santri ADD COLUMN provinsi TEXT;
+  ALTER TABLE santri ADD COLUMN kode_wilayah TEXT;
+  ALTER TABLE santri ADD COLUMN foto_versi TEXT;
+  ALTER TABLE santri ADD COLUMN kartu_kode TEXT;
+  ALTER TABLE santri ADD COLUMN daftar_mandiri TEXT;
+  CREATE UNIQUE INDEX santri_kartu ON santri(kartu_kode) WHERE kartu_kode IS NOT NULL;
+
+  CREATE TABLE foto_santri (
+    santri_id INTEGER PRIMARY KEY REFERENCES santri(id) ON DELETE CASCADE,
+    data BLOB NOT NULL,
+    jenis TEXT NOT NULL,
+    diubah TEXT NOT NULL,
+    oleh TEXT
+  );
+
+  CREATE TABLE pendaftaran_wali (
+    id INTEGER PRIMARY KEY,
+    santri_id INTEGER NOT NULL REFERENCES santri(id) ON DELETE CASCADE,
+    nama_wali TEXT NOT NULL,
+    hubungan TEXT NOT NULL,
+    hp TEXT NOT NULL,
+    alamat TEXT,
+    desa TEXT,
+    kecamatan TEXT,
+    kabupaten TEXT,
+    provinsi TEXT,
+    kode_wilayah TEXT,
+    sandi TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'menunggu' CHECK (status IN ('menunggu','disetujui','ditolak')),
+    alasan TEXT,
+    dibuat TEXT NOT NULL,
+    diputus TEXT,
+    diputus_oleh TEXT
+  );
+  CREATE INDEX pendaftaran_status ON pendaftaran_wali(status, dibuat);
+
+  CREATE TABLE pesan_keluar (
+    id INTEGER PRIMARY KEY,
+    jenis TEXT NOT NULL CHECK (jenis IN ('laporan','tagihan','uji')),
+    tujuan TEXT NOT NULL,
+    hp TEXT NOT NULL,
+    isi TEXT NOT NULL,
+    santri_id INTEGER REFERENCES santri(id) ON DELETE SET NULL,
+    pengurus_id INTEGER REFERENCES pengurus(id) ON DELETE SET NULL,
+    status TEXT NOT NULL CHECK (status IN ('antre','terkirim','gagal')),
+    galat TEXT,
+    dibuat TEXT NOT NULL,
+    dikirim TEXT
+  );
+  CREATE INDEX pesan_status ON pesan_keluar(status, dibuat);
+  CREATE INDEX pesan_santri ON pesan_keluar(jenis, santri_id, dibuat);
+  `,
 ];
 
 export function migrasi(db: DB) {

@@ -71,6 +71,22 @@ export const tanggalOpsional = () =>
 
 // Pengaturan lembaga --------------------------------------------------------------------------
 
+/** Draf tata tertib santri untuk sisi belakang kartu; madrasah dapat mengubahnya di Pengaturan. */
+export const TATA_TERTIB_AWAL = [
+  'Kewajiban santri:',
+  'Hadir tepat waktu dan mengikuti doa bersama sebelum pelajaran dimulai.',
+  'Berpakaian rapi, sopan, dan menutup aurat sesuai ketentuan madrasah.',
+  'Membawa kitab, alat tulis, dan perlengkapan belajar setiap hari.',
+  'Menghormati ustadz, ustadzah, pengurus, dan sesama santri serta bertutur kata santun.',
+  'Menjaga kebersihan, ketertiban, dan fasilitas madrasah.',
+  'Menyetorkan hafalan sesuai target yang ditetapkan wali kelas.',
+  'Memberi kabar kepada wali kelas bila berhalangan hadir.',
+  'Larangan:',
+  'Membawa ponsel, rokok, senjata tajam, atau barang yang tidak berhubungan dengan pelajaran.',
+  'Berkelahi, merundung, berkata kotor, atau merusak barang milik madrasah dan orang lain.',
+  'Meninggalkan madrasah saat jam pelajaran tanpa izin.',
+].join('\n');
+
 export const PENGATURAN_AWAL = {
   nama_lembaga: 'Madrasah Diniyah Al Wafa’',
   nama_arab: 'مدرسة الوفاء الدينية',
@@ -87,6 +103,20 @@ export const PENGATURAN_AWAL = {
   syahriah_nominal: '0',
   tampil_peringkat: '1',
   mode: 'produksi',
+  // Kartu santri digital: sisi belakang. Satu butir per baris; baris berakhiran titik dua menjadi judul bagian.
+  tata_tertib: TATA_TERTIB_AWAL,
+  kartu_berlaku: 'Selama menjadi santri aktif',
+  // Pesan WhatsApp otomatis. Penyedia 'manual': pesan disiapkan dan dikirim admin lewat tautan WhatsApp.
+  wa_penyedia: 'manual',
+  wa_token: '',
+  laporan_aktif: '1',
+  laporan_jam: '18:00',
+  tagihan_aktif: '1',
+  tagihan_jam: '09:00',
+  tagihan_jeda: '3',
+  tagihan_jatuh_tempo: '10',
+  jadwal_laporan_terakhir: '',
+  jadwal_tagihan_terakhir: '',
 } as const;
 export type Pengaturan = { [K in keyof typeof PENGATURAN_AWAL]: string };
 
@@ -150,3 +180,36 @@ export function buatKodeVerifikasi(): string {
 /** Hasil ambil semua baris dengan tipe. */
 export const semua = <T>(db: DB, sql: string, ...param: unknown[]) => db.prepare(sql).all(...param) as T[];
 export const satu = <T>(db: DB, sql: string, ...param: unknown[]) => db.prepare(sql).get(...param) as T | undefined;
+
+// Alamat dan nomor WhatsApp -------------------------------------------------------------------
+
+/** Alamat terstruktur: kabupaten/kota dan provinsi diisi otomatis dari kecamatan di antarmuka. */
+export const skemaAlamat = {
+  alamat: teksOpsional(200),
+  desa: teksOpsional(80),
+  kecamatan: teksOpsional(80),
+  kabupaten: teksOpsional(80),
+  provinsi: teksOpsional(80),
+  kodeWilayah: teksOpsional(12).refine((v) => v === null || /^\d{2}\.\d{2}\.\d{2}$/.test(v), 'Kode wilayah tidak valid.'),
+};
+
+/** Nomor WhatsApp dalam bentuk 08xxxxxxxxxx (spasi, tanda hubung, +62, dan 62 dirapikan). */
+export function normalHp(hp: string | null | undefined): string {
+  let d = (hp ?? '').replace(/\D/g, '');
+  if (d.startsWith('62')) d = '0' + d.slice(2);
+  else if (d.startsWith('8')) d = '0' + d;
+  return d;
+}
+export const hpValid = (hp: string) => /^08\d{8,12}$/.test(normalHp(hp));
+
+/** Format tampilan nomor: 0812-3456-7890. */
+export function rapikanHp(hp: string): string {
+  const d = normalHp(hp);
+  return d.length > 8 ? `${d.slice(0, 4)}-${d.slice(4, 8)}-${d.slice(8)}` : d;
+}
+
+/** Kode acak huruf+angka tanpa karakter yang mirip (untuk kode kartu santri). */
+export function kodeAcak(panjang: number): string {
+  const abjad = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({ length: panjang }, () => abjad[angkaAcak(abjad.length)]).join('');
+}

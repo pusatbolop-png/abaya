@@ -2,7 +2,10 @@
 import { Hono } from 'hono';
 import type { DB } from '../db';
 import type { VarWali } from '../auth';
-import { GalatPengguna, ambilPengaturan, idParam, satu, semua, sekarang } from '../util';
+import { z } from 'zod';
+import { GalatPengguna, ambilPengaturan, bacaIsi, catatLog, idParam, satu, semua, sekarang, skemaAlamat } from '../util';
+import { hapusFoto, simpanFoto } from '../domain/foto';
+import { dataKartu } from '../domain/kartu';
 import { ambilPeriode, rekapKehadiran, type DataRaport } from '../domain/raport';
 import { keSantri, type SantriBaris } from './santri';
 import { bulanIni, bulanTahunAjaran, hariIni } from '../../shared/format';
@@ -90,6 +93,44 @@ export function ruteWali(db: DB) {
       jadwalHariIni,
       pengumuman: pengumumanUntuk(db, s.jk, s.kelas_id, 3),
     });
+  });
+
+  // Wali bisa memotret ananda langsung dari ponsel (kamera depan/belakang) untuk kartu santri.
+  r.put('/foto', async (c) => {
+    const s = santriSaya(c);
+    const { data } = await bacaIsi(c, z.object({ data: z.string().max(900_000, 'Ukuran foto terlalu besar.') }));
+    const fotoVersi = simpanFoto(db, s.id, data, `Wali ${s.nama}`);
+    catatLog(db, `Wali ${s.nama}`, 'Memperbarui foto santri', `${s.nama} (${s.nis})`);
+    return c.json({ fotoVersi });
+  });
+
+  r.delete('/foto', (c) => {
+    const s = santriSaya(c);
+    hapusFoto(db, s.id);
+    catatLog(db, `Wali ${s.nama}`, 'Menghapus foto santri', `${s.nama} (${s.nis})`);
+    return c.json({ ok: true });
+  });
+
+  r.get('/kartu', (c) => {
+    const s = santriSaya(c);
+    return c.json({ ...dataKartu(db, s.id), alamatAplikasi: c.req.header('origin') ?? new URL(c.req.url).origin });
+  });
+
+  // Wali memperbarui alamat dan nomor WhatsApp sendiri.
+  r.put('/kontak', async (c) => {
+    const s = santriSaya(c);
+    const isi = await bacaIsi(c, z.object({ ...skemaAlamat }));
+    db.prepare('UPDATE santri SET alamat = ?, desa = ?, kecamatan = ?, kabupaten = ?, provinsi = ?, kode_wilayah = ? WHERE id = ?').run(
+      isi.alamat,
+      isi.desa,
+      isi.kecamatan,
+      isi.kabupaten,
+      isi.provinsi,
+      isi.kodeWilayah,
+      s.id,
+    );
+    catatLog(db, `Wali ${s.nama}`, 'Memperbarui alamat', `${s.nama} (${s.nis})`);
+    return c.json({ ok: true });
   });
 
   r.get('/profil', (c) => {
