@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Check, MessageCircle, Plus, Save, Trash2, Wallet } from 'lucide-react';
+import { urlFoto } from '../../lib/foto';
 import { kirim } from '../../lib/api';
 import { useKirim, usePakai } from '../../lib/pakai';
 import { useSesi } from '../../lib/sesi';
@@ -23,7 +24,7 @@ interface DataSyahriah {
   bulanIni: string;
   nominal: number;
   total: number;
-  daftar: { santriId: number; nis: string; nama: string; jk: string; hp: string | null; bayar: Record<string, Bayar> }[];
+  daftar: { santriId: number; nis: string; nama: string; jk: string; fotoVersi: string | null; hp: string | null; bayar: Record<string, Bayar> }[];
 }
 
 export default function Syahriah() {
@@ -120,7 +121,7 @@ export default function Syahriah() {
                     <tr key={s.santriId}>
                       <td className="kolom-tetap">
                         <div className="baris">
-                          <Avatar nama={s.nama} jk={s.jk} ukuran={30} />
+                          <Avatar nama={s.nama} jk={s.jk} ukuran={30} foto={urlFoto(s.santriId, s.fotoVersi)} />
                           <span className="potong" style={{ maxWidth: 170 }}>
                             {s.nama}
                           </span>

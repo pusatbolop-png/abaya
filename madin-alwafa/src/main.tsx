@@ -7,6 +7,7 @@ import './styles/komponen.css';
 import './styles/tata-letak.css';
 import './styles/halaman.css';
 import './styles/raport.css';
+import './styles/kartu.css';
 import { Aplikasi } from './rute';
 
 createRoot(document.getElementById('akar')!).render(

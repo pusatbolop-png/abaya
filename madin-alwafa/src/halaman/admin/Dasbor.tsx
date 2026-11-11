@@ -246,6 +246,7 @@ export default function Dasbor() {
         <div className="kartu-judul">
           <h2>Aktivitas terbaru</h2>
         </div>
+        {!d.aktivitas.length && <p className="redup kecil">Belum ada aktivitas.</p>}
         <ol className="linimasa">
           {d.aktivitas.map((a, i) => (
             <li key={i}>
@@ -259,7 +260,6 @@ export default function Dasbor() {
               </div>
             </li>
           ))}
-          {!d.aktivitas.length && <p className="redup kecil">Belum ada aktivitas.</p>}
         </ol>
       </section>
     </>

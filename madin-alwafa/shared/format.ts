@@ -143,3 +143,16 @@ export function bulanTahunAjaran(tahunAjaran: string): string[] {
 export function namaSemester(semester: number): string {
   return semester === 1 ? 'Ganjil' : 'Genap';
 }
+
+/** Alamat lengkap satu baris: "Dusun Krajan RT 02/RW 01, Desa Kalirejo, Kec. Bangil, Kab. Pasuruan, Jawa Timur". */
+export function alamatLengkap(a: { alamat?: string | null; desa?: string | null; kecamatan?: string | null; kabupaten?: string | null; provinsi?: string | null }): string {
+  return [
+    a.alamat,
+    a.desa && (/^(desa|ds\.|kel)/i.test(a.desa) ? a.desa : `Desa ${a.desa}`),
+    a.kecamatan && `Kec. ${a.kecamatan}`,
+    a.kabupaten?.replace(/^Kabupaten /, 'Kab. '),
+    a.provinsi,
+  ]
+    .filter(Boolean)
+    .join(', ');
+}

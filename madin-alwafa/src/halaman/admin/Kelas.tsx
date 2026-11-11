@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { BookMarked, CalendarClock, GraduationCap, Pencil, Plus, Save, School, Trash2, Users } from 'lucide-react';
+import { urlFoto } from '../../lib/foto';
 import { kirim } from '../../lib/api';
 import { useKirim, usePakai } from '../../lib/pakai';
 import { useSesi } from '../../lib/sesi';
@@ -23,7 +24,7 @@ interface DetailKelas {
   kelas: Omit<TKelas, 'putra' | 'putri' | 'jumlahMapel'>;
   mapel: { mapelId: number; nama: string; namaArab: string | null; kitab: string | null; kkm: number; pengajar: string | null }[];
   jadwal: { id: number; hari: number; jamMulai: string; jamSelesai: string; mapelId: number; mapel: string; pengajar: string | null }[];
-  santri: { id: number; nis: string; nama: string; jk: string }[];
+  santri: { id: number; nis: string; nama: string; jk: string; fotoVersi: string | null }[];
 }
 
 export default function Kelas() {
@@ -489,7 +490,7 @@ function LaciKelas({
           <div className="tumpuk tumpuk--rapat">
             {data?.santri.map((s) => (
               <Link key={s.id} to={`/admin/santri/${s.id}`} className="baris panel baris-tautan">
-                <Avatar nama={s.nama} jk={s.jk} ukuran={34} />
+                <Avatar nama={s.nama} jk={s.jk} ukuran={34} foto={urlFoto(s.id, s.fotoVersi)} />
                 <span className="isi-penuh potong">{s.nama}</span>
                 <span className="redup-2 kecil angka">{s.nis}</span>
               </Link>

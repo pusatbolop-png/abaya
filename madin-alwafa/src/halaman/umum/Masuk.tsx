@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Eye, EyeOff, IdCard, LockKeyhole, LogIn, ShieldCheck, UserRound, Users } from 'lucide-react';
+import { Eye, EyeOff, IdCard, LockKeyhole, LogIn, ShieldCheck, UserPlus, UserRound, Users } from 'lucide-react';
 import { api, GalatApi } from '../../lib/api';
 import { useSesi } from '../../lib/sesi';
 import { Bidang, Pesan, Tombol, useIngat, useJudul } from '../../ui/dasar';
@@ -116,6 +116,14 @@ export function Masuk() {
               Masuk
             </Tombol>
           </form>
+          {jenis === 'wali' && (
+            <Link to="/daftar" className="masuk__daftar">
+              <UserPlus />
+              <span>
+                <b>Belum punya akun?</b> Daftar dengan NIS ananda dan nomor WhatsApp aktif
+              </span>
+            </Link>
+          )}
 
           {demo && (
             <Pesan jenis="info" judul="Akun demo">
@@ -146,7 +154,7 @@ export function Masuk() {
           )}
 
           <p className="masuk__kaki">
-            {jenis === 'wali' ? 'NIS dan sandi awal diberikan oleh pengurus madrasah. ' : 'Lupa sandi? Minta administrator membuat sandi baru. '}
+            {jenis === 'wali' ? 'Lupa sandi? Hubungi pengurus madrasah. ' : 'Lupa sandi? Minta administrator membuat sandi baru. '}
             <Link to="/verifikasi">Periksa keaslian raport</Link>
           </p>
         </section>

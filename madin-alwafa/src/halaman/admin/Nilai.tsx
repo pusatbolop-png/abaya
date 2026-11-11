@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { urlFoto } from '../../lib/foto';
 import { useSaringan } from '../../lib/saringan';
 import { ArrowLeft, Lock, NotebookPen, Save } from 'lucide-react';
 import { kirim } from '../../lib/api';
@@ -19,7 +20,7 @@ interface DataNilai {
   mapel: { id: number; nama: string; namaArab: string | null; kkm: number; pengajar: string | null };
   periode: { id: number; tahunAjaran: string; semester: number };
   bobot: Bobot;
-  daftar: { santriId: number; nis: string; nama: string; jk: string; harian: number | null; uts: number | null; uas: number | null; akhir: number | null; terkunci: boolean }[];
+  daftar: { santriId: number; nis: string; nama: string; jk: string; fotoVersi: string | null; harian: number | null; uts: number | null; uas: number | null; akhir: number | null; terkunci: boolean }[];
 }
 
 const KOMPONEN = [
@@ -270,7 +271,7 @@ function InputNilai({ kelasId, mapelId, periodeId, kembali }: { kelasId: string;
                     <td className="redup-2 angka">{i + 1}</td>
                     <td>
                       <div className="baris">
-                        <Avatar nama={d.nama} jk={d.jk} ukuran={32} />
+                        <Avatar nama={d.nama} jk={d.jk} ukuran={32} foto={urlFoto(d.santriId, d.fotoVersi)} />
                         <span className="potong" style={{ maxWidth: 220 }}>
                           {d.nama}
                         </span>

@@ -17,6 +17,7 @@ import { Link, type LinkProps } from 'react-router';
 import { CircleAlert, Info, LoaderCircle, RefreshCw, Sparkle, TriangleAlert, X, CircleCheck } from 'lucide-react';
 import { inisial } from '../../shared/format';
 import type { GalatApi } from '../lib/api';
+import { useSumberFoto } from '../lib/foto';
 
 type Varian = 'utama' | 'zamrud' | 'hantu' | 'bahaya';
 type Ukuran = 'kecil' | 'besar';
@@ -296,10 +297,17 @@ export function Pesan({ jenis = 'info', children, judul }: { jenis?: 'info' | 'w
   );
 }
 
-export function Avatar({ nama, jk, ukuran = 40, emas }: { nama: string; jk?: 'L' | 'P' | string; ukuran?: number; emas?: boolean }) {
+export function Avatar({ nama, jk, ukuran = 40, emas, foto }: { nama: string; jk?: 'L' | 'P' | string; ukuran?: number; emas?: boolean; foto?: string | null }) {
+  const src = useSumberFoto(foto ?? null);
+  const [gagal, setGagal] = useState<string | null>(null);
+  const tampil = src && gagal !== src;
   return (
-    <span className={`avatar ${jk === 'P' ? 'avatar--P' : ''} ${emas ? 'avatar--emas' : ''}`} style={{ ['--ukuran' as string]: `${ukuran}px` }} aria-hidden>
-      {inisial(nama)}
+    <span
+      className={`avatar ${jk === 'P' ? 'avatar--P' : ''} ${emas ? 'avatar--emas' : ''} ${tampil ? 'avatar--foto' : ''}`}
+      style={{ ['--ukuran' as string]: `${ukuran}px` }}
+      aria-hidden
+    >
+      {tampil ? <img src={src} alt="" loading="lazy" decoding="async" draggable={false} onError={() => setGagal(src)} /> : inisial(nama)}
     </span>
   );
 }

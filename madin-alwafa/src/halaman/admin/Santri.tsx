@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowRightLeft, IdCard, Search, UserPlus, Users, X } from 'lucide-react';
+import { urlFoto } from '../../lib/foto';
 import { kirim } from '../../lib/api';
 import { usePakai } from '../../lib/pakai';
 import { useSaringan } from '../../lib/saringan';
@@ -9,6 +10,7 @@ import { useToast } from '../../lib/toast';
 import type { Kelas, Santri } from '../../lib/tipe';
 import { Avatar, GalatMuat, KepalaHalaman, Kosong, Lencana, Memuat, Tombol, useJudul } from '../../ui/dasar';
 import { FormSantri, KartuAkun, TampilAkun, type AkunBaru } from './santri-form';
+import { PitaPendaftaran } from './Pendaftaran';
 import { STATUS_SANTRI } from '../../../shared/konstanta';
 import { waktu } from '../../../shared/format';
 
@@ -123,6 +125,8 @@ export default function DaftarSantri() {
         </select>
       </div>
 
+      {admin && <PitaPendaftaran berubah={muatUlang} />}
+
       {admin && pilih.size > 0 && (
         <div className="kaca kaca--rapat bilah-massal">
           <b>{pilih.size} dipilih</b>
@@ -220,7 +224,7 @@ export default function DaftarSantri() {
                     )}
                     <td data-sel="utama">
                       <div className="baris">
-                        <Avatar nama={s.nama} jk={s.jk} ukuran={38} />
+                        <Avatar nama={s.nama} jk={s.jk} ukuran={38} foto={urlFoto(s.id, s.fotoVersi)} />
                         <div style={{ display: 'grid', minWidth: 0 }}>
                           <b className="potong">{s.nama}</b>
                           <span className="redup-2 kecil angka">NIS {s.nis}</span>

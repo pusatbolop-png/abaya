@@ -2,25 +2,8 @@
 import type { DB } from '../db';
 import { GalatPengguna, ambilPengaturan, kodeAcak, lembaga, satu } from '../util';
 
-export interface BagianAturan {
-  judul: string | null;
-  butir: string[];
-}
-
-/** Teks tata tertib (satu butir per baris; baris berakhiran titik dua menjadi judul bagian). */
-export function uraiAturan(teks: string): BagianAturan[] {
-  const bagian: BagianAturan[] = [];
-  for (const mentah of teks.split(/\r?\n/)) {
-    const baris = mentah.trim().replace(/^(\d+[.)]|[-•*])\s*/, '');
-    if (!baris) continue;
-    if (baris.endsWith(':')) bagian.push({ judul: baris.slice(0, -1).trim(), butir: [] });
-    else {
-      if (!bagian.length) bagian.push({ judul: null, butir: [] });
-      bagian[bagian.length - 1].butir.push(baris);
-    }
-  }
-  return bagian.filter((b) => b.butir.length);
-}
+export { uraiAturan, type BagianAturan } from '../../shared/aturan';
+import { uraiAturan } from '../../shared/aturan';
 
 /** Kode kartu dibuat sekali, saat kartu pertama kali dibuka. */
 function kodeKartu(db: DB, santriId: number): string {

@@ -462,6 +462,21 @@ input[type='time'].masukan {
   color: #2a1d05;
   background: linear-gradient(140deg, #fbe9b9, #c9a04c);
 }
+.avatar--foto {
+  overflow: hidden;
+  background: var(--tosca-900, #04282a);
+  box-shadow:
+    0 0 0 1.5px rgba(239, 220, 179, 0.55),
+    0 6px 16px rgba(0, 20, 20, 0.35);
+}
+.avatar--foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* foto 3:4: wajah ada di sepertiga atas */
+  object-position: 50% 28%;
+  display: block;
+}
 
 /* ——— Tabel ——— */
 .tabel-bungkus {
@@ -1033,4 +1048,217 @@ input[type='time'].masukan {
   border-top-color: var(--emas-400);
   animation: putar 0.9s linear infinite;
   margin-bottom: 8px;
+}
+
+/* ——— Ambil foto santri ——— */
+.foto-pilih {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.foto-pilih__tombol {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 22px 14px;
+  border-radius: var(--r-lg, 18px);
+  border: 1px solid var(--garis-2);
+  background: var(--kaca-1);
+  color: var(--teks);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 160ms,
+    background 160ms,
+    transform 160ms;
+}
+.foto-pilih__tombol:hover {
+  border-color: rgba(239, 220, 179, 0.45);
+  background: var(--kaca-2, rgba(255, 255, 255, 0.08));
+}
+.foto-pilih__tombol:active {
+  transform: scale(0.98);
+}
+.foto-pilih__tombol svg {
+  width: 30px;
+  height: 30px;
+  color: var(--emas-300);
+}
+.foto-pilih__tombol span {
+  font-size: 12.5px;
+  color: var(--teks-3);
+}
+.foto-pilih__tombol--utama {
+  border-color: rgba(239, 220, 179, 0.4);
+  background: linear-gradient(160deg, rgba(239, 220, 179, 0.14), rgba(20, 168, 159, 0.08));
+}
+.foto-pilih__saran {
+  grid-column: 1 / -1;
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--teks-2);
+  display: grid;
+  gap: 4px;
+}
+.foto-potong {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+.foto-potong__bingkai {
+  position: relative;
+  width: min(300px, 100%);
+  aspect-ratio: 3 / 4;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(239, 220, 179, 0.45),
+    0 18px 40px rgba(0, 20, 22, 0.45);
+}
+.foto-potong__bingkai canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+.foto-potong__bingkai canvas:active {
+  cursor: grabbing;
+}
+.foto-potong__panduan {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.foto-potong__alat {
+  width: min(300px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--teks-3);
+}
+.foto-potong__alat > svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.foto-potong__alat input[type='range'] {
+  flex: 1;
+  accent-color: var(--emas-300, #e9d29f);
+}
+
+/* Avatar dengan tombol kamera di pojok */
+.avatar-ubah {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.avatar-ubah__kamera {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #2a1d05;
+  background: linear-gradient(140deg, #fbe9b9, #c9a04c);
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.avatar-ubah__kamera svg {
+  width: 15px;
+  height: 15px;
+}
+.avatar-ubah:focus-visible {
+  outline: 2px solid var(--emas-300);
+  outline-offset: 3px;
+}
+
+/* ——— Isian alamat dengan kecamatan otomatis ——— */
+.isian-alamat {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.isian-alamat > .bentang-2 {
+  grid-column: 1 / -1;
+}
+@media (max-width: 560px) {
+  .isian-alamat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.isian-alamat__kotak {
+  position: relative;
+}
+.saran-wilayah {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 290px;
+  overflow-y: auto;
+  border-radius: 14px;
+  border: 1px solid var(--garis-2);
+  background: linear-gradient(170deg, rgba(11, 72, 73, 0.98), rgba(4, 34, 36, 0.99));
+  box-shadow: 0 20px 44px rgba(0, 16, 18, 0.55);
+}
+.saran-wilayah li {
+  display: grid;
+  gap: 1px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.saran-wilayah li[aria-selected='true'] {
+  background: rgba(239, 220, 179, 0.12);
+}
+.saran-wilayah li b {
+  font-weight: 650;
+}
+.saran-wilayah li span {
+  font-size: 12.5px;
+  color: var(--teks-3);
+}
+.masukan-otomatis {
+  position: relative;
+  display: block;
+}
+.masukan-otomatis .masukan {
+  background: rgba(255, 255, 255, 0.025);
+  border-style: dashed;
+  color: var(--teks-2);
+  cursor: default;
+}
+.masukan-otomatis.terisi .masukan {
+  border-style: solid;
+  border-color: rgba(52, 211, 153, 0.45);
+  color: var(--teks);
+  padding-right: 38px;
+}
+.masukan-otomatis svg {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 18px;
+  height: 18px;
+  color: #34d399;
 }

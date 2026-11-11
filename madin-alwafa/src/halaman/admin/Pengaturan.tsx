@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CalendarRange, CheckCircle2, History, KeyRound, Landmark, Plus, Save, ShieldCheck, UserPlus } from 'lucide-react';
+import { CalendarRange, CheckCircle2, History, IdCard, KeyRound, Landmark, Plus, RotateCcw, Save, ShieldCheck, UserPlus } from 'lucide-react';
 import { kirim } from '../../lib/api';
 import { useKirim, usePakai } from '../../lib/pakai';
 import { useSesi } from '../../lib/sesi';
@@ -8,6 +8,8 @@ import type { Periode } from '../../lib/tipe';
 import { Avatar, Bidang, GalatMuat, KepalaHalaman, Lencana, Memuat, Modal, Pesan, Sakelar, Tombol, useIngat, useJudul, useKonfirmasi } from '../../ui/dasar';
 import { PERAN_PENGURUS, type PeranPengurus } from '../../../shared/konstanta';
 import { namaSemester, tanggalPendek, waktu } from '../../../shared/format';
+import { uraiAturan } from '../../../shared/aturan';
+import { Belakang } from '../../ui/KartuSantri';
 
 interface DataPengaturan {
   pengaturan: {
@@ -23,6 +25,8 @@ interface DataPengaturan {
     bobot: { harian: number; uts: number; uas: number };
     syahriahNominal: number;
     tampilPeringkat: boolean;
+    tataTertib: string;
+    kartuBerlaku: string;
   };
   lengkapi: { kunci: string; label: string }[];
 }
@@ -36,7 +40,7 @@ interface AkunPengurus {
   masukTerakhir: string | null;
 }
 
-type Tab = 'madrasah' | 'semester' | 'akun' | 'riwayat';
+type Tab = 'madrasah' | 'semester' | 'kartu' | 'akun' | 'riwayat';
 
 export default function Pengaturan() {
   useJudul('Pengaturan');
@@ -54,6 +58,9 @@ export default function Pengaturan() {
         <button role="tab" aria-selected={tabAman === 'semester'} onClick={() => setTab('semester')}>
           <CalendarRange /> Tahun ajaran
         </button>
+        <button role="tab" aria-selected={tabAman === 'kartu'} onClick={() => setTab('kartu')}>
+          <IdCard /> Kartu santri
+        </button>
         {admin && (
           <button role="tab" aria-selected={tabAman === 'akun'} onClick={() => setTab('akun')}>
             <ShieldCheck /> Akun pengurus
@@ -67,6 +74,7 @@ export default function Pengaturan() {
       </div>
       {tabAman === 'madrasah' && <TabMadrasah admin={admin} />}
       {tabAman === 'semester' && <TabSemester admin={admin} />}
+      {tabAman === 'kartu' && <TabKartu admin={admin} />}
       {tabAman === 'akun' && <TabAkun />}
       {tabAman === 'riwayat' && <TabRiwayat />}
     </>
@@ -543,5 +551,72 @@ function TabRiwayat() {
         ))}
       </ol>
     </section>
+  );
+}
+
+/** Sisi belakang kartu santri: tata tertib yang bisa ditulis ulang madrasah, dengan pratinjau langsung. */
+function TabKartu({ admin }: { admin: boolean }) {
+  const toast = useToast();
+  const { lembaga } = useSesi();
+  const { data, galat, muatUlang } = usePakai<DataPengaturan & { tataTertibAwal?: string }>('/api/admin/pengaturan');
+  const { sibuk, bidang, jalankan } = useKirim();
+  const [f, setF] = useState<{ tataTertib: string; kartuBerlaku: string } | null>(null);
+  useEffect(() => {
+    if (data && !f) setF({ tataTertib: data.pengaturan.tataTertib, kartuBerlaku: data.pengaturan.kartuBerlaku });
+  }, [data, f]);
+  if (galat) return <GalatMuat galat={galat} ulang={muatUlang} />;
+  if (!f) return <Memuat baris={3} tinggi={120} />;
+  const aturan = uraiAturan(f.tataTertib);
+  const jumlah = aturan.reduce((n, b) => n + b.butir.length, 0);
+  const simpan = () =>
+    jalankan(async () => {
+      await kirim('PUT', '/api/admin/pengaturan/kartu', f);
+      toast.tampil('Tata tertib kartu santri disimpan.');
+      muatUlang();
+    }).catch(toast.galat);
+  return (
+    <div className="grid-kartu-atur">
+      <section className="kaca kaca--pad tumpuk">
+        <div className="kartu-judul" style={{ marginBottom: 0 }}>
+          <h2>Tata tertib di balik kartu</h2>
+          <Lencana jenis={jumlah > 14 ? 'waspada' : 'info'}>{jumlah} butir</Lencana>
+        </div>
+        <Pesan judul="Masih draf">
+          Isi di bawah adalah contoh dari aplikasi. Ganti dengan tata tertib resmi dari madrasah; kartu semua santri ikut berubah begitu disimpan.
+        </Pesan>
+        <Bidang
+          label="Tata tertib"
+          galat={bidang.tataTertib}
+          bantu="Satu butir per baris. Baris yang diakhiri titik dua (mis. Larangan:) menjadi judul bagian. Paling enak dibaca 8–12 butir."
+        >
+          <textarea className="masukan" rows={16} value={f.tataTertib} onChange={(e) => setF({ ...f, tataTertib: e.target.value })} disabled={!admin} spellCheck />
+        </Bidang>
+        <Bidang label="Masa berlaku kartu" galat={bidang.kartuBerlaku}>
+          <input className="masukan" value={f.kartuBerlaku} onChange={(e) => setF({ ...f, kartuBerlaku: e.target.value })} disabled={!admin} />
+        </Bidang>
+        {admin && (
+          <div className="baris baris--bungkus" style={{ gap: 8 }}>
+            <Tombol varian="utama" ikon={<Save />} sibuk={sibuk} onClick={simpan}>
+              Simpan
+            </Tombol>
+            <Tombol varian="hantu" ikon={<RotateCcw />} onClick={() => setF({ tataTertib: data!.pengaturan.tataTertib, kartuBerlaku: data!.pengaturan.kartuBerlaku })}>
+              Batalkan perubahan
+            </Tombol>
+          </div>
+        )}
+      </section>
+      <section className="kaca kaca--pad tumpuk pratinjau-kartu">
+        <div className="kartu-judul" style={{ marginBottom: 0 }}>
+          <h2>Pratinjau</h2>
+          <span className="redup-2 kecil">Sisi belakang</span>
+        </div>
+        <div className="pratinjau-kartu__wadah">
+          <div className="kartu">
+            <Belakang d={{ aturan, lembaga }} />
+          </div>
+        </div>
+        {jumlah > 14 && <span className="kecil" style={{ color: 'var(--waspada, #f5c66b)' }}>Butir terlalu banyak: sebagian bisa terpotong saat dicetak. Ringkas menjadi 12 butir atau kurang.</span>}
+      </section>
+    </div>
   );
 }

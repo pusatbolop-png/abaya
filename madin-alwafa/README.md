@@ -4,7 +4,7 @@ Aplikasi web untuk Madrasah Diniyah Al Wafa’ (Al Wafa’ Islamic Center, Bangi
 berlatar hijau tosca, aksen emas, dan logo Al Wafa’.
 Ada dua jenis akun:
 
-- **Wali santri** (masuk dengan NIS + sandi): beranda ananda, **raport online** (ringkasan di ponsel, lembar A4, unduh PDF), kehadiran per bulan, setoran hafalan, status syahriah, jadwal pelajaran, pengumuman, dan ganti sandi.
+- **Wali santri** (masuk dengan NIS + sandi, atau **daftar sendiri dari ponsel** dengan NIS + nomor WhatsApp aktif): beranda ananda, **raport online** (ringkasan di ponsel, lembar A4, unduh PDF), **kartu santri digital**, foto ananda langsung dari kamera ponsel, kehadiran per bulan, setoran hafalan, status syahriah, jadwal pelajaran, pengumuman, alamat, dan ganti sandi.
 - **Pengurus** (masuk dengan nama pengguna + sandi), dengan dua peran:
   - **Administrator**: semua menu, termasuk data santri, kelas, pengaturan, syahriah, akun pengurus, dan menerbitkan raport.
   - **Ustadz/ustadzah**: mengisi absensi, nilai, hafalan, dan isian raport (kepribadian, catatan wali kelas).
@@ -14,7 +14,7 @@ Ada dua jenis akun:
 | Menu | Isi |
 |---|---|
 | Dasbor | Santri aktif (putra/putri), absensi hari ini per kelas, grafik kehadiran, kemajuan pengisian nilai, raport terbit, syahriah bulan ini, aktivitas terbaru, tanggal Hijriah |
-| Data santri | Tambah/ubah santri dan santriwati, NIS otomatis, akun wali dibuat otomatis, kirim sandi lewat WhatsApp, kartu akun wali per kelas untuk dicetak, pindah kelas/ubah status massal |
+| Data santri | Tambah/ubah santri dan santriwati, foto santri, alamat dengan kecamatan yang mengisi kabupaten/kota dan provinsi otomatis, NIS otomatis, akun wali dibuat otomatis, kirim sandi lewat WhatsApp, kartu akun wali per kelas, pindah kelas/ubah status massal, pemeriksaan pendaftaran wali, kartu santri digital |
 | Kelas & pelajaran | Kelas putra/putri per jenjang (Ula, Wustho, Ulya), wali kelas, mata pelajaran dengan nama Arab, kitab, KKM, pengajar, dan jadwal pekanan |
 | Absensi | Hadir/Izin/Sakit/Alpa per pertemuan, rekap bulanan per kelas |
 | Nilai | Nilai harian, UTS, UAS dengan bobot yang bisa diatur; nilai akhir, predikat (Mumtaz, Jayyid jiddan, …) dan terbilang dihitung otomatis |
@@ -22,7 +22,8 @@ Ada dua jenis akun:
 | Hafalan | Setoran Al-Qur'an, nadzom, do'a & hadits dengan predikat lancar/cukup/ulang |
 | Syahriah | Tabel 12 bulan per kelas, catat beberapa bulan sekaligus, pengingat tunggakan lewat WhatsApp |
 | Pengumuman | Untuk semua wali, wali santri putra, wali santriwati, atau satu kelas |
-| Pengaturan | Identitas madrasah (kop raport), tahun ajaran & semester, bobot nilai, iuran syahriah, akun pengurus, riwayat aktivitas |
+| Pesan otomatis | Laporan harian santri untuk setiap guru (bawaan pukul 18:00 WIB) dan pengingat syahriah setiap 3 hari sampai lunas, lewat WhatsApp |
+| Pengaturan | Identitas madrasah (kop raport), tahun ajaran & semester, bobot nilai, iuran syahriah, tata tertib di balik kartu santri, akun pengurus, riwayat aktivitas |
 
 ### Raport online
 
@@ -30,6 +31,36 @@ Ada dua jenis akun:
 - Saat **terbit**, isi raport dibekukan dan diberi **kode verifikasi + QR**. Nilai santri itu terkunci; untuk memperbaikinya, tarik raport, ubah, lalu terbitkan lagi.
 - Siapa pun bisa memeriksa keaslian di `/verifikasi/KODE`. Halaman itu hanya menampilkan ringkasan dengan nama yang disamarkan, bukan rincian nilai.
 - Lembar raport dirancang muat satu halaman A4. Wali menekan **Unduh PDF**, lalu memilih *Simpan sebagai PDF*.
+
+### Foto, pendaftaran wali, dan kartu santri
+
+- **Foto santri** diambil dari kamera ponsel (langsung selfie) atau galeri, lalu digeser/diperbesar agar wajah pas di bingkai 3×4.
+  Foto dikompres di ponsel (sekitar 60–150 KB), disimpan di basis data, dan hanya bisa dilihat pengurus dan wali santri itu sendiri.
+- **Daftar akun wali** (`/daftar`): wali mengisi NIS, nama, nomor WhatsApp aktif, alamat, dan sandi pilihannya.
+  Bila nomor WhatsApp **sama** dengan yang tercatat di madrasah, akun langsung aktif. Bila **berbeda atau belum tercatat**,
+  pendaftaran menunggu di *Data santri* sampai administrator menghubungi nomor itu lalu menyetujui atau menolaknya.
+- **Alamat otomatis**: ketik nama kecamatan (mis. "bangil"), pilih dari daftar, maka kabupaten/kota dan provinsi terisi sendiri.
+  Data 7.285 kecamatan seluruh Indonesia ada di dalam aplikasi (lihat `src/data/WILAYAH.md`), tanpa layanan luar.
+- **Kartu santri digital** (ukuran kartu ATM, 54 × 85,6 mm): depan berisi foto, nama, NIS, kelas, data lahir, wali, alamat, dan QR;
+  belakang berisi tata tertib. Ketuk kartu untuk membaliknya, atau cetak depan-belakang lalu laminasi. QR membuka `/kartu/KODE`
+  yang hanya menampilkan nama, NIS, kelas, dan status aktif (tanpa foto dan alamat).
+- **Tata tertib** di balik kartu masih **draf** dan bisa diganti di *Pengaturan › Kartu santri*, dengan pratinjau langsung.
+
+### Pesan WhatsApp otomatis
+
+- **Laporan harian guru** (bawaan 18:00 WIB): setiap guru yang punya nomor HP menerima rekap kelas yang diajarnya
+  (sebagai wali kelas atau pengajar): hadir, izin, sakit, alpa beserta namanya, dan setoran hafalan. Administrator menerima semua kelas,
+  ditambah syahriah yang masuk hari itu dan pendaftaran wali yang menunggu. Hari tanpa pelajaran tidak dikirimi laporan.
+- **Pengingat syahriah**: wali yang syahriahnya belum tercatat (lewat tanggal jatuh tempo, bawaan tanggal 10) diingatkan
+  **setiap 3 hari** (bawaan 09:00 WIB) sampai lunas. Jeda hari, jam, dan tanggal jatuh tempo bisa diatur.
+- **Cara kirim**:
+  - *Manual* (bawaan): pesan dibuat otomatis sesuai jadwal dan menunggu di *Pesan otomatis › Kotak keluar*. Admin mengetuk
+    **Kirim via WhatsApp** dan pesan terbuka di WhatsApp siap dikirim. Tidak perlu biaya atau akun tambahan.
+  - *Otomatis* lewat [Fonnte](https://fonnte.com): daftar, hubungkan nomor WhatsApp madrasah dengan memindai QR di dasbor Fonnte,
+    lalu salin token perangkat ke *Pesan otomatis › Pengaturan*. Pesan terkirim sendiri tanpa disentuh. Gunakan nomor khusus madrasah,
+    bukan nomor pribadi.
+- Jadwal hanya berjalan bila server menyala terus (VPS). Pratinjau tanpa server tidak bisa mengirim pesan terjadwal; tombol
+  *Buat laporan hari ini* dan *Proses pengingat sekarang* tetap bisa dicoba di sana.
 
 ## Menjalankan
 
@@ -128,6 +159,9 @@ Tanpa HTTPS, sandi wali dan pengurus terkirim tanpa enkripsi. Aplikasi tetap bis
 | `DATA_DIR` | `./data` | Folder basis data SQLite; cadangkan folder ini |
 | `TRUST_PROXY` | kosong | Isi `1` bila berada di belakang Nginx/Caddy, agar alamat IP dan HTTPS terbaca benar |
 | `COOKIE_SECURE` | otomatis | Bawaan mengikuti protokol (HTTPS → cookie Secure). Isi `true`/`false` untuk memaksa |
+| `PENJADWAL` | menyala | Isi `0` untuk mematikan laporan harian dan pengingat syahriah terjadwal (mis. di server cadangan) |
+| `WA_JEDA_MS` | `4000` | Jeda antarpesan WhatsApp lewat gateway, agar nomor madrasah tidak dianggap spam |
+| `WA_FONNTE_URL` | `https://api.fonnte.com/send` | Alamat API Fonnte (hanya diubah untuk pengujian) |
 
 ## Keamanan
 
@@ -135,6 +169,9 @@ Tanpa HTTPS, sandi wali dan pengurus terkirim tanpa enkripsi. Aplikasi tetap bis
 - Percobaan masuk dibatasi 8 kali per 10 menit untuk setiap NIS/nama pengguna dan alamat IP.
 - Setiap perubahan data wajib membawa header khusus aplikasi (perlindungan CSRF), dan pembatasan peran diperiksa di server.
 - Wali santri hanya bisa membaca data ananda sendiri, dan raport hanya setelah diterbitkan.
+- Foto santri hanya disajikan kepada pengurus dan wali santri itu sendiri; jenis berkas diperiksa dari isinya, bukan dari namanya.
+- Pendaftaran wali dibatasi per alamat IP. Nomor yang tidak cocok dengan data madrasah tidak pernah langsung aktif.
+- Token gateway WhatsApp disimpan di server dan tidak pernah dikirim ke peramban.
 
 ## Struktur
 
@@ -150,5 +187,5 @@ src/             antarmuka React
   halaman/raport lembar raport A4 dan kode QR
   styles/        token desain kaca, komponen, tata letak, lembar raport
 tests/e2e.mjs    uji peramban ujung ke ujung
-tests/menyeluruh.mjs  uji menyeluruh: 101 pemeriksaan tombol, tata letak, dan aksesibilitas
+tests/menyeluruh.mjs  uji menyeluruh: 114 pemeriksaan tombol, tata letak, dan aksesibilitas
 ```

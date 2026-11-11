@@ -287,14 +287,15 @@ export async function detakJadwal(db: DB, kini = new Date()) {
   const hasil: Record<string, unknown> = {};
   if (p.laporan_aktif === '1' && jam >= p.laporan_jam && p.jadwal_laporan_terakhir !== tanggal) {
     simpanPengaturan(db, { jadwal_laporan_terakhir: tanggal });
-    hasil.laporan = await jalankanLaporan(db, tanggal);
-    catatLog(db, 'Sistem', 'Mengirim laporan harian guru', JSON.stringify(hasil.laporan));
+    const l = await jalankanLaporan(db, tanggal);
+    hasil.laporan = l;
+    if (l.dibuat) catatLog(db, 'Sistem', 'Membuat laporan harian guru', `${l.dibuat} guru${l.terkirim ? `, ${l.terkirim} terkirim otomatis` : ', menunggu dikirim admin'}`);
   }
   if (p.tagihan_aktif === '1' && jam >= p.tagihan_jam && p.jadwal_tagihan_terakhir !== tanggal) {
     simpanPengaturan(db, { jadwal_tagihan_terakhir: tanggal });
     const t = await jalankanTagihan(db, tanggal);
     hasil.tagihan = t;
-    if (t.dibuat) catatLog(db, 'Sistem', 'Mengirim pengingat syahriah', `${t.dibuat} wali santri`);
+    if (t.dibuat) catatLog(db, 'Sistem', 'Membuat pengingat syahriah', `${t.dibuat} wali santri${t.terkirim ? `, ${t.terkirim} terkirim otomatis` : ', menunggu dikirim admin'}`);
   }
   return hasil;
 }

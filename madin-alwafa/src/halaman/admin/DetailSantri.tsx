@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowLeft, BookOpenCheck, KeyRound, MessageCircle, Pencil, ScrollText, Trash2 } from 'lucide-react';
+import { ArrowLeft, BookOpenCheck, Camera, IdCard, KeyRound, MessageCircle, Pencil, ScrollText, Trash2 } from 'lucide-react';
 import { kirim } from '../../lib/api';
 import { usePakai } from '../../lib/pakai';
 import { useSesi } from '../../lib/sesi';
 import { useToast } from '../../lib/toast';
-import type { Santri } from '../../lib/tipe';
-import { Avatar, GalatMuat, Lencana, LencanaJk, Memuat, TautanTombol, Tombol, useJudul, useKonfirmasi } from '../../ui/dasar';
+import type { DataKartu, Santri } from '../../lib/tipe';
+import { urlFoto } from '../../lib/foto';
+import { Avatar, GalatMuat, Lencana, LencanaJk, Memuat, Modal, TautanTombol, Tombol, useJudul, useKonfirmasi } from '../../ui/dasar';
+import { AmbilFoto } from '../../ui/AmbilFoto';
+import { KartuSantri } from '../../ui/KartuSantri';
 import { FormSantri, TampilAkun, type AkunBaru } from './santri-form';
 import { PREDIKAT_HAFALAN, STATUS_SANTRI, type PredikatHafalan } from '../../../shared/konstanta';
-import { namaBulanPendek, namaSemester, rupiah, tanggalPanjang, tanggalPendek, tautanWa, waktu } from '../../../shared/format';
+import { alamatLengkap, namaBulanPendek, namaSemester, rupiah, tanggalPanjang, tanggalPendek, tautanWa, waktu } from '../../../shared/format';
 
 interface Detail {
   santri: Santri & { waliKelas: string | null };
@@ -30,6 +33,8 @@ export default function DetailSantri() {
   const { data, galat, muatUlang } = usePakai<Detail>(`/api/admin/santri/${id}`);
   const [ubah, setUbah] = useState(false);
   const [akun, setAkun] = useState<AkunBaru | null>(null);
+  const [foto, setFoto] = useState(false);
+  const [kartu, setKartu] = useState(false);
   useJudul(data?.santri.nama ?? 'Santri');
 
   if (galat) return <GalatMuat galat={galat} ulang={muatUlang} />;
@@ -74,12 +79,18 @@ export default function DetailSantri() {
       </Link>
 
       <section className="kaca kaca--emas kaca--pad kaca--kilau profil-santri">
-        <Avatar nama={s.nama} jk={s.jk} ukuran={84} />
+        <button type="button" className="avatar-ubah" onClick={() => setFoto(true)} aria-label={s.fotoVersi ? `Ganti foto ${s.nama}` : `Tambah foto ${s.nama}`}>
+          <Avatar nama={s.nama} jk={s.jk} ukuran={84} foto={urlFoto(s.id, s.fotoVersi)} />
+          <span className="avatar-ubah__kamera" aria-hidden>
+            <Camera />
+          </span>
+        </button>
         <div className="tumpuk tumpuk--rapat isi-penuh">
           <div className="baris baris--bungkus" style={{ gap: 8 }}>
             <LencanaJk jk={s.jk} />
             <Lencana jenis={s.status === 'aktif' ? 'emas' : undefined}>{STATUS_SANTRI[s.status]}</Lencana>
             {s.masukTerakhir ? <Lencana jenis="ok">Wali aktif · {waktu(s.masukTerakhir)}</Lencana> : <Lencana>Wali belum masuk</Lencana>}
+            {s.daftarMandiri && <Lencana jenis="info">Daftar dari ponsel</Lencana>}
           </div>
           <h1 className="judul-hias" style={{ fontSize: 'clamp(30px, 4vw, 40px)' }}>
             {s.nama}
@@ -89,8 +100,12 @@ export default function DetailSantri() {
             {s.waliKelas && <> · Wali kelas {s.waliKelas}</>}
           </div>
         </div>
-        {admin && (
-          <div className="baris baris--bungkus profil-santri__aksi">
+        <div className="baris baris--bungkus profil-santri__aksi">
+          <Tombol ikon={<IdCard />} onClick={() => setKartu(true)}>
+            Kartu santri
+          </Tombol>
+          {admin && (
+            <>
             <Tombol ikon={<Pencil />} onClick={() => setUbah(true)}>
               Ubah data
             </Tombol>
@@ -98,8 +113,9 @@ export default function DetailSantri() {
               Sandi baru wali
             </Tombol>
             <Tombol varian="hantu" ikon={<Trash2 />} onClick={hapus} aria-label="Hapus santri" title="Hapus santri" />
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </section>
 
       <div className="grid-2">
@@ -111,7 +127,7 @@ export default function DetailSantri() {
             <dt>Tempat, tanggal lahir</dt>
             <dd>{[s.tempatLahir, s.tanggalLahir && tanggalPanjang(s.tanggalLahir)].filter(Boolean).join(', ') || '–'}</dd>
             <dt>Alamat</dt>
-            <dd>{s.alamat ?? '–'}</dd>
+            <dd>{alamatLengkap(s) || '–'}</dd>
             <dt>Tanggal masuk</dt>
             <dd>{tanggalPanjang(s.tanggalMasuk)}</dd>
             <dt>Ayah</dt>
@@ -209,6 +225,7 @@ export default function DetailSantri() {
               Catat setoran
             </TautanTombol>
           </div>
+          {!data.hafalan.length && <p className="redup kecil">Belum ada setoran.</p>}
           <ol className="linimasa">
             {data.hafalan.map((h) => (
               <li key={h.id}>
@@ -224,7 +241,6 @@ export default function DetailSantri() {
                 </div>
               </li>
             ))}
-            {!data.hafalan.length && <p className="redup kecil">Belum ada setoran.</p>}
           </ol>
         </section>
       </div>
@@ -240,6 +256,31 @@ export default function DetailSantri() {
         />
       )}
       {akun && <TampilAkun akun={akun} tutup={() => setAkun(null)} />}
+      {foto && (
+        <AmbilFoto
+          nama={s.nama}
+          adaFoto={!!s.fotoVersi}
+          tutup={() => setFoto(false)}
+          simpan={async (data) => {
+            await kirim('PUT', `/api/admin/santri/${s.id}/foto`, { data });
+            muatUlang();
+          }}
+          hapus={async () => {
+            await kirim('DELETE', `/api/admin/santri/${s.id}/foto`);
+            muatUlang();
+          }}
+        />
+      )}
+      {kartu && <ModalKartu url={`/api/admin/santri/${s.id}/kartu`} tutup={() => setKartu(false)} />}
     </>
+  );
+}
+
+function ModalKartu({ url, tutup }: { url: string; tutup: () => void }) {
+  const { data, galat, muatUlang } = usePakai<DataKartu>(url);
+  return (
+    <Modal judul="Kartu santri" sub="Ketuk kartu untuk melihat tata tertib di sisi belakang." tutup={tutup}>
+      {galat ? <GalatMuat galat={galat} ulang={muatUlang} /> : !data ? <Memuat baris={3} tinggi={120} /> : <KartuSantri d={data} />}
+    </Modal>
   );
 }

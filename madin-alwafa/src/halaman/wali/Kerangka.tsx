@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
-import { BookOpenCheck, CalendarCheck2, CalendarClock, ChevronDown, Grid2x2, Home, KeyRound, LogOut, Megaphone, ScrollText, Wallet } from 'lucide-react';
+import { BookOpenCheck, CalendarCheck2, CalendarClock, ChevronDown, Grid2x2, Home, IdCard, KeyRound, LogOut, Megaphone, ScrollText, Wallet } from 'lucide-react';
+import { urlFoto } from '../../lib/foto';
 import { useSesi } from '../../lib/sesi';
 import { Avatar, Modal } from '../../ui/dasar';
 import { Lambang } from '../../ui/Lambang';
@@ -14,6 +15,7 @@ const NAV = [
   { ke: '/wali/syahriah', label: 'Syahriah', ikon: Wallet },
   { ke: '/wali/jadwal', label: 'Jadwal', ikon: CalendarClock },
   { ke: '/wali/pengumuman', label: 'Pengumuman', ikon: Megaphone },
+  { ke: '/wali/kartu', label: 'Kartu santri', ikon: IdCard },
 ];
 
 export default function KerangkaWali() {
@@ -43,7 +45,7 @@ export default function KerangkaWali() {
     await keluar();
     navigasi('/', { replace: true });
   };
-  const diLainnya = ['/wali/syahriah', '/wali/jadwal', '/wali/pengumuman', '/wali/akun'].some((p) => lokasi.pathname.startsWith(p));
+  const diLainnya = ['/wali/syahriah', '/wali/jadwal', '/wali/pengumuman', '/wali/kartu', '/wali/akun'].some((p) => lokasi.pathname.startsWith(p));
 
   return (
     <div className="kerangka-wali">
@@ -67,7 +69,7 @@ export default function KerangkaWali() {
           </nav>
           <div className="akun-wali" ref={ref}>
             <button onClick={() => setMenu(!menu)} aria-expanded={menu} aria-haspopup="menu" aria-label={`Menu akun wali ${wali.nama}`}>
-              <Avatar nama={wali.nama} jk={wali.jk} ukuran={34} />
+              <Avatar nama={wali.nama} jk={wali.jk} ukuran={34} foto={urlFoto(wali.santriId, wali.fotoVersi)} />
               <span className="akun-wali__nama potong" style={{ maxWidth: 140, fontWeight: 600, fontSize: 14 }}>
                 {wali.nama.split(' ')[0]}
               </span>
@@ -81,6 +83,9 @@ export default function KerangkaWali() {
                   <div className="kecil redup-2 angka">NIS {wali.nis}</div>
                 </div>
                 <hr />
+                <button role="menuitem" onClick={() => navigasi('/wali/kartu')}>
+                  <IdCard /> Kartu santri
+                </button>
                 <button role="menuitem" onClick={() => navigasi('/wali/akun')}>
                   <KeyRound /> Akun & sandi
                 </button>

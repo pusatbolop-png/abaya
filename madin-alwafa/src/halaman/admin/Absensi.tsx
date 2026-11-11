@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarCheck2, CalendarRange, CheckCheck, Save } from 'lucide-react';
+import { urlFoto } from '../../lib/foto';
 import { kirim } from '../../lib/api';
 import { usePakai } from '../../lib/pakai';
 import { useSaringan } from '../../lib/saringan';
@@ -13,7 +14,7 @@ interface DataAbsen {
   kelas: { id: number; nama: string };
   tanggal: string;
   tersimpan: boolean;
-  daftar: { santriId: number; nis: string; nama: string; jk: string; status: StatusHadir | null; keterangan: string | null }[];
+  daftar: { santriId: number; nis: string; nama: string; jk: string; fotoVersi: string | null; status: StatusHadir | null; keterangan: string | null }[];
 }
 interface Rekap {
   kelas: { id: number; nama: string };
@@ -161,7 +162,7 @@ function IsiAbsensi({ kelasId, tanggal }: { kelasId: string; tanggal: string }) 
               <span className="redup-2 angka kecil" style={{ width: 22 }}>
                 {i + 1}
               </span>
-              <Avatar nama={d.nama} jk={d.jk} ukuran={36} />
+              <Avatar nama={d.nama} jk={d.jk} ukuran={36} foto={urlFoto(d.santriId, d.fotoVersi)} />
               <div className="isi-penuh" style={{ display: 'grid' }}>
                 <b className="potong">{d.nama}</b>
                 <span className="redup-2 kecil angka">{d.nis}</span>

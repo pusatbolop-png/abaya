@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowLeft, ChevronLeft, ChevronRight, Printer, Save, Send, Undo2 } from 'lucide-react';
+import { urlFoto } from '../../lib/foto';
 import { kirim } from '../../lib/api';
 import { usePakai } from '../../lib/pakai';
 import { useSesi } from '../../lib/sesi';
@@ -26,7 +27,7 @@ export default function RaportSantri() {
   const toast = useToast();
   const tanya = useKonfirmasi();
   const navigasi = useNavigate();
-  const { data, galat, muatUlang } = usePakai<DataRaport>(`/api/admin/raport/${santriId}/${periodeId}`);
+  const { data, galat, muatUlang } = usePakai<DataRaport & { fotoVersi: string | null }>(`/api/admin/raport/${santriId}/${periodeId}`);
   const { data: kelasRaport } = usePakai<DaftarRaport>(data?.kelas ? `/api/admin/raport?kelas=${data.kelas.id}&periode=${periodeId}` : null);
   useJudul(data ? `Raport ${data.santri.nama}` : 'Raport');
 
@@ -133,7 +134,7 @@ export default function RaportSantri() {
       </div>
 
       <section className="kaca kaca--pad kepala-raport">
-        <Avatar nama={data.santri.nama} jk={data.santri.jk} ukuran={56} />
+        <Avatar nama={data.santri.nama} jk={data.santri.jk} ukuran={56} foto={urlFoto(data.santri.id, data.fotoVersi)} />
         <div className="isi-penuh tumpuk tumpuk--rapat" style={{ gap: 4 }}>
           <div className="baris baris--bungkus" style={{ gap: 8 }}>
             {terbit ? <Lencana jenis="ok">Terbit {waktu(data.diterbitkan)}</Lencana> : data.kekurangan.length ? <Lencana jenis="waspada">Draf · belum lengkap</Lencana> : <Lencana jenis="emas">Draf · siap terbit</Lencana>}

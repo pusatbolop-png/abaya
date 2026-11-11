@@ -7,6 +7,7 @@ import {
   LogOut,
   Megaphone,
   Menu,
+  MessageCircle,
   NotebookPen,
   School,
   ScrollText,
@@ -14,6 +15,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
+import { api } from '../../lib/api';
 import { useSesi } from '../../lib/sesi';
 import { Avatar, Tombol } from '../../ui/dasar';
 import { Lambang } from '../../ui/Lambang';
@@ -43,6 +45,7 @@ const MENU = [
     isi: [
       { ke: '/admin/syahriah', label: 'Syahriah', ikon: Wallet, admin: true },
       { ke: '/admin/pengumuman', label: 'Pengumuman', ikon: Megaphone },
+      { ke: '/admin/pesan', label: 'Pesan otomatis', ikon: MessageCircle, admin: true },
       { ke: '/admin/pengaturan', label: 'Pengaturan', ikon: Settings },
     ],
   },
@@ -53,7 +56,15 @@ export default function KerangkaAdmin() {
   const [buka, setBuka] = useState(false);
   const lokasi = useLocation();
   const navigasi = useNavigate();
+  const [lencana, setLencana] = useState<Record<string, number>>({});
   useEffect(() => setBuka(false), [lokasi.pathname]);
+  // Angka di menu: pendaftaran wali yang menunggu dan pesan WhatsApp yang belum terkirim (khusus admin).
+  useEffect(() => {
+    if (pengurus?.peran !== 'admin') return;
+    api<{ pendaftaran: number; pesanAntre: number }>('GET', '/api/admin/lencana')
+      .then((l) => setLencana({ '/admin/santri': l.pendaftaran, '/admin/pesan': l.pesanAntre }))
+      .catch(() => undefined);
+  }, [lokasi.pathname, pengurus?.peran]);
   if (!pengurus) return null;
 
   const merek = (
@@ -83,6 +94,11 @@ export default function KerangkaAdmin() {
                     <NavLink key={m.ke} to={m.ke} end={'ujung' in m && m.ujung} className="sisi__tautan">
                       <m.ikon />
                       {m.label}
+                      {!!lencana[m.ke] && (
+                        <span className="sisi__lencana" aria-label={`${lencana[m.ke]} perlu tindakan`}>
+                          {lencana[m.ke]}
+                        </span>
+                      )}
                     </NavLink>
                   ))}
               </div>

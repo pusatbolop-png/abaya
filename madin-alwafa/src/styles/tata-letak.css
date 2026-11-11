@@ -601,3 +601,144 @@
     font-size: 11px;
   }
 }
+
+/* ——— Halaman daftar akun wali ——— */
+.halaman-daftar {
+  min-height: calc(100dvh - var(--pita));
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px var(--tepi) 48px;
+  display: grid;
+  align-content: start;
+  gap: 22px;
+}
+.halaman-daftar__kepala {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.halaman-daftar__logo {
+  width: min(210px, 52%);
+  height: auto;
+  filter: drop-shadow(0 12px 26px rgba(0, 40, 36, 0.45));
+}
+.halaman-daftar__kartu {
+  padding: clamp(22px, 4vw, 36px);
+  border-radius: var(--r-xl);
+  display: grid;
+  gap: 22px;
+}
+.halaman-daftar__judul {
+  font-size: clamp(28px, 5vw, 38px);
+}
+.halaman-daftar__bagian {
+  margin: 0;
+  padding: 18px 0 0;
+  border: 0;
+  border-top: 1px solid var(--garis);
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.halaman-daftar__bagian legend {
+  padding: 0 10px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--emas-300);
+}
+.halaman-daftar__bagian legend span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: #2a1d05;
+  background: linear-gradient(140deg, #fbe9b9, #c9a04c);
+}
+.halaman-daftar__hasil {
+  margin-top: 8vh;
+  text-align: center;
+  justify-items: center;
+}
+.halaman-daftar__hasil p {
+  max-width: 480px;
+  margin: 0;
+}
+.halaman-daftar__ikon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--emas-300);
+  background: rgba(239, 220, 179, 0.12);
+  border: 1px solid rgba(239, 220, 179, 0.35);
+}
+.halaman-daftar__ikon--ok {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+.halaman-daftar__ikon svg {
+  width: 30px;
+  height: 30px;
+}
+@media (max-width: 520px) {
+  .halaman-daftar__kepala {
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+  .halaman-daftar__kepala .tautan-kembali {
+    align-self: flex-start;
+  }
+}
+.masuk__daftar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px dashed rgba(239, 220, 179, 0.4);
+  color: var(--teks-2);
+  font-size: 13.5px;
+  text-decoration: none;
+  transition:
+    background 160ms,
+    border-color 160ms;
+}
+.masuk__daftar:hover {
+  background: rgba(239, 220, 179, 0.07);
+  border-color: rgba(239, 220, 179, 0.6);
+}
+.masuk__daftar b {
+  color: var(--emas-300);
+  font-weight: 650;
+}
+.masuk__daftar svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--emas-300);
+}
+.sisi__lencana {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #2a1d05;
+  background: linear-gradient(140deg, #fbe9b9, #c9a04c);
+}

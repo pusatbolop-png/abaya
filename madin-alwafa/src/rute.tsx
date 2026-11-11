@@ -36,6 +36,10 @@ const SyahriahWali = lazy(() => import('./halaman/wali/Syahriah'));
 const JadwalWali = lazy(() => import('./halaman/wali/Jadwal'));
 const PengumumanWali = lazy(() => import('./halaman/wali/Pengumuman'));
 const AkunWali = lazy(() => import('./halaman/wali/Akun'));
+const KartuWali = lazy(() => import('./halaman/wali/Kartu'));
+const Daftar = lazy(() => import('./halaman/umum/Daftar'));
+const PeriksaKartu = lazy(() => import('./halaman/umum/PeriksaKartu'));
+const PesanOtomatis = lazy(() => import('./halaman/admin/Pesan'));
 
 const muat = (
   <div className="konten" style={{ maxWidth: 900 }}>
@@ -87,6 +91,8 @@ const router = (PRATINJAU ? createMemoryRouter : createBrowserRouter)([
       { path: '/', element: <Beranda /> },
       { path: '/pasang', element: tunda(<Pasang />) },
       { path: '/verifikasi/:kode?', element: tunda(<Verifikasi />) },
+      { path: '/daftar', element: tunda(<Daftar />) },
+      { path: '/kartu/:kode', element: tunda(<PeriksaKartu />) },
       { path: '/admin/raport/:kelasId/:periodeId/cetak', element: tunda(<CetakRaport />) },
       {
         path: '/admin',
@@ -103,6 +109,7 @@ const router = (PRATINJAU ? createMemoryRouter : createBrowserRouter)([
           { path: 'hafalan', element: tunda(<Hafalan />) },
           { path: 'syahriah', element: <KhususAdmin>{tunda(<Syahriah />)}</KhususAdmin> },
           { path: 'pengumuman', element: tunda(<Pengumuman />) },
+          { path: 'pesan', element: <KhususAdmin>{tunda(<PesanOtomatis />)}</KhususAdmin> },
           { path: 'pengaturan', element: tunda(<Pengaturan />) },
           { path: 'akun', element: tunda(<AkunSaya />) },
         ],
@@ -120,6 +127,7 @@ const router = (PRATINJAU ? createMemoryRouter : createBrowserRouter)([
           { path: 'jadwal', element: tunda(<JadwalWali />) },
           { path: 'pengumuman', element: tunda(<PengumumanWali />) },
           { path: 'akun', element: tunda(<AkunWali />) },
+          { path: 'kartu', element: tunda(<KartuWali />) },
         ],
       },
       { path: '*', element: <TidakDitemukan /> },

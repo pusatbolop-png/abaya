@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { BookOpenCheck, Plus, Save, Trash2 } from 'lucide-react';
+import { urlFoto } from '../../lib/foto';
 import { kirim } from '../../lib/api';
 import { useKirim, usePakai } from '../../lib/pakai';
 import { useSaringan } from '../../lib/saringan';
@@ -121,7 +122,7 @@ export default function Hafalan() {
                     </td>
                     <td data-sel="utama">
                       <Link to={`/admin/santri/${h.santriId}`} className="baris" style={{ color: 'inherit', textDecoration: 'none' }}>
-                        <Avatar nama={h.nama!} jk={h.jk} ukuran={32} />
+                        <Avatar nama={h.nama!} jk={h.jk} ukuran={32} foto={urlFoto(h.santriId, h.fotoVersi)} />
                         <span style={{ display: 'grid', minWidth: 0 }}>
                           <b className="potong">{h.nama}</b>
                           <span className="redup-2 kecil">{h.kelas}</span>

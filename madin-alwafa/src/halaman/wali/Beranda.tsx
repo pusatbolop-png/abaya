@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowRight, BookOpenCheck, CalendarCheck2, CalendarClock, KeyRound, Megaphone, ScrollText, Star, Wallet } from 'lucide-react';
+import { ArrowRight, BookOpenCheck, CalendarCheck2, CalendarClock, Camera, IdCard, KeyRound, Megaphone, ScrollText, Star, Wallet } from 'lucide-react';
+import { kirim } from '../../lib/api';
+import { urlFoto } from '../../lib/foto';
 import { usePakai } from '../../lib/pakai';
 import { useSesi } from '../../lib/sesi';
 import type { Pengumuman, Santri } from '../../lib/tipe';
-import { Avatar, GalatMuat, Lencana, Memuat, Pesan, TautanTombol, useJudul } from '../../ui/dasar';
+import { Avatar, GalatMuat, Lencana, Memuat, Pesan, TautanTombol, Tombol, useJudul } from '../../ui/dasar';
+import { AmbilFoto } from '../../ui/AmbilFoto';
 import { CincinHadir } from './CincinHadir';
 import { warnaPredikat } from '../admin/Hafalan';
 import { PREDIKAT_HAFALAN, STATUS_HADIR, predikat, type PredikatHafalan, type StatusHadir } from '../../../shared/konstanta';
@@ -24,8 +28,9 @@ interface Beranda {
 
 export default function BerandaWali() {
   useJudul('Beranda');
-  const { wali } = useSesi();
+  const { wali, muatUlang: segarkanSesi } = useSesi();
   const { data: d, galat, muatUlang } = usePakai<Beranda>('/api/wali/beranda');
+  const [foto, setFoto] = useState(false);
   if (galat) return <GalatMuat galat={galat} ulang={muatUlang} />;
   if (!d)
     return (
@@ -54,7 +59,12 @@ export default function BerandaWali() {
           </div>
         </div>
         <div className="sambutan__sisi">
-          <Avatar nama={s.nama} jk={s.jk} ukuran={92} />
+          <button type="button" className="avatar-ubah" onClick={() => setFoto(true)} aria-label={s.fotoVersi ? `Ganti foto ${s.nama}` : `Tambah foto ${s.nama}`}>
+            <Avatar nama={s.nama} jk={s.jk} ukuran={92} foto={urlFoto(s.id, s.fotoVersi)} />
+            <span className="avatar-ubah__kamera" aria-hidden>
+              <Camera />
+            </span>
+          </button>
           {d.absenHariIni ? (
             <Lencana jenis={d.absenHariIni.status === 'H' ? 'ok' : d.absenHariIni.status === 'A' ? 'bahaya' : 'info'} titik>
               Hari ini: {STATUS_HADIR[d.absenHariIni.status]}
@@ -64,6 +74,21 @@ export default function BerandaWali() {
           )}
         </div>
       </section>
+
+      {!s.fotoVersi && (
+        <div className="kaca kaca--rapat ajakan-foto">
+          <span className="stat__ikon">
+            <Camera />
+          </span>
+          <div className="isi-penuh">
+            <b>Lengkapi foto ananda</b>
+            <div className="redup kecil">Foto dipakai di kartu santri digital dan memudahkan ustadz mengenali ananda.</div>
+          </div>
+          <Tombol varian="utama" ukuran="kecil" ikon={<Camera />} onClick={() => setFoto(true)}>
+            Ambil foto
+          </Tombol>
+        </div>
+      )}
 
       {wali && !wali.sandiDiganti && (
         <Pesan jenis="waspada" judul="Ganti sandi awal Anda">
@@ -235,6 +260,19 @@ export default function BerandaWali() {
           )}
         </section>
 
+        <Link to="/wali/kartu" className="kaca kaca--pad pintas-kartu">
+          <span className="pintas-kartu__mini" aria-hidden>
+            <span />
+          </span>
+          <span className="tumpuk tumpuk--rapat isi-penuh" style={{ gap: 4 }}>
+            <b className="baris" style={{ gap: 8 }}>
+              <IdCard className="teks-ikon" /> Kartu santri digital
+            </b>
+            <span className="redup kecil">Identitas ananda dan tata tertib madrasah. Bisa ditunjukkan dari ponsel atau dicetak.</span>
+          </span>
+          <ArrowRight className="redup-2" style={{ width: 18, flex: 'none' }} />
+        </Link>
+
         <section className="kaca kaca--pad">
           <div className="kartu-judul">
             <h2 className="baris" style={{ gap: 8 }}>
@@ -259,6 +297,24 @@ export default function BerandaWali() {
           </div>
         </section>
       </div>
+
+      {foto && (
+        <AmbilFoto
+          nama={s.nama}
+          adaFoto={!!s.fotoVersi}
+          tutup={() => setFoto(false)}
+          simpan={async (data) => {
+            await kirim('PUT', '/api/wali/foto', { data });
+            muatUlang();
+            segarkanSesi();
+          }}
+          hapus={async () => {
+            await kirim('DELETE', '/api/wali/foto');
+            muatUlang();
+            segarkanSesi();
+          }}
+        />
+      )}
 
       {wali?.sandiDiganti === false ? null : (
         <div className="baris" style={{ justifyContent: 'center' }}>

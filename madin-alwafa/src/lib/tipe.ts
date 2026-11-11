@@ -25,11 +25,12 @@ export interface Wali {
   nis: string;
   jk: 'L' | 'P';
   sandiDiganti: boolean;
+  fotoVersi: string | null;
 }
 
 export interface Saya {
   lembaga: Lembaga;
-  demo: { username: string; sandi: string; nis: string; sandiWali: string } | null;
+  demo: { username: string; sandi: string; nis: string; sandiWali: string; daftarNis: string; daftarHp: string } | null;
   perluPasang: boolean;
   pengurus: Pengurus | null;
   wali: Wali | null;
@@ -68,6 +69,13 @@ export interface Santri {
   tempatLahir: string | null;
   tanggalLahir: string | null;
   alamat: string | null;
+  desa: string | null;
+  kecamatan: string | null;
+  kabupaten: string | null;
+  provinsi: string | null;
+  kodeWilayah: string | null;
+  fotoVersi: string | null;
+  daftarMandiri: string | null;
   namaAyah: string | null;
   namaIbu: string | null;
   namaWali: string | null;
@@ -127,6 +135,7 @@ export interface Hafalan {
   nama?: string;
   nis?: string;
   jk?: 'L' | 'P';
+  fotoVersi?: string | null;
   kelas?: string | null;
   tanggal: string;
   jenis: string;
@@ -145,4 +154,32 @@ export interface Pengumuman {
   terbit: string;
   penulis?: string | null;
   kelas?: string | null;
+}
+
+export interface BagianAturan {
+  judul: string | null;
+  butir: string[];
+}
+
+export interface DataKartu {
+  kode: string;
+  santri: {
+    id: number;
+    nis: string;
+    nama: string;
+    jk: 'L' | 'P';
+    tempatLahir: string | null;
+    tanggalLahir: string | null;
+    wali: string | null;
+    alamat: string | null;
+    kelas: string | null;
+    jenjang: string | null;
+    status: string;
+    tanggalMasuk: string | null;
+    fotoVersi: string | null;
+  };
+  lembaga: Lembaga;
+  aturan: BagianAturan[];
+  berlaku: string;
+  alamatAplikasi: string;
 }

@@ -5,6 +5,7 @@ import { useKirim, usePakai } from '../../lib/pakai';
 import { useToast } from '../../lib/toast';
 import type { Kelas, Santri } from '../../lib/tipe';
 import { Bidang, Modal, Pesan, Tombol } from '../../ui/dasar';
+import { ALAMAT_KOSONG, IsianAlamat } from '../../ui/IsianAlamat';
 import { Lambang } from '../../ui/Lambang';
 import { STATUS_SANTRI } from '../../../shared/konstanta';
 import { tautanWa } from '../../../shared/format';
@@ -23,7 +24,7 @@ const kosong = {
   jk: 'L' as 'L' | 'P',
   tempatLahir: '',
   tanggalLahir: '',
-  alamat: '',
+  ...ALAMAT_KOSONG,
   namaAyah: '',
   namaIbu: '',
   namaWali: '',
@@ -46,6 +47,11 @@ export function FormSantri({ santri, tutup, selesai }: { santri?: Santri; tutup:
           tempatLahir: santri.tempatLahir ?? '',
           tanggalLahir: santri.tanggalLahir ?? '',
           alamat: santri.alamat ?? '',
+          desa: santri.desa ?? '',
+          kecamatan: santri.kecamatan ?? '',
+          kabupaten: santri.kabupaten ?? '',
+          provinsi: santri.provinsi ?? '',
+          kodeWilayah: santri.kodeWilayah ?? '',
           namaAyah: santri.namaAyah ?? '',
           namaIbu: santri.namaIbu ?? '',
           namaWali: santri.namaWali ?? '',
@@ -114,9 +120,13 @@ export function FormSantri({ santri, tutup, selesai }: { santri?: Santri; tutup:
           <Bidang label="Tanggal lahir" galat={bidang.tanggalLahir}>
             <input className="masukan" type="date" value={f.tanggalLahir} onChange={ubah('tanggalLahir')} />
           </Bidang>
-          <Bidang label="Alamat" galat={bidang.alamat} className="bentang-2">
-            <input className="masukan" value={f.alamat} onChange={ubah('alamat')} />
-          </Bidang>
+          <div className="bentang-2">
+            <IsianAlamat
+              nilai={{ alamat: f.alamat, desa: f.desa, kecamatan: f.kecamatan, kabupaten: f.kabupaten, provinsi: f.provinsi, kodeWilayah: f.kodeWilayah }}
+              ubah={(a) => setF({ ...f, ...a })}
+              galat={bidang}
+            />
+          </div>
         </div>
         <div className="mikro redup-2" style={{ marginTop: 8 }}>
           Madrasah

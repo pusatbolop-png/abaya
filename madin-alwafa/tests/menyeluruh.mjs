@@ -19,7 +19,7 @@ const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'madin-menyeluruh-'));
 if (!fs.existsSync('dist/client/index.html')) throw new Error('Jalankan `npm run build` lebih dulu.');
 
 const server = spawn('npx', ['tsx', 'server/demo.ts'], {
-  env: { ...process.env, NODE_ENV: 'production', PORT: String(PORT), DATA_DIR: dataDir },
+  env: { ...process.env, NODE_ENV: 'production', PORT: String(PORT), DATA_DIR: dataDir, PENJADWAL: '0' },
   stdio: 'ignore',
   detached: true,
 });
@@ -120,7 +120,19 @@ try {
   }
   const demo = await (await fetch(`${ASAL}/api/auth/saya`)).json();
   const NIS = demo.demo.nis;
+  const NIS_DAFTAR = demo.demo.daftarNis;
   browser = await chromium.launch().catch(() => chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? '/opt/pw-browsers/chromium' }));
+  // Foto potret sederhana untuk menguji unggah foto santri.
+  const FOTO = path.join(dataDir, 'foto-uji.jpg');
+  {
+    const pf = await browser.newPage({ viewport: { width: 480, height: 640 } });
+    await pf.setContent(
+      '<body style="margin:0;background:#cfe6e3"><div style="position:absolute;left:150px;top:120px;width:180px;height:230px;border-radius:50%;background:#e8b48f"></div>' +
+        '<div style="position:absolute;left:70px;top:380px;width:340px;height:300px;border-radius:170px 170px 0 0;background:#f5f1e6"></div></body>',
+    );
+    await pf.screenshot({ path: FOTO, type: 'jpeg', quality: 85 });
+    await pf.close();
+  }
 
   // ——————————————————— Halaman umum ———————————————————
   bagian = 'Umum';
@@ -183,6 +195,50 @@ try {
       await page.getByText('Kode tidak dikenal').waitFor();
     });
     await cek('aksesibilitas halaman verifikasi', () => aksesibel(page, 'verifikasi'));
+    await cek('daftar wali: kecamatan mengisi kabupaten dan provinsi, akun langsung aktif', async () => {
+      const { ctx: c2, page: d } = await konteks(390, 844);
+      await d.goto(ASAL + '/');
+      await d.getByRole('link', { name: /Belum punya akun/ }).click();
+      await d.waitForURL('**/daftar');
+      await d.getByRole('heading', { name: 'Daftar akun wali santri' }).waitFor();
+      await lebarAman(d, 'daftar @390');
+      const kec = d.getByRole('combobox', { name: 'Kecamatan' });
+      await kec.fill('pandaan');
+      await d.getByRole('option', { name: /Pandaan.*Kabupaten Pasuruan/ }).click();
+      harus((await d.getByRole('textbox', { name: 'Kabupaten / kota' }).inputValue()) === 'Kabupaten Pasuruan', 'kabupaten tidak terisi otomatis');
+      harus((await d.getByRole('textbox', { name: 'Provinsi' }).inputValue()) === 'Jawa Timur', 'provinsi tidak terisi otomatis');
+      await kec.fill('pandaa');
+      harus((await d.getByRole('textbox', { name: 'Provinsi' }).inputValue()) === '', 'kecamatan diubah, provinsi seharusnya kosong lagi');
+      await kec.press('ArrowDown');
+      await kec.press('Enter');
+      harus((await d.getByRole('textbox', { name: 'Provinsi' }).inputValue()) !== '', 'pilihan dengan papan ketik tidak bekerja');
+      await aksesibel(d, 'daftar');
+      await d.getByRole('button', { name: 'Isi contoh' }).click();
+      await d.getByLabel('Ketik ulang sandi').fill('beda-sendiri');
+      await d.getByRole('button', { name: 'Daftar', exact: true }).click();
+      await d.getByText('Sandi tidak sama.').waitFor();
+      await d.getByLabel('Ketik ulang sandi').fill('wali-contoh-1');
+      await d.getByRole('button', { name: 'Daftar', exact: true }).click();
+      await d.getByRole('heading', { name: 'Akun wali aktif' }).waitFor();
+      await d.getByRole('button', { name: 'Buka beranda wali' }).click();
+      await d.waitForURL('**/wali');
+      await d.locator('.sambutan__nama').waitFor();
+      await c2.close();
+    });
+    await cek('daftar wali: NIS yang sudah aktif ditolak dengan alasan', async () => {
+      const { ctx: c2, page: d } = await konteks(390, 844);
+      await d.goto(ASAL + '/daftar');
+      await d.getByLabel('Nomor Induk Santri (NIS)').fill(NIS_DAFTAR);
+      await d.getByLabel('Nama lengkap').fill('Bapak Uji');
+      await d.getByLabel('Nomor WhatsApp aktif').fill('0812-0000-0000');
+      await d.getByRole('combobox', { name: 'Kecamatan' }).fill('bangil');
+      await d.getByRole('option').first().click();
+      await d.getByLabel('Buat sandi').fill('sandi-uji-123');
+      await d.getByLabel('Ketik ulang sandi').fill('sandi-uji-123');
+      await d.getByRole('button', { name: 'Daftar', exact: true }).click();
+      await toast(d, 'sudah memiliki akun wali yang aktif');
+      await c2.close();
+    });
     await cek('halaman tidak ditemukan', async () => {
       await page.goto(ASAL + '/halaman-yang-tidak-ada');
       await page.getByRole('heading', { name: 'Halaman tidak ditemukan' }).waitFor();
@@ -322,16 +378,39 @@ try {
     await p.getByText(namaBaru).first().click();
     await p.waitForURL(/admin\/santri\/\d+/);
     await p.getByRole('button', { name: 'Ubah data' }).click();
-    await dialog(p).getByLabel('Alamat').fill('Jl. Uji No. 1, Bangil');
+    await dialog(p).getByLabel('Jalan / dusun, RT/RW').fill('Jl. Uji No. 1, Bangil');
+    await dialog(p).getByRole('combobox', { name: 'Kecamatan' }).fill('bangil');
+    await dialog(p).getByRole('option', { name: /^Bangil Kabupaten Pasuruan/ }).click();
     await dialog(p).getByRole('button', { name: 'Simpan' }).click();
     await toast(p, 'disimpan');
-    await p.getByText('Jl. Uji No. 1, Bangil').waitFor();
+    await p.getByText('Jl. Uji No. 1, Bangil, Kec. Bangil, Kab. Pasuruan, Jawa Timur').waitFor();
   });
   await cek('detail santri: sandi baru wali', async () => {
     await p.getByRole('button', { name: 'Sandi baru wali' }).click();
     await dialog(p).getByRole('button', { name: 'Buat sandi baru' }).click();
     await p.getByRole('heading', { name: 'Akun wali santri' }).waitFor();
     await p.keyboard.press('Escape');
+  });
+  await cek('detail santri: foto dari galeri, kartu santri, balik, cetak', async () => {
+    await p.getByRole('button', { name: /Tambah foto/ }).click();
+    await dialog(p).getByLabel('Pilih foto dari galeri').setInputFiles(FOTO);
+    await dialog(p).locator('.foto-potong canvas').waitFor();
+    await dialog(p).getByLabel('Perbesar foto').fill('1.4');
+    await dialog(p).getByRole('button', { name: 'Putar foto' }).click();
+    await dialog(p).getByRole('button', { name: 'Simpan foto' }).click();
+    await toast(p, 'tersimpan');
+    await p.locator('.profil-santri .avatar--foto img').waitFor();
+    await p.getByRole('button', { name: 'Kartu santri' }).click();
+    await dialog(p).locator('.kartu__foto img').waitFor();
+    await dialog(p).getByRole('button', { name: 'Lihat tata tertib' }).click();
+    await dialog(p).getByRole('button', { name: 'Lihat depan' }).waitFor();
+    const sebelum = await p.evaluate(() => window.__cetak);
+    await dialog(p).getByRole('button', { name: 'Cetak kartu' }).click();
+    await tunggu(500);
+    harus((await p.evaluate(() => window.__cetak)) > sebelum, 'cetak kartu tidak membuka jendela cetak');
+    await aksesibel(p, 'kartu santri admin');
+    await p.keyboard.press('Escape');
+    await dialog(p).waitFor({ state: 'detached' });
   });
   await cek('detail santri: hapus santri tanpa riwayat', async () => {
     await p.getByRole('button', { name: 'Hapus santri' }).click();
@@ -712,6 +791,86 @@ try {
     await p.getByText('Menambah akun pengurus').first().waitFor();
   });
 
+  bagian = 'Admin › Pendaftaran wali';
+  await cek('nomor berbeda: muncul di Data santri, diperiksa lalu disetujui', async () => {
+    const calon = (await (await fetch(`${ASAL}/api/auth/saya`)).json()).demo.daftarNis;
+    const r = await fetch(`${ASAL}/api/auth/daftar-wali`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-madin': '1' },
+      body: JSON.stringify({ nis: calon, hp: '0857-1111-2222', namaWali: 'Ibu Uji Daftar', hubungan: 'Ibu', kecamatan: 'Bangil', kabupaten: 'Kabupaten Pasuruan', provinsi: 'Jawa Timur', kodeWilayah: '35.14.14', sandi: 'sandi-ibu-uji' }),
+    });
+    harus((await r.json()).status === 'menunggu', 'pendaftaran seharusnya menunggu');
+    await p.goto(ASAL + '/admin/santri');
+    await p.locator('.sisi').getByRole('link', { name: /Data santri/ }).getByText('1').waitFor();
+    await p.getByText('1 pendaftaran wali menunggu pemeriksaan').waitFor();
+    await p.getByRole('button', { name: 'Periksa' }).click();
+    await dialog(p).getByText('Ibu Uji Daftar').waitFor();
+    await dialog(p).getByRole('button', { name: 'Setujui' }).click();
+    await p.getByRole('dialog').last().getByRole('button', { name: 'Setujui', exact: true }).click();
+    await toast(p, 'aktif');
+    harus((await p.getByRole('link', { name: /Kirim kabar via WhatsApp/ }).getAttribute('href')).includes('wa.me/6285711112222'), 'tautan kabar WhatsApp salah');
+    await p.keyboard.press('Escape');
+    const w2 = await konteks(390, 844);
+    await masuk(w2.page, 'wali', calon, 'sandi-ibu-uji');
+    await w2.ctx.close();
+    halamanAktif = p;
+  });
+
+  bagian = 'Admin › Pesan otomatis';
+  await cek('laporan harian dan pengingat syahriah dibuat dari tombol', async () => {
+    await ctxAdmin.route('https://wa.me/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: 'wa' }));
+    await p.locator('.sisi').getByRole('link', { name: /Pesan otomatis/ }).click();
+    await p.waitForURL('**/admin/pesan');
+    await p.getByRole('button', { name: 'Buat laporan hari ini' }).click();
+    await toast(p, /laporan harian dibuat|Tidak ada laporan/);
+    await p.getByRole('button', { name: 'Proses pengingat sekarang' }).click();
+    await toast(p, /pengingat/i);
+  });
+  await cek('pengaturan: gateway butuh token, pesan uji masuk kotak keluar', async () => {
+    await p.getByRole('button', { name: 'Pengaturan', exact: true }).click();
+    await dialog(p).getByRole('radio', { name: /gateway Fonnte/ }).click();
+    await dialog(p).getByRole('button', { name: 'Simpan' }).click();
+    await toast(p, 'token');
+    await dialog(p).getByRole('radio', { name: /Manual/ }).click();
+    await dialog(p).getByLabel('Nomor WhatsApp uji').fill('0812-0000-7777');
+    await dialog(p).getByRole('button', { name: 'Kirim', exact: true }).click();
+    await toast(p, 'kotak keluar');
+    await dialog(p).getByRole('button', { name: 'Simpan' }).click();
+    await toast(p, 'disimpan');
+  });
+  await cek('kotak keluar: kirim via WhatsApp menandai terkirim, saringan status', async () => {
+    await p.reload();
+    const pesanUji = p.locator('.daftar-pesan__item').filter({ hasText: 'Pesan uji' }).first();
+    await pesanUji.waitFor();
+    const [tab] = await Promise.all([p.waitForEvent('popup'), pesanUji.getByRole('link', { name: 'Kirim via WhatsApp' }).click()]);
+    harus(tab.url().startsWith('https://wa.me/6281200007777'), 'tautan WhatsApp salah: ' + tab.url());
+    await tab.close();
+    await p.getByRole('tab', { name: 'Terkirim' }).click();
+    await p.locator('.daftar-pesan__item').filter({ hasText: 'Pesan uji' }).first().getByText('Terkirim', { exact: true }).waitFor();
+    await p.getByRole('tab', { name: 'Semua' }).click();
+    await aksesibel(p, 'pesan otomatis');
+  });
+  await cek('batalkan pesan yang menunggu', async () => {
+    const item = p.locator('.daftar-pesan__item--antre').first();
+    if (!(await item.count())) return;
+    const n = await p.locator('.daftar-pesan__item--antre').count();
+    await item.getByRole('button', { name: 'Batalkan' }).click();
+    await p.getByRole('dialog').getByRole('button', { name: 'Batalkan pesan' }).click();
+    await p.waitForFunction((n) => document.querySelectorAll('.daftar-pesan__item--antre').length === n - 1, n);
+  });
+  await cek('pengaturan kartu: tata tertib berubah, pratinjau ikut berubah', async () => {
+    await p.goto(ASAL + '/admin/pengaturan');
+    await p.getByRole('tab', { name: 'Kartu santri' }).click();
+    const ta = p.getByLabel('Tata tertib');
+    const lama = await ta.inputValue();
+    await ta.fill(lama + '\nMenjaga adab di dalam masjid.');
+    await p.locator('.pratinjau-kartu').getByText('Menjaga adab di dalam masjid.').waitFor();
+    await p.getByRole('button', { name: 'Simpan', exact: true }).click();
+    await toast(p, 'Tata tertib kartu santri disimpan');
+    await aksesibel(p, 'pengaturan kartu');
+    await p.getByRole('tab', { name: 'Madrasah & nilai' }).click();
+  });
+
   bagian = 'Admin › Akun saya';
   await cek('ganti sandi: sandi lama salah dan ulang tidak sama', async () => {
     await p.locator('.sisi__akun-tautan').click();
@@ -743,7 +902,7 @@ try {
   for (const lebar of [1440, 1024, 768, 390, 320]) {
     await cek(`semua halaman pengurus muat di ${lebar}px`, async () => {
       await p.setViewportSize({ width: lebar, height: 860 });
-      for (const alamat of ['/admin', '/admin/santri', '/admin/kelas', '/admin/absensi', '/admin/nilai', '/admin/raport', '/admin/hafalan', '/admin/syahriah', '/admin/pengumuman', '/admin/pengaturan', '/admin/akun']) {
+      for (const alamat of ['/admin', '/admin/santri', '/admin/kelas', '/admin/absensi', '/admin/nilai', '/admin/raport', '/admin/hafalan', '/admin/syahriah', '/admin/pengumuman', '/admin/pesan', '/admin/pengaturan', '/admin/akun']) {
         await p.goto(ASAL + alamat);
         await p.locator('.kepala-halaman h1').first().waitFor();
         await tunggu(150);
@@ -817,6 +976,40 @@ try {
       for (const t of ['Raport terbaru', 'Kehadiran', 'Hafalan', 'Pelajaran hari ini', 'Pengumuman']) await w.getByRole('heading', { name: new RegExp(t) }).first().waitFor();
     });
     await cek('aksesibilitas beranda wali', () => aksesibel(w, 'beranda wali'));
+    await cek('foto ananda dari ponsel: ajakan, potong, tersimpan di beranda dan kepala', async () => {
+      await w.locator('.ajakan-foto').getByRole('button', { name: 'Ambil foto' }).click();
+      await dialog(w).getByRole('button', { name: /Ambil foto/ }).waitFor();
+      harus((await dialog(w).getByLabel('Ambil foto dengan kamera').getAttribute('capture')) === 'user', 'kamera depan (selfie) tidak diminta');
+      await dialog(w).getByLabel('Pilih foto dari galeri').setInputFiles(FOTO);
+      await dialog(w).locator('.foto-potong canvas').waitFor();
+      const kanvas = dialog(w).locator('.foto-potong canvas');
+      const kotak = await kanvas.boundingBox();
+      await w.mouse.move(kotak.x + kotak.width / 2, kotak.y + kotak.height / 2);
+      await w.mouse.down();
+      await w.mouse.move(kotak.x + kotak.width / 2 + 30, kotak.y + kotak.height / 2 + 20);
+      await w.mouse.up();
+      await aksesibel(w, 'potong foto');
+      await dialog(w).getByRole('button', { name: 'Simpan foto' }).click();
+      await toast(w, 'tersimpan');
+      await w.locator('.sambutan .avatar--foto img').waitFor();
+      await w.locator('.akun-wali .avatar--foto img').waitFor();
+      harus(!(await w.locator('.ajakan-foto').count()), 'ajakan foto masih tampil');
+    });
+    await cek('kartu santri dari beranda: depan, belakang, cetak', async () => {
+      await w.getByRole('link', { name: /Kartu santri digital/ }).click();
+      await w.waitForURL('**/wali/kartu');
+      await w.locator('.kartu__foto img').first().waitFor();
+      await w.getByText('Menjaga adab di dalam masjid.').first().waitFor({ state: 'attached' });
+      await w.getByRole('button', { name: 'Lihat tata tertib' }).click();
+      await w.getByRole('button', { name: 'Lihat depan' }).click();
+      const sebelum = await w.evaluate(() => window.__cetak);
+      await w.getByRole('button', { name: 'Cetak kartu' }).click();
+      await tunggu(500);
+      harus((await w.evaluate(() => window.__cetak)) > sebelum, 'cetak kartu tidak membuka jendela cetak');
+      await aksesibel(w, 'kartu santri wali');
+      await w.goto(ASAL + '/wali');
+      await w.locator('.sambutan__nama').waitFor();
+    });
     await cek('tautan di beranda', async () => {
       for (const [nama, alamat] of [
         ['Rincian', '/wali/absensi'],
@@ -864,6 +1057,7 @@ try {
         ['Syahriah', '/wali/syahriah'],
         ['Jadwal', '/wali/jadwal'],
         ['Pengumuman', '/wali/pengumuman'],
+        ['Kartu santri', '/wali/kartu'],
         ['Akun & sandi', '/wali/akun'],
       ]) {
         await w.locator('.tab-bawah').getByRole('link', { name: 'Lainnya' }).click();
@@ -871,6 +1065,15 @@ try {
         await w.waitForURL('**' + alamat);
         await w.locator('.kepala-halaman h1').waitFor();
       }
+    });
+    await cek('perbarui alamat: kecamatan otomatis lalu tersimpan', async () => {
+      await w.getByRole('button', { name: 'Perbarui alamat' }).click();
+      await dialog(w).getByRole('combobox', { name: 'Kecamatan' }).fill('gempol');
+      await dialog(w).getByRole('option', { name: /Gempol.*Pasuruan/ }).click();
+      await dialog(w).getByLabel('Desa / kelurahan').fill('Kejapanan');
+      await dialog(w).getByRole('button', { name: 'Simpan alamat' }).click();
+      await toast(w, 'Alamat diperbarui');
+      await w.getByText(/Desa Kejapanan, Kec\. Gempol, Kab\. Pasuruan/).waitFor();
     });
     await cek('ganti sandi wali: sandi lama salah ditolak', async () => {
       await w.getByLabel('Sandi saat ini').fill('salah-salah');
@@ -882,7 +1085,7 @@ try {
     for (const lebar of [320, 390, 768, 1024, 1440]) {
       await cek(`semua halaman wali muat di ${lebar}px`, async () => {
         await w.setViewportSize({ width: lebar, height: 860 });
-        for (const alamat of ['/wali', '/wali/raport', '/wali/absensi', '/wali/hafalan', '/wali/syahriah', '/wali/jadwal', '/wali/pengumuman', '/wali/akun']) {
+        for (const alamat of ['/wali', '/wali/raport', '/wali/absensi', '/wali/hafalan', '/wali/syahriah', '/wali/jadwal', '/wali/pengumuman', '/wali/kartu', '/wali/akun']) {
           await w.goto(ASAL + alamat);
           await w.locator('h1').first().waitFor();
           await tunggu(150);

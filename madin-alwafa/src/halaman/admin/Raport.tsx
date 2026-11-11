@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { urlFoto } from '../../lib/foto';
 import { useSaringan } from '../../lib/saringan';
 import { BadgeCheck, Eye, Printer, ScrollText, Send, SlidersHorizontal } from 'lucide-react';
 import { kirim } from '../../lib/api';
@@ -17,6 +18,7 @@ export interface BarisRaport {
   nis: string;
   nama: string;
   jk: string;
+  fotoVersi: string | null;
   rataRata: number | null;
   peringkat: number | null;
   status: 'draf' | 'terbit';
@@ -187,7 +189,7 @@ export default function RaportKelas() {
                   <tr key={d.santriId} className="bisa-klik" onClick={() => navigasi(`/admin/raport/${d.santriId}/${data.periode.id}`)}>
                     <td data-sel="utama">
                       <div className="baris">
-                        <Avatar nama={d.nama} jk={d.jk} ukuran={36} />
+                        <Avatar nama={d.nama} jk={d.jk} ukuran={36} foto={urlFoto(d.santriId, d.fotoVersi)} />
                         <div style={{ display: 'grid', minWidth: 0 }}>
                           <b className="potong">{d.nama}</b>
                           <span className="redup-2 kecil angka">NIS {d.nis}</span>
