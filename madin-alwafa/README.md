@@ -76,6 +76,7 @@ npm run dev:demo     # sama, dengan data contoh
 npm run typecheck
 npm test             # uji alur server
 npm run e2e          # uji peramban ujung ke ujung (perlu `npm run build`)
+npm run uji:menyeluruh  # tekan setiap tombol semua peran, 5 lebar layar, cek aksesibilitas (perlu `npm run build`)
 ```
 
 ## Memasang di VPS (mis. port 3012)
@@ -149,4 +150,5 @@ src/             antarmuka React
   halaman/raport lembar raport A4 dan kode QR
   styles/        token desain kaca, komponen, tata letak, lembar raport
 tests/e2e.mjs    uji peramban ujung ke ujung
+tests/menyeluruh.mjs  uji menyeluruh: 101 pemeriksaan tombol, tata letak, dan aksesibilitas
 ```
