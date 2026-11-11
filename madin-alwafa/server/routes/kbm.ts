@@ -125,9 +125,10 @@ export function ruteNilai(db: DB) {
     );
     if (!mapel) throw new GalatPengguna(404, 'Pilih mata pelajaran yang diajarkan di kelas ini.');
     const bobot = bobotNilai(ambilPengaturan(db));
-    const daftar = semua<{ santriId: number; nis: string; nama: string; jk: string; harian: number | null; uts: number | null; uas: number | null; status: string | null }>(
+    const daftar = semua<{ santriId: number; nis: string; nama: string; jk: string; harian: number | null; uts: number | null; uas: number | null; status: string | null; jumlahHarian: number }>(
       db,
-      `SELECT s.id AS santriId, s.nis, s.nama, s.jk, s.foto_versi AS fotoVersi, n.harian, n.uts, n.uas, r.status
+      `SELECT s.id AS santriId, s.nis, s.nama, s.jk, s.foto_versi AS fotoVersi, n.harian, n.uts, n.uas, r.status,
+              (SELECT COUNT(*) FROM nilai_harian x WHERE x.santri_id = s.id AND x.mapel_id = ? AND x.tanggal BETWEEN ? AND ?) AS jumlahHarian
          FROM santri s
          LEFT JOIN nilai n ON n.santri_id = s.id AND n.periode_id = ? AND n.mapel_id = ?
          LEFT JOIN raport r ON r.santri_id = s.id AND r.periode_id = ?
@@ -137,6 +138,9 @@ export function ruteNilai(db: DB) {
            OR (s.kelas_id = ? AND s.status = 'aktif' AND (s.tanggal_masuk IS NULL OR s.tanggal_masuk <= ?)
                AND COALESCE(r.status, 'draf') != 'terbit')
         ORDER BY s.nama`,
+      mapel.id,
+      periode.mulai,
+      periode.selesai,
       periode.id,
       mapel.id,
       periode.id,
@@ -183,6 +187,16 @@ export function ruteNilai(db: DB) {
           periode.id,
           isi.mapelId,
         );
+        // Bila sudah ada nilai harian per pertemuan, nilai harian semester dihitung otomatis dan tidak ditimpa manual.
+        const dariPertemuan = satu<{ n: number }>(
+          db,
+          'SELECT COUNT(*) AS n FROM nilai_harian WHERE santri_id = ? AND mapel_id = ? AND tanggal BETWEEN ? AND ?',
+          n.santriId,
+          isi.mapelId,
+          periode.mulai,
+          periode.selesai,
+        )!.n;
+        if (dariPertemuan) n.harian = lama?.harian ?? null;
         const sama = lama ? lama.harian === n.harian && lama.uts === n.uts && lama.uas === n.uas : n.harian === null && n.uts === null && n.uas === null;
         if (sama) continue;
         pastikanBelumTerbit(db, n.santriId, periode.id, s.nama);

@@ -4,6 +4,7 @@ import type { DB } from './db';
 import { hashSandi } from './auth';
 import { simpanPengaturan, sekarang } from './util';
 import { terbitkan } from './domain/raport';
+import { hariKe, hitungUlangHarian } from './domain/harian';
 import { hariIni } from '../shared/format';
 
 export const SANDI_DEMO = 'demo-wafa-2026';
@@ -162,6 +163,16 @@ export async function isiDemo(db: DB) {
   const idAdmin = Number(pengurusBaru.run('Ust. Ahmad Fauzi', 'admin', sandiPengurus, 'admin', '0812-0000-1001', sekarang(), sekarang()).lastInsertRowid);
   pengurusBaru.run('Ustdz. Siti Maryam', 'ustadzah', sandiPengurus, 'ustadz', '0812-0000-1002', sekarang(), null);
   pengurusBaru.run('Ust. Abdul Karim', 'abdulkarim', sandiPengurus, 'ustadz', '0812-0000-1003', sekarang(), null);
+  // Setiap pengajar punya akun dan nomor WhatsApp, agar pengingat input harian sampai kepadanya.
+  [
+    ['Ust. M. Ridwan Hakim', 'ridwan'],
+    ['Ust. Zainal Abidin', 'zainal'],
+    ['Ust. Hasan Basri', 'hasanbasri'],
+    ['Ustdz. Nur Aini', 'nuraini'],
+    ['Ustdz. Umi Kulsum', 'umikulsum'],
+    ['Ustdz. Lailatul Fitriyah', 'lailatul'],
+    ['Ustdz. Rofiqoh', 'rofiqoh'],
+  ].forEach(([nama, pengguna], i) => pengurusBaru.run(nama, pengguna, sandiPengurus, 'ustadz', `0812-0000-10${String(i + 4).padStart(2, '0')}`, sekarang(), null));
 
   // Semester.
   const idLalu = Number(
@@ -183,7 +194,7 @@ export async function isiDemo(db: DB) {
     );
   });
 
-  // Kelas, mapel kelas, dan jadwal (Sabtu–Kamis, dua jam pelajaran 14.00–16.30).
+  // Kelas, mapel kelas, dan jadwal (Sabtu–Kamis, dua jam pelajaran 17.45–19.15; pulang 19.15).
   const idKelas: number[] = [];
   for (const k of KELAS) {
     const id = Number(
@@ -198,7 +209,7 @@ export async function isiDemo(db: DB) {
     const hariMadin = [6, 7, 1, 2, 3, 4]; // Sabtu, Ahad, Senin, Selasa, Rabu, Kamis
     urutan.forEach((m, i) => {
       const h = hariMadin[Math.floor(i / 2)];
-      const [a, b] = i % 2 === 0 ? ['14:00', '15:10'] : ['15:20', '16:30'];
+      const [a, b] = i % 2 === 0 ? ['17:45', '18:25'] : ['18:35', '19:15'];
       db.prepare('INSERT INTO jadwal (kelas_id, hari, jam_mulai, jam_selesai, mapel_id) VALUES (?,?,?,?,?)').run(id, h, a, b, idMapel[m]);
     });
   }
@@ -383,6 +394,41 @@ export async function isiDemo(db: DB) {
       isiAbsensi(s, idKelas[s.kelasIdx], hariKini);
       if (hariIniBelajar && s.kelasIdx < 2) isiAbsensi(s, idKelas[s.kelasIdx], [hari]);
       if (komponen.harian) isiNilai(s, s.kelasIdx, idKini, komponen);
+    }
+  })();
+
+  // Nilai harian per pertemuan semester berjalan, untuk santri yang hadir di setiap pelajaran terjadwal.
+  // Hari ini: Sayyidina Husein sudah lengkap, Sayyidah Fatimah baru pelajaran pertama, dua kelas lain belum diisi,
+  // sehingga dasbor dan pengingat guru punya contoh yang nyata.
+  db.transaction(() => {
+    const jadwalKelas = new Map<string, number[]>();
+    for (const j of db.prepare('SELECT kelas_id, hari, mapel_id FROM jadwal ORDER BY jam_mulai').all() as { kelas_id: number; hari: number; mapel_id: number }[]) {
+      const k = `${j.kelas_id}:${j.hari}`;
+      const daftar = jadwalKelas.get(k) ?? [];
+      if (!daftar.includes(j.mapel_id)) daftar.push(j.mapel_id);
+      jadwalKelas.set(k, daftar);
+    }
+    const st = db.prepare('INSERT INTO nilai_harian (santri_id, mapel_id, tanggal, kelas_id, nilai, oleh, diubah) VALUES (?,?,?,?,?,?,?)');
+    const hadir = db.prepare('SELECT status FROM absensi WHERE santri_id = ? AND tanggal = ?');
+    const hariHarian = hariIniBelajar ? [...hariKini, hari] : hariKini;
+    const dinilai = new Set<string>();
+    for (const s of santri) {
+      const kelasId = idKelas[s.kelasIdx];
+      for (const t of hariHarian) {
+        if (t === hari && s.kelasIdx > 1) continue;
+        if ((hadir.get(s.id, t) as { status: string } | undefined)?.status !== 'H') continue;
+        for (const [i, m] of (jadwalKelas.get(`${kelasId}:${hariKe(t)}`) ?? []).entries()) {
+          if (t === hari && s.kelasIdx === 1 && i > 0) continue;
+          st.run(s.id, m, t, kelasId, batas(s.mampu + 4 + (acak() - 0.5) * 16), null, sekarang());
+          dinilai.add(`${s.id}:${m}`);
+        }
+      }
+    }
+    // Nilai harian semester = rata-rata nilai pertemuan.
+    const periodeKini = { id: idKini, mulai: kini.mulai, selesai: kini.selesai };
+    for (const k of dinilai) {
+      const [santriId, mapelId] = k.split(':').map(Number);
+      hitungUlangHarian(db, santriId, mapelId, periodeKini);
     }
   })();
 

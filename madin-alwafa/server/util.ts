@@ -109,14 +109,30 @@ export const PENGATURAN_AWAL = {
   // Pesan WhatsApp otomatis. Penyedia 'manual': pesan disiapkan dan dikirim admin lewat tautan WhatsApp.
   wa_penyedia: 'manual',
   wa_token: '',
+  /** Nomor WhatsApp madrasah yang dipakai mengirim pesan (ditampilkan; pengiriman memakai perangkat gateway). */
+  wa_nomor: '',
+  /** Batas guru mengisi nilai harian setiap hari. */
+  batas_input_jam: '21:00',
+  pengingat_guru_aktif: '1',
+  pengingat_guru_jam: '20:00',
+  /** Rekap harian setelah batas input: untuk administrator, dan bila diizinkan untuk semua guru. */
   laporan_aktif: '1',
-  laporan_jam: '18:00',
+  laporan_jam: '21:00',
+  rekap_ke_guru: '0',
   tagihan_aktif: '1',
-  tagihan_jam: '09:00',
+  tagihan_jam: '17:00',
   tagihan_jeda: '3',
   tagihan_jatuh_tempo: '10',
+  /** Pengingat jam pulang untuk wali santri, sekali sehari, beberapa menit sebelum pulang. */
+  pulang_aktif: '1',
+  jam_pulang: '19:15',
+  pulang_menit: '10',
+  /** Libur: semua pesan otomatis berhenti sampai tanggal ini (YYYY-MM-DD). */
+  jeda_sampai: '',
   jadwal_laporan_terakhir: '',
   jadwal_tagihan_terakhir: '',
+  jadwal_pengingat_terakhir: '',
+  jadwal_pulang_terakhir: '',
 } as const;
 export type Pengaturan = { [K in keyof typeof PENGATURAN_AWAL]: string };
 

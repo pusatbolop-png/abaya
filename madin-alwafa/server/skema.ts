@@ -237,6 +237,43 @@ export const MIGRASI: string[] = [
   CREATE INDEX pesan_status ON pesan_keluar(status, dibuat);
   CREATE INDEX pesan_santri ON pesan_keluar(jenis, santri_id, dibuat);
   `,
+
+  /* 3: nilai harian per pertemuan; jenis pesan baru (pengingat guru, rekap, jam pulang) dan kunci anti-ganda */ `
+  CREATE TABLE nilai_harian (
+    santri_id INTEGER NOT NULL REFERENCES santri(id) ON DELETE CASCADE,
+    mapel_id INTEGER NOT NULL REFERENCES mapel(id),
+    tanggal TEXT NOT NULL,
+    kelas_id INTEGER REFERENCES kelas(id),
+    nilai INTEGER NOT NULL CHECK (nilai BETWEEN 0 AND 100),
+    oleh TEXT,
+    diubah TEXT NOT NULL,
+    PRIMARY KEY (santri_id, mapel_id, tanggal)
+  );
+  CREATE INDEX nilai_harian_kelas ON nilai_harian(kelas_id, mapel_id, tanggal);
+
+  CREATE TABLE pesan_keluar_baru (
+    id INTEGER PRIMARY KEY,
+    jenis TEXT NOT NULL CHECK (jenis IN ('laporan','rekap','pengingat','tagihan','pulang','uji')),
+    tujuan TEXT NOT NULL,
+    hp TEXT NOT NULL,
+    isi TEXT NOT NULL,
+    santri_id INTEGER REFERENCES santri(id) ON DELETE SET NULL,
+    pengurus_id INTEGER REFERENCES pengurus(id) ON DELETE SET NULL,
+    status TEXT NOT NULL CHECK (status IN ('antre','terkirim','gagal')),
+    galat TEXT,
+    dibuat TEXT NOT NULL,
+    dikirim TEXT,
+    kunci TEXT
+  );
+  INSERT INTO pesan_keluar_baru (id, jenis, tujuan, hp, isi, santri_id, pengurus_id, status, galat, dibuat, dikirim)
+    SELECT id, jenis, tujuan, hp, isi, santri_id, pengurus_id, status, galat, dibuat, dikirim FROM pesan_keluar;
+  DROP TABLE pesan_keluar;
+  ALTER TABLE pesan_keluar_baru RENAME TO pesan_keluar;
+  CREATE INDEX pesan_status ON pesan_keluar(status, dibuat);
+  CREATE INDEX pesan_santri ON pesan_keluar(jenis, santri_id, dibuat);
+  -- Satu pesan per penerima per hari untuk pengingat guru, rekap, dan jam pulang.
+  CREATE UNIQUE INDEX pesan_kunci ON pesan_keluar(kunci) WHERE kunci IS NOT NULL;
+  `,
 ];
 
 export function migrasi(db: DB) {

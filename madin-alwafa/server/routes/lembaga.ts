@@ -21,6 +21,8 @@ import {
 } from '../util';
 import { ambilPeriode } from '../domain/raport';
 import { uraiAturan } from '../domain/kartu';
+import { statusHarian } from '../domain/harian';
+import { jamWib } from '../domain/pesan';
 import { bulanIni, bulanTahunAjaran, hariIni, namaBulan } from '../../shared/format';
 
 export function ruteSyahriah(db: DB) {
@@ -399,6 +401,7 @@ export function ruteRingkasan(db: DB) {
       hafalanPekan,
       akunWali: { aktif: akunWali.aktif ?? 0, total: akunWali.total },
       aktivitas: semua(db, 'SELECT waktu, pelaku, aksi, detail FROM log_aktivitas ORDER BY id DESC LIMIT 8'),
+      inputHarian: { ...statusHarian(db, hari), jamSekarang: jamWib() },
     });
   });
 

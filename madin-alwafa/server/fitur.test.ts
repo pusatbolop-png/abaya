@@ -10,7 +10,8 @@ import { bukaDb } from './db';
 import { buatApp } from './app';
 import { config } from './config';
 import { isiDemo, SANDI_DEMO } from './demo-data';
-import { detakJadwal, jalankanTagihan, susunLaporan, tunggakanSyahriah } from './domain/pesan';
+import { detakJadwal, jalankanPengingatGuru, jalankanPulang, jalankanTagihan, kekuranganGuru, susunPengingatGuru, susunPulang, susunRekap, tunggakanSyahriah } from './domain/pesan';
+import { pelajaranHari } from './domain/harian';
 import { uraiAturan } from './domain/kartu';
 import { simpanPengaturan } from './util';
 
@@ -160,31 +161,123 @@ test('foto santri: unggah, hak akses, dan kartu santri', async () => {
   tutup(db);
 });
 
-test('pesan otomatis: laporan harian guru, tagihan tiap 3 hari, gateway, dan penjadwal', async () => {
+test('nilai harian per pertemuan: tersimpan, nilai semester dihitung otomatis, terkunci bila raport terbit', async () => {
+  const { db, tutup } = siapkan();
+  await isiDemo(db);
+  const app = buatApp(db);
+  const a = klien(app);
+  await a.post('/api/auth/masuk-pengurus', { username: 'abdulkarim', sandi: SANDI_DEMO });
+  const tgl = (db.prepare('SELECT MAX(tanggal) AS t FROM absensi').get() as { t: string }).t;
+  const st = (await a.get(`/api/admin/harian?tanggal=${tgl}`)).data;
+  assert.ok(st.pelajaran.length >= 4, 'ada pelajaran terjadwal');
+  assert.equal(st.batas, '21:00');
+  assert.equal(st.saya, 'Ust. Abdul Karim');
+  const pel = st.pelajaran[0];
+  const isi = (await a.get(`/api/admin/harian/isi?kelas=${pel.kelasId}&mapel=${pel.mapelId}&tanggal=${tgl}`)).data;
+  assert.equal(isi.daftar.length, pel.anggota);
+  const target = isi.daftar.find((d: any) => !d.terkunci)!;
+  const sebelum = (db.prepare('SELECT harian FROM nilai WHERE santri_id = ? AND mapel_id = ? AND periode_id = (SELECT id FROM periode WHERE aktif = 1)').get(target.santriId, pel.mapelId) as { harian: number }).harian;
+  const simpan = await a.put('/api/admin/harian', { kelasId: pel.kelasId, mapelId: pel.mapelId, tanggal: tgl, daftar: [{ santriId: target.santriId, nilai: 100 }] });
+  assert.equal(simpan.status, 200);
+  const rata = db.prepare(
+    "SELECT ROUND(AVG(nilai)) AS r FROM nilai_harian WHERE santri_id = ? AND mapel_id = ? AND tanggal BETWEEN (SELECT mulai FROM periode WHERE aktif = 1) AND (SELECT selesai FROM periode WHERE aktif = 1)",
+  ).get(target.santriId, pel.mapelId) as { r: number };
+  const sesudah = (db.prepare('SELECT harian FROM nilai WHERE santri_id = ? AND mapel_id = ? AND periode_id = (SELECT id FROM periode WHERE aktif = 1)').get(target.santriId, pel.mapelId) as { harian: number }).harian;
+  assert.equal(sesudah, rata.r, 'nilai harian semester = rata-rata pertemuan');
+  assert.ok(sesudah >= sebelum);
+  // Nilai harian semester tidak bisa ditimpa manual bila sudah dihitung dari pertemuan.
+  const kelasMapel = `kelas=${pel.kelasId}&mapel=${pel.mapelId}`;
+  const n = (await a.get(`/api/admin/nilai?${kelasMapel}`)).data.daftar.find((d: any) => d.santriId === target.santriId);
+  assert.ok(n.jumlahHarian > 0);
+  const periodeId = (await a.get(`/api/admin/nilai?${kelasMapel}`)).data.periode.id;
+  await a.put('/api/admin/nilai', { periodeId, kelasId: pel.kelasId, mapelId: pel.mapelId, daftar: [{ santriId: target.santriId, harian: 12, uts: n.uts, uas: n.uas }] });
+  assert.equal((await a.get(`/api/admin/nilai?${kelasMapel}`)).data.daftar.find((d: any) => d.santriId === target.santriId).harian, sesudah);
+  // Mengosongkan nilai menghapus isian pertemuan itu.
+  await a.put('/api/admin/harian', { kelasId: pel.kelasId, mapelId: pel.mapelId, tanggal: tgl, daftar: [{ santriId: target.santriId, nilai: null }] });
+  assert.equal(db.prepare('SELECT 1 FROM nilai_harian WHERE santri_id = ? AND mapel_id = ? AND tanggal = ?').get(target.santriId, pel.mapelId, tgl), undefined);
+  // Tanggal yang belum tiba ditolak; raport semester lalu yang sudah terbit mengunci nilai harian lama.
+  assert.equal((await a.put('/api/admin/harian', { kelasId: pel.kelasId, mapelId: pel.mapelId, tanggal: '2999-01-01', daftar: [] })).status, 400);
+  const lama = db.prepare("SELECT r.santri_id, p.mulai FROM raport r JOIN periode p ON p.id = r.periode_id WHERE r.status = 'terbit' LIMIT 1").get() as { santri_id: number; mulai: string };
+  const kelasLama = db.prepare('SELECT kelas_id FROM santri WHERE id = ?').get(lama.santri_id) as { kelas_id: number };
+  const mapelLama = db.prepare('SELECT mapel_id FROM kelas_mapel WHERE kelas_id = ? LIMIT 1').get(kelasLama.kelas_id) as { mapel_id: number };
+  const tglLama = (db.prepare('SELECT MIN(tanggal) AS t FROM absensi WHERE santri_id = ? AND tanggal > ?').get(lama.santri_id, lama.mulai) as { t: string }).t;
+  assert.equal((await a.put('/api/admin/harian', { kelasId: kelasLama.kelas_id, mapelId: mapelLama.mapel_id, tanggal: tglLama, daftar: [{ santriId: lama.santri_id, nilai: 90 }] })).status, 409);
+  // Dasbor ikut menampilkan status input harian.
+  const ring = (await a.get('/api/admin/ringkasan')).data;
+  assert.ok(Array.isArray(ring.inputHarian.pelajaran));
+  assert.equal(ring.inputHarian.batas, '21:00');
+  tutup(db);
+});
+
+test('pesan otomatis: pengingat guru, rekap, jam pulang, tagihan santun, gateway, dan penjadwal', async () => {
   const { db, tutup } = siapkan();
   await isiDemo(db);
   const app = buatApp(db);
   const a = klien(app);
   await a.post('/api/auth/masuk-pengurus', { username: 'admin', sandi: SANDI_DEMO });
+  const idKelas = (nama: string) => (db.prepare('SELECT id FROM kelas WHERE nama = ?').get(nama) as { id: number }).id;
 
-  // Hari terakhir yang ada absensinya di data demo.
-  const tgl = (db.prepare('SELECT MAX(tanggal) AS t FROM absensi').get() as { t: string }).t;
-  const laporan = susunLaporan(db, tgl);
-  assert.equal(laporan.length, 3, 'admin dan dua ustadz yang punya nomor HP');
-  const maryam = laporan.find((l) => l.nama === 'Ustdz. Siti Maryam')!;
-  assert.match(maryam.isi, /Sayyidah Fatimah/);
-  assert.doesNotMatch(maryam.isi, /Sayyidina Husein/, 'guru putri hanya menerima kelas yang diajarnya');
-  assert.match(laporan.find((l) => l.nama === 'Ust. Ahmad Fauzi')!.isi, /Sayyidina Husein[\s\S]*Sayyidah Khodijah/);
-  assert.match(maryam.isi, /Hadir \d+ · Izin \d+ · Sakit \d+ · Alpa \d+/);
+  // Dua hari belajar terakhir. Pada hari pertama: Sayyidina Hasan belum dinilai, absensi Sayyidah Khodijah belum diisi.
+  const [tgl, tgl2] = (db.prepare('SELECT DISTINCT tanggal FROM absensi ORDER BY tanggal DESC LIMIT 2').all() as { tanggal: string }[]).map((r) => r.tanggal);
+  db.prepare('DELETE FROM nilai_harian WHERE kelas_id = ? AND tanggal = ?').run(idKelas('Sayyidina Hasan'), tgl);
+  db.prepare('DELETE FROM absensi WHERE kelas_id = ? AND tanggal = ?').run(idKelas('Sayyidah Khodijah'), tgl);
+  const pel = pelajaranHari(db, tgl);
+  const pengingat = susunPengingatGuru(db, tgl);
+  for (const x of pel.filter((p) => p.kelas === 'Sayyidina Hasan')) {
+    assert.ok(pengingat.some((g) => g.nama === x.pengajar), `${x.pengajar} (pengajar ${x.mapel} Sayyidina Hasan) diingatkan`);
+  }
+  const aini = pengingat.find((g) => g.nama === 'Ustdz. Nur Aini')!;
+  assert.match(aini.isi, /Absensi kelas Sayyidah Khodijah/);
+  assert.match(aini.isi, /Ustdz\. Nur Aini yang kami hormati[\s\S]*pengabdian Ustadzah[\s\S]*sebelum pukul 21\.00 WIB/);
+  for (const g of pengingat) {
+    const k = kekuranganGuru(pel, g.nama);
+    assert.ok(k.nilai.length + k.absensi.length > 0, `${g.nama} hanya diingatkan bila ada kekurangan`);
+  }
+  const lengkap = (db.prepare("SELECT nama FROM pengurus WHERE hp IS NOT NULL").all() as { nama: string }[]).filter(
+    (g) => !kekuranganGuru(pel, g.nama).nilai.length && !kekuranganGuru(pel, g.nama).absensi.length,
+  );
+  assert.ok(lengkap.length > 0 && lengkap.every((g) => !pengingat.some((x) => x.nama === g.nama)), 'guru yang sudah lengkap tidak diingatkan');
+  const p1 = await jalankanPengingatGuru(db, tgl);
+  assert.equal(p1.dibuat, pengingat.length);
+  assert.equal((await jalankanPengingatGuru(db, tgl)).dibuat, 0, 'sekali per guru per hari');
 
-  // Tagihan: dikirim, ditahan 3 hari, lalu dikirim lagi; berhenti setelah lunas.
+  // Rekap setelah batas: bawaan hanya untuk administrator.
+  const rekap = susunRekap(db, tgl);
+  assert.equal(rekap.length, 1);
+  assert.match(rekap[0].isi, /Input nilai harian: \*\d+ dari \d+\* pelajaran lengkap/);
+  assert.match(rekap[0].isi, /Sayyidah Khodijah[\s\S]*Absensi belum diisi/);
+  simpanPengaturan(db, { rekap_ke_guru: '1' });
+  const rekapGuru = susunRekap(db, tgl);
+  assert.ok(rekapGuru.length > 1);
+  assert.doesNotMatch(rekapGuru.find((r) => r.nama === 'Ustdz. Siti Maryam')!.isi, /Sayyidina Husein/, 'guru hanya menerima kelas yang diajarnya');
+  simpanPengaturan(db, { rekap_ke_guru: '0' });
+
+  // Jam pulang: satu pesan per nomor per hari, santri yang izin/sakit/alpa dilewati, kakak-beradik digabung.
+  const absen = db.prepare("SELECT s.id, s.hp_wali FROM absensi a JOIN santri s ON s.id = a.santri_id WHERE a.tanggal = ? AND a.status != 'H' LIMIT 1").get(tgl) as
+    | { id: number; hp_wali: string }
+    | undefined;
+  const [k1, k2] = db.prepare("SELECT s.id, s.nama FROM santri s JOIN absensi a ON a.santri_id = s.id AND a.tanggal = ? AND a.status = 'H' LIMIT 2").all(tgl) as { id: number; nama: string }[];
+  db.prepare('UPDATE santri SET hp_wali = ? WHERE id IN (?, ?)').run('0813-5555-0001', k1.id, k2.id);
+  const pulang = susunPulang(db, tgl);
+  const kakakAdik = pulang.filter((x) => x.hp === '081355550001');
+  assert.equal(kakakAdik.length, 1, 'kakak-beradik satu pesan');
+  assert.match(kakakAdik[0].isi, new RegExp(`${k1.nama}[\\s\\S]*dan[\\s\\S]*${k2.nama}|${k2.nama}[\\s\\S]*dan[\\s\\S]*${k1.nama}`));
+  assert.match(kakakAdik[0].isi, /selesai pukul \*19\.15 WIB\*[\s\S]*bermanfaat/);
+  if (absen) assert.ok(!pulang.some((x) => x.isi.includes(`*${(db.prepare('SELECT nama FROM santri WHERE id = ?').get(absen.id) as { nama: string }).nama}*`)), 'santri yang tidak hadir dilewati');
+  const pu = await jalankanPulang(db, tgl);
+  assert.equal(pu.dibuat, pulang.length);
+  assert.equal((await jalankanPulang(db, tgl)).dibuat, 0, 'sekali per nomor per hari');
+
+  // Tagihan: santun, menyapa nama wali; dikirim, ditahan 3 hari, lalu dikirim lagi; berhenti setelah lunas.
   const hariTagih = `${tgl.slice(0, 8)}${String(Math.max(Number(tgl.slice(8)), 10)).padStart(2, '0')}`;
   const tunggak = tunggakanSyahriah(db, hariTagih);
   assert.ok(tunggak.length > 0, 'data demo punya santri yang belum membayar');
   const t1 = await jalankanTagihan(db, hariTagih);
   assert.equal(t1.dibuat, tunggak.filter((t) => t.hp_wali).length);
-  const contoh = db.prepare("SELECT isi FROM pesan_keluar WHERE jenis = 'tagihan' LIMIT 1").get() as { isi: string };
-  assert.match(contoh.isi, /belum tercatat[\s\S]*Jumlah: \*Rp/);
+  const contoh = db.prepare("SELECT isi, santri_id FROM pesan_keluar WHERE jenis = 'tagihan' LIMIT 1").get() as { isi: string; santri_id: number };
+  const wali = db.prepare('SELECT nama_wali FROM santri WHERE id = ?').get(contoh.santri_id) as { nama_wali: string };
+  assert.match(contoh.isi, new RegExp(`Yth\\. Bapak ${wali.nama_wali}, wali dari ananda`));
+  assert.match(contoh.isi, /Semoga Bapak sekeluarga senantiasa dalam lindungan[\s\S]*belum tercatat[\s\S]*Jumlah: \*Rp[\s\S]*mohon maaf[\s\S]*Wassalamu'alaikum/);
   const t2 = await jalankanTagihan(db, hariTagih);
   assert.equal(t2.dibuat, 0);
   assert.equal(t2.dilewati, t1.dibuat);
@@ -206,6 +299,7 @@ test('pesan otomatis: laporan harian guru, tagihan tiap 3 hari, gateway, dan pen
   const antre = (await a.get('/api/admin/pesan?status=antre')).data;
   assert.ok(antre.daftar.length > 0);
   assert.equal(antre.pengaturan.penyedia, 'manual');
+  assert.equal(antre.pengaturan.jamKirimPulang, '19:05');
   assert.equal((await a.post(`/api/admin/pesan/${antre.daftar[0].id}/tandai`)).status, 200);
 
   // Gateway Fonnte tiruan.
@@ -226,11 +320,29 @@ test('pesan otomatis: laporan harian guru, tagihan tiap 3 hari, gateway, dan pen
   config.waFonnteUrl = `http://127.0.0.1:${(gw.address() as AddressInfo).port}/send`;
   config.waJedaMs = 0;
   try {
-    const atur = { laporanAktif: true, laporanJam: '18:00', tagihanAktif: true, tagihanJam: '09:00', tagihanJeda: 3, jatuhTempo: 10 };
+    const atur = {
+      nomor: '0812-0000-1717',
+      batasInput: '21:00',
+      pengingatAktif: true,
+      pengingatJam: '20:00',
+      laporanAktif: true,
+      laporanJam: '21:00',
+      rekapKeGuru: false,
+      pulangAktif: true,
+      jamPulang: '19:15',
+      pulangMenit: 10,
+      tagihanAktif: false,
+      tagihanJam: '17:00',
+      tagihanJeda: 3,
+      jatuhTempo: 10,
+      jedaSampai: null,
+    };
     assert.equal((await a.put('/api/admin/pesan/pengaturan', { ...atur, penyedia: 'fonnte' })).status, 400, 'token wajib');
+    assert.equal((await a.put('/api/admin/pesan/pengaturan', { ...atur, penyedia: 'manual', pengingatJam: '21:30' })).status, 400, 'pengingat harus sebelum batas');
     assert.equal((await a.put('/api/admin/pesan/pengaturan', { ...atur, penyedia: 'fonnte', token: 'TOKEN-UJI' })).status, 200);
     const info = (await a.get('/api/admin/pesan')).data.pengaturan;
     assert.equal(info.tokenTerisi, true);
+    assert.equal(info.nomor, '0812-0000-1717');
     assert.equal(JSON.stringify(info).includes('TOKEN-UJI'), false, 'token tidak pernah dikirim ke peramban');
     const uji = await a.post('/api/admin/pesan/uji', { hp: '+62 812-0000-9999' });
     assert.equal(uji.data.status, 'terkirim');
@@ -243,16 +355,26 @@ test('pesan otomatis: laporan harian guru, tagihan tiap 3 hari, gateway, dan pen
     jawab = { status: true };
     assert.equal((await a.post(`/api/admin/pesan/${gagal.data.id}/ulang`)).data.terkirim, 1);
 
-    // Penjadwal: laporan dibuat sekali setelah 18:00 WIB, tidak berulang di hari yang sama.
-    simpanPengaturan(db, { tagihan_aktif: '0' });
+    // Penjadwal pada hari kedua (tgl2): jam pulang 19:05, pengingat guru 20:00, rekap 21:00; masing-masing sekali.
+    db.prepare('DELETE FROM nilai_harian WHERE kelas_id = ? AND tanggal = ?').run(idKelas('Sayyidah Fatimah'), tgl2);
+    const pukul = (jam: string, t = tgl2) => new Date(`${t}T${jam}:00+07:00`);
+    assert.deepEqual(await detakJadwal(db, pukul('19:04')), {});
     const sebelum = diterima.length;
-    const pukul = (jam: string) => new Date(`${tgl}T${jam}:00+07:00`);
-    assert.deepEqual(await detakJadwal(db, pukul('17:59')), {});
-    const d1 = (await detakJadwal(db, pukul('18:00'))) as { laporan: { dibuat: number; terkirim: number } };
-    assert.equal(d1.laporan.dibuat, 3);
-    assert.equal(d1.laporan.terkirim, 3);
-    assert.equal(diterima.length, sebelum + 3);
-    assert.deepEqual(await detakJadwal(db, pukul('19:30')), {}, 'tidak dikirim dua kali');
+    const d1 = (await detakJadwal(db, pukul('19:05'))) as { pulang: { dibuat: number; terkirim: number } };
+    assert.ok(d1.pulang.dibuat > 0);
+    assert.equal(d1.pulang.terkirim, d1.pulang.dibuat);
+    assert.equal(diterima.length, sebelum + d1.pulang.dibuat);
+    assert.deepEqual(await detakJadwal(db, pukul('19:10')), {}, 'jam pulang tidak dikirim dua kali');
+    const d2 = (await detakJadwal(db, pukul('20:00'))) as { pengingat: { dibuat: number } };
+    assert.ok(d2.pengingat.dibuat > 0, 'guru Sayyidah Fatimah diingatkan');
+    const d3 = (await detakJadwal(db, pukul('21:00'))) as { rekap: { dibuat: number } };
+    assert.equal(d3.rekap.dibuat, 1);
+    // Jadwal yang terlewat (server mati) tidak dikirim terlambat: hari berikutnya pukul 23:30 tidak ada apa-apa.
+    const besok = plus(tgl2, 1) === tgl ? plus(tgl, 1) : plus(tgl2, 1);
+    assert.deepEqual(await detakJadwal(db, pukul('23:30', besok)), {});
+    // Libur: semua pesan otomatis berhenti.
+    simpanPengaturan(db, { jeda_sampai: plus(besok, 1) });
+    assert.deepEqual(await detakJadwal(db, pukul('19:06', plus(besok, 1))), {});
   } finally {
     config.waFonnteUrl = urlLama;
     config.waJedaMs = jedaLama;

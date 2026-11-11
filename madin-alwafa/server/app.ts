@@ -15,6 +15,7 @@ import { ruteLog, rutePengaturan, rutePengumuman, rutePengurus, ruteRingkasan, r
 import { ruteWali } from './routes/wali';
 import { rutePendaftaran } from './routes/pendaftaran';
 import { rutePesan } from './routes/pesan';
+import { ruteHarian } from './routes/harian';
 
 export function buatApp(db: DB) {
   const app = new Hono();
@@ -83,6 +84,7 @@ export function buatApp(db: DB) {
   pengurus.route('/periode', rutePeriode(db));
   pengurus.route('/absensi', ruteAbsensi(db));
   pengurus.route('/nilai', ruteNilai(db));
+  pengurus.route('/harian', ruteHarian(db));
   pengurus.route('/hafalan', ruteHafalan(db));
   pengurus.route('/raport', ruteRaport(db));
   pengurus.route('/syahriah', ruteSyahriah(db));
