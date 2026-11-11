@@ -17,7 +17,7 @@ export default function AkunWali() {
   const s = data?.santri;
   return (
     <>
-      <KepalaHalaman kecil="Akun" judul="Akun & profil" sub="Data ananda tercatat di madrasah. Alamat bisa Anda perbarui sendiri; data lain hubungi pengurus madrasah." />
+      <KepalaHalaman kecil="Akun" judul="Akun & profil" sub="Data ananda tercatat di madrasah. Alamat bisa Anda perbarui sendiri; data lain hubungi madrasah." />
       <div className="grid-2" style={{ alignItems: 'start' }}>
         <section className="kaca kaca--pad">
           {!s ? (

@@ -1,38 +1,55 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Eye, EyeOff, IdCard, LockKeyhole, LogIn, ShieldCheck, UserPlus, UserRound, Users } from 'lucide-react';
+import { Eye, EyeOff, GraduationCap, IdCard, LockKeyhole, LogIn, ShieldCheck, UserPlus, UserRound, Users } from 'lucide-react';
 import { api, GalatApi } from '../../lib/api';
 import { useSesi } from '../../lib/sesi';
-import { Bidang, Pesan, Tombol, useIngat, useJudul } from '../../ui/dasar';
+import { Bidang, Pesan, Tombol, useJudul } from '../../ui/dasar';
 import { LogoLengkap } from '../../ui/Lambang';
 import { PitaDemo } from '../../ui/PitaDemo';
 
-type Jenis = 'wali' | 'pengurus';
+export type Pintu = 'wali' | 'guru' | 'pengurus';
 
-export function Masuk() {
-  useJudul('Masuk');
+/** Pintu masuk yang terakhir dipakai di perangkat ini, agar keluar/sesi habis kembali ke halaman yang sama. */
+export const ingatPintu = (p: Pintu) => {
+  try {
+    localStorage.setItem('madin:pintu', p);
+  } catch {
+    /* tanpa penyimpanan peramban */
+  }
+};
+export const pintuTerakhir = (): string => {
+  try {
+    const p = localStorage.getItem('madin:pintu');
+    return p === 'guru' ? '/guru' : p === 'pengurus' ? '/pengurus' : '/';
+  } catch {
+    return '/';
+  }
+};
+
+const TEKS: Record<Pintu, { sapa: string; sub: string; ikon: typeof Users }> = {
+  wali: { sapa: 'Ahlan wa sahlan', sub: 'Masuk untuk melihat perkembangan ananda.', ikon: Users },
+  guru: { sapa: 'Ruang guru', sub: 'Masuk dengan akun guru dari madrasah.', ikon: GraduationCap },
+  pengurus: { sapa: 'Ruang pengurus', sub: 'Khusus administrator madrasah.', ikon: ShieldCheck },
+};
+
+export function Masuk({ pintu = 'wali' }: { pintu?: Pintu }) {
+  useJudul(pintu === 'wali' ? 'Masuk' : pintu === 'guru' ? 'Masuk guru' : 'Masuk pengurus');
   const { lembaga, demo, muatUlang } = useSesi();
   const navigasi = useNavigate();
-  const [jenis, setJenis] = useIngat<Jenis>('jenis-masuk', 'wali');
+  const jenis = pintu;
   const [id, setId] = useState('');
   const [sandi, setSandi] = useState('');
   const [lihat, setLihat] = useState(false);
   const [sibuk, setSibuk] = useState(false);
   const [galat, setGalat] = useState('');
 
-  const ganti = (j: Jenis) => {
-    setJenis(j);
-    setId('');
-    setSandi('');
-    setGalat('');
-  };
-
   const kirim = async () => {
     setSibuk(true);
     setGalat('');
     try {
       if (jenis === 'wali') await api('POST', '/api/auth/masuk-wali', { nis: id, sandi });
-      else await api('POST', '/api/auth/masuk-pengurus', { username: id, sandi });
+      else await api('POST', '/api/auth/masuk-pengurus', { username: id, sandi, pintu: jenis });
+      ingatPintu(jenis);
       await muatUlang();
       navigasi(jenis === 'wali' ? '/wali' : '/admin', { replace: true });
     } catch (e) {
@@ -53,23 +70,24 @@ export function Masuk() {
             {lembaga.namaArab && <div className="masuk__arab">{lembaga.namaArab}</div>}
             <h1 className="masuk__judul">{lembaga.nama}</h1>
             {lembaga.slogan && <p className="masuk__semboyan">{lembaga.slogan}</p>}
-            <p className="masuk__slogan">Raport, kehadiran, hafalan, dan syahriah ananda, bisa dilihat kapan saja dari ponsel.</p>
+            <p className="masuk__slogan">
+              {jenis === 'wali'
+                ? 'Raport, kehadiran, hafalan, dan syahriah ananda, bisa dilihat kapan saja dari ponsel.'
+                : jenis === 'guru'
+                  ? 'Absen kehadiran, nilai harian, dan absensi santri dalam satu tempat.'
+                  : 'Kelola santri, guru, raport, syahriah, dan pesan otomatis madrasah.'}
+            </p>
           </div>
           <p className="masuk__tanda">{tanda}</p>
         </section>
 
         <section className="kaca kaca--emas kaca--kilau masuk__kartu" aria-labelledby="judul-masuk">
           <div className="tumpuk tumpuk--rapat">
-            <h2 id="judul-masuk">Ahlan wa sahlan</h2>
-            <p className="redup kecil">Masuk sebagai wali santri atau pengurus madrasah.</p>
-          </div>
-          <div className="segmen" role="tablist" style={{ width: '100%' }}>
-            <button role="tab" aria-selected={jenis === 'wali'} onClick={() => ganti('wali')} style={{ flex: 1, justifyContent: 'center' }}>
-              <Users /> Wali santri
-            </button>
-            <button role="tab" aria-selected={jenis === 'pengurus'} onClick={() => ganti('pengurus')} style={{ flex: 1, justifyContent: 'center' }}>
-              <ShieldCheck /> Pengurus
-            </button>
+            <h2 id="judul-masuk" className="baris" style={{ gap: 10 }}>
+              {jenis !== 'wali' && <span className="stat__ikon">{(() => { const I = TEKS[jenis].ikon; return <I />; })()}</span>}
+              {TEKS[jenis].sapa}
+            </h2>
+            <p className="redup kecil">{TEKS[jenis].sub}</p>
           </div>
 
           <form
@@ -129,22 +147,23 @@ export function Masuk() {
             <Pesan jenis="info" judul="Akun demo">
               <div className="tumpuk tumpuk--rapat" style={{ gap: 6 }}>
                 <span>
-                  Wali: NIS <b>{demo.nis}</b> · sandi <b>{demo.sandiWali}</b>
-                  <br />
-                  Pengurus: <b>{demo.username}</b> · sandi <b>{demo.sandi}</b>
+                  {jenis === 'wali' ? (
+                    <>
+                      NIS <b>{demo.nis}</b> · sandi <b>{demo.sandiWali}</b>
+                    </>
+                  ) : (
+                    <>
+                      Nama pengguna <b>{jenis === 'guru' ? demo.guru : demo.username}</b> · sandi <b>{demo.sandi}</b>
+                    </>
+                  )}
                 </span>
                 <button
                   type="button"
                   className="tombol tombol--kecil"
                   style={{ justifySelf: 'start' }}
                   onClick={() => {
-                    if (jenis === 'wali') {
-                      setId(demo.nis);
-                      setSandi(demo.sandiWali);
-                    } else {
-                      setId(demo.username);
-                      setSandi(demo.sandi);
-                    }
+                    setId(jenis === 'wali' ? demo.nis : jenis === 'guru' ? demo.guru : demo.username);
+                    setSandi(jenis === 'wali' ? demo.sandiWali : demo.sandi);
                   }}
                 >
                   Isi otomatis
@@ -154,8 +173,13 @@ export function Masuk() {
           )}
 
           <p className="masuk__kaki">
-            {jenis === 'wali' ? 'Lupa sandi? Hubungi pengurus madrasah. ' : 'Lupa sandi? Minta administrator membuat sandi baru. '}
-            <Link to="/verifikasi">Periksa keaslian raport</Link>
+            {jenis === 'wali' ? (
+              <>
+                Lupa sandi? Hubungi madrasah. <Link to="/verifikasi">Periksa keaslian raport</Link>
+              </>
+            ) : (
+              'Lupa sandi? Minta administrator membuat sandi baru.'
+            )}
           </p>
         </section>
         <p className="masuk__tanda masuk__tanda--bawah">{tanda}</p>

@@ -82,7 +82,7 @@ export default function BerandaWali() {
           </span>
           <div className="isi-penuh">
             <b>Lengkapi foto ananda</b>
-            <div className="redup kecil">Foto dipakai di kartu santri digital dan memudahkan ustadz mengenali ananda.</div>
+            <div className="redup kecil">Foto dipakai di kartu santri digital dan memudahkan madrasah mengenali ananda.</div>
           </div>
           <Tombol varian="utama" ukuran="kecil" ikon={<Camera />} onClick={() => setFoto(true)}>
             Ambil foto
@@ -217,7 +217,7 @@ export default function BerandaWali() {
           ) : (
             <div className="tumpuk tumpuk--rapat">
               <Lencana jenis="waspada">Belum tercatat{d.syahriah.nominal ? ` · ${rupiah(d.syahriah.nominal)}` : ''}</Lencana>
-              <span className="redup-2 kecil">Pembayaran dicatat oleh pengurus madrasah.</span>
+              <span className="redup-2 kecil">Pembayaran dicatat oleh madrasah.</span>
             </div>
           )}
           {d.syahriah.tunggakan > 0 && (
@@ -245,7 +245,7 @@ export default function BerandaWali() {
                   </span>
                   <span className="isi-penuh">
                     <b>{j.mapel}</b>
-                    {j.pengajar && <span className="redup-2 kecil"> · {j.pengajar}</span>}
+                    
                   </span>
                   {j.mapelArab && (
                     <span className="arab redup" style={{ fontSize: 17 }}>

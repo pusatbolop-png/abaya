@@ -79,5 +79,5 @@ export function nilaiAkhir(n: { harian: number | null; uts: number | null; uas: 
 }
 
 /** Peran akun pengurus. Ustadz mengisi absensi, nilai, hafalan, dan raport; administrator mengelola semuanya. */
-export const PERAN_PENGURUS = { admin: 'Administrator', ustadz: 'Ustadz / Ustadzah' } as const;
+export const PERAN_PENGURUS = { admin: 'Administrator', ustadz: 'Guru' } as const;
 export type PeranPengurus = keyof typeof PERAN_PENGURUS;

@@ -73,7 +73,7 @@ export function ruteWali(db: DB) {
     const jadwalHariIni = s.kelas_id
       ? semua(
           db,
-          `SELECT j.jam_mulai AS jamMulai, j.jam_selesai AS jamSelesai, m.nama AS mapel, m.nama_arab AS mapelArab, km.pengajar
+          `SELECT j.jam_mulai AS jamMulai, j.jam_selesai AS jamSelesai, m.nama AS mapel, m.nama_arab AS mapelArab
              FROM jadwal j JOIN mapel m ON m.id = j.mapel_id LEFT JOIN kelas_mapel km ON km.kelas_id = j.kelas_id AND km.mapel_id = j.mapel_id
             WHERE j.kelas_id = ? AND j.hari = ? ORDER BY j.jam_mulai`,
           s.kelas_id,
@@ -236,7 +236,7 @@ export function ruteWali(db: DB) {
     const jadwal = s.kelas_id
       ? semua(
           db,
-          `SELECT j.hari, j.jam_mulai AS jamMulai, j.jam_selesai AS jamSelesai, m.nama AS mapel, m.nama_arab AS mapelArab, m.kitab, km.pengajar
+          `SELECT j.hari, j.jam_mulai AS jamMulai, j.jam_selesai AS jamSelesai, m.nama AS mapel, m.nama_arab AS mapelArab, m.kitab
              FROM jadwal j JOIN mapel m ON m.id = j.mapel_id LEFT JOIN kelas_mapel km ON km.kelas_id = j.kelas_id AND km.mapel_id = j.mapel_id
             WHERE j.kelas_id = ? ORDER BY j.hari, j.jam_mulai`,
           s.kelas_id,
@@ -245,7 +245,7 @@ export function ruteWali(db: DB) {
     const mapel = s.kelas_id
       ? semua(
           db,
-          'SELECT m.nama, m.nama_arab AS namaArab, m.kitab, km.pengajar FROM kelas_mapel km JOIN mapel m ON m.id = km.mapel_id WHERE km.kelas_id = ? ORDER BY m.urutan, m.nama',
+          'SELECT m.nama, m.nama_arab AS namaArab, m.kitab FROM kelas_mapel km JOIN mapel m ON m.id = km.mapel_id WHERE km.kelas_id = ? ORDER BY m.urutan, m.nama',
           s.kelas_id,
         )
       : [];

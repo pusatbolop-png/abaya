@@ -3,6 +3,7 @@ import { Activity, BookOpenCheck, CalendarCheck2, ChevronRight, NotebookPen, Scr
 import { useEffect } from 'react';
 import { usePakai } from '../../lib/pakai';
 import { sisaWaktu, type Pelajaran } from './NilaiHarian';
+import { KartuAbsenSaya } from './AbsenGuru';
 import { useSesi } from '../../lib/sesi';
 import { Bilah, GalatMuat, KepalaHalaman, Lencana, Memuat, Pesan, Stat, TautanTombol, useJudul } from '../../ui/dasar';
 import { namaBulan, namaSemester, rupiah, tanggalHari, tanggalHijriah, tanggalPendek, waktu } from '../../../shared/format';
@@ -131,7 +132,17 @@ export default function Dasbor() {
         />
       </div>
 
-      {d.inputHarian.pelajaran.length > 0 && <InputHarian h={d.inputHarian} />}
+      {pengurus?.peran !== 'admin' && <KartuAbsenSaya ringkas />}
+      {pengurus?.peran === 'admin' && d.inputHarian.pelajaran.length > 0 && <RingkasAbsenGuru />}
+      {d.inputHarian.pelajaran.length > 0 && (
+        <InputHarian
+          h={
+            pengurus?.peran === 'admin'
+              ? d.inputHarian
+              : { ...d.inputHarian, pelajaran: d.inputHarian.pelajaran.filter((p) => p.pengajar === pengurus?.nama), lengkap: d.inputHarian.pelajaran.filter((p) => p.pengajar === pengurus?.nama && p.lengkap).length }
+          }
+        />
+      )}
 
       <div className="dasbor-grid">
         <section className="kaca kaca--pad">
@@ -333,7 +344,32 @@ function GrafikHadir({ tren }: { tren: Ringkasan['tren'] }) {
   );
 }
 
+function RingkasAbsenGuru() {
+  const { data } = usePakai<{ daftar: { id: number; nama: string; status: string | null; terlambat: boolean }[] }>('/api/admin/absen-guru');
+  if (!data?.daftar.length) return null;
+  const hadir = data.daftar.filter((g) => g.status === 'H');
+  const belum = data.daftar.filter((g) => !g.status);
+  return (
+    <section className="kaca kaca--rapat ringkas-absen-guru">
+      <span className="stat__ikon">
+        <Users />
+      </span>
+      <div className="isi-penuh">
+        <b>
+          Kehadiran guru: {hadir.length} dari {data.daftar.length} hadir
+          {hadir.some((g) => g.terlambat) && ` · ${hadir.filter((g) => g.terlambat).length} terlambat`}
+        </b>
+        <div className="redup kecil">{belum.length ? `Belum absen: ${belum.map((g) => g.nama).join(', ')}` : 'Semua guru yang mengajar hari ini sudah absen.'}</div>
+      </div>
+      <Link to="/admin/absen-guru" className="kecil">
+        Absensi guru
+      </Link>
+    </section>
+  );
+}
+
 function InputHarian({ h }: { h: Ringkasan['inputHarian'] }) {
+  if (!h.pelajaran.length) return null;
   const sisa = sisaWaktu(h.jamSekarang, h.batas);
   const belum = h.pelajaran.filter((p) => !p.lengkap);
   return (

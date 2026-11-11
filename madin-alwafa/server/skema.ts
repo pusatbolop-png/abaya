@@ -274,6 +274,21 @@ export const MIGRASI: string[] = [
   -- Satu pesan per penerima per hari untuk pengingat guru, rekap, dan jam pulang.
   CREATE UNIQUE INDEX pesan_kunci ON pesan_keluar(kunci) WHERE kunci IS NOT NULL;
   `,
+
+  /* 4: absensi guru */ `
+  CREATE TABLE absensi_guru (
+    pengurus_id INTEGER NOT NULL REFERENCES pengurus(id) ON DELETE CASCADE,
+    tanggal TEXT NOT NULL,
+    status TEXT NOT NULL CHECK (status IN ('H','I','S','A')),
+    jam TEXT,
+    terlambat INTEGER NOT NULL DEFAULT 0,
+    keterangan TEXT,
+    dicatat_oleh TEXT,
+    diubah TEXT NOT NULL,
+    PRIMARY KEY (pengurus_id, tanggal)
+  );
+  CREATE INDEX absensi_guru_tanggal ON absensi_guru(tanggal);
+  `,
 ];
 
 export function migrasi(db: DB) {

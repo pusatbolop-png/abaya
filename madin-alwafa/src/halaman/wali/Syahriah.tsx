@@ -25,7 +25,7 @@ export default function SyahriahWali() {
       <KepalaHalaman
         kecil="Iuran bulanan"
         judul="Syahriah"
-        sub="Status pembayaran syahriah setiap bulan. Pembayaran dicatat oleh pengurus madrasah."
+        sub="Status pembayaran syahriah setiap bulan. Pembayaran dicatat oleh madrasah."
         aksi={
           data &&
           data.pilihan.length > 1 && (
@@ -74,7 +74,7 @@ export default function SyahriahWali() {
               );
             })}
           </div>
-          <p className="redup-2 kecil">Bila Anda sudah membayar tetapi belum tercatat, hubungi pengurus madrasah dengan menyertakan bukti pembayaran.</p>
+          <p className="redup-2 kecil">Bila Anda sudah membayar tetapi belum tercatat, hubungi madrasah dengan menyertakan bukti pembayaran.</p>
         </>
       )}
     </>

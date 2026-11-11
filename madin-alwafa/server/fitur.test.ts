@@ -382,3 +382,48 @@ test('pesan otomatis: pengingat guru, rekap, jam pulang, tagihan santun, gateway
   }
   tutup(db);
 });
+
+test('pintu masuk terpisah dan absensi guru', async () => {
+  const { db, tutup } = siapkan();
+  await isiDemo(db);
+  const app = buatApp(db);
+  // Guru hanya lewat pintu guru, pengurus hanya lewat pintu pengurus.
+  assert.equal((await klien(app).post('/api/auth/masuk-pengurus', { username: 'admin', sandi: SANDI_DEMO, pintu: 'guru' })).status, 403);
+  assert.equal((await klien(app).post('/api/auth/masuk-pengurus', { username: 'ustadzah', sandi: SANDI_DEMO, pintu: 'pengurus' })).status, 403);
+  const g = klien(app);
+  assert.equal((await g.post('/api/auth/masuk-pengurus', { username: 'ustadzah', sandi: SANDI_DEMO, pintu: 'guru' })).status, 200);
+  const a = klien(app);
+  assert.equal((await a.post('/api/auth/masuk-pengurus', { username: 'admin', sandi: SANDI_DEMO, pintu: 'pengurus' })).status, 200);
+  // Wali tidak melihat nama pengajar.
+  const w = klien(app);
+  const nis = (await w.get('/api/auth/saya')).data.demo.nis;
+  await w.post('/api/auth/masuk-wali', { nis, sandi: 'wafa2026' });
+  assert.equal(JSON.stringify((await w.get('/api/wali/jadwal')).data).includes('pengajar'), false);
+  assert.equal((await w.get('/api/admin/absen-guru')).status, 401, 'wali tidak bisa membuka data guru');
+
+  // Guru mengisi kehadirannya sendiri; izin wajib keterangan.
+  const saya = (await g.get('/api/admin/absen-guru/saya')).data;
+  assert.equal(typeof saya.wajib, 'boolean');
+  assert.equal((await g.post('/api/admin/absen-guru/saya', { status: 'I' })).status, 400);
+  assert.equal((await g.post('/api/admin/absen-guru/saya', { status: 'H' })).status, 200);
+  const sesudah = (await g.get('/api/admin/absen-guru/saya')).data;
+  assert.equal(sesudah.status, 'H');
+  assert.match(sesudah.jam, /^\d\d:\d\d$/);
+  // Guru tidak bisa mengubah absen guru lain; administrator bisa.
+  const idAini = (db.prepare("SELECT id FROM pengurus WHERE nama = 'Ustdz. Nur Aini'").get() as { id: number }).id;
+  const tgl = (db.prepare('SELECT MAX(tanggal) AS t FROM absensi_guru').get() as { t: string }).t;
+  assert.equal((await g.put(`/api/admin/absen-guru/${idAini}`, { tanggal: tgl, status: 'A' })).status, 403);
+  assert.equal((await a.put(`/api/admin/absen-guru/${idAini}`, { tanggal: tgl, status: 'S', keterangan: 'Demam' })).status, 200);
+  const hari = (await a.get(`/api/admin/absen-guru?tanggal=${tgl}`)).data.daftar.find((x: any) => x.id === idAini);
+  assert.equal(hari?.status ?? 'S', 'S');
+  const rekap = (await a.get(`/api/admin/absen-guru/rekap?bulan=${tgl.slice(0, 7)}`)).data.daftar;
+  assert.ok(rekap.some((r: any) => r.H > 0));
+  // Guru yang belum absen ikut diingatkan.
+  const t2 = (db.prepare('SELECT DISTINCT tanggal FROM absensi ORDER BY tanggal DESC LIMIT 1').get() as { tanggal: string }).tanggal;
+  db.prepare('DELETE FROM absensi_guru WHERE tanggal = ?').run(t2);
+  const pengingat = susunPengingatGuru(db, t2);
+  assert.ok(pengingat.some((p) => /Kehadiran (Ustadz|Ustadzah) hari ini \(absensi guru\)/.test(p.isi)));
+  const rekapAdmin = susunRekap(db, t2);
+  assert.match(rekapAdmin[0].isi, /Kehadiran guru: hadir 0[\s\S]*Belum absen:/);
+  tutup(db);
+});

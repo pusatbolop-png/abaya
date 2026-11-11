@@ -91,7 +91,7 @@ export default function LihatRaport() {
                   <div className="baris baris--antara">
                     <div style={{ display: 'grid', minWidth: 0 }}>
                       <b className="potong">{m.nama}</b>
-                      <span className="redup-2 kecil potong">{m.kitab ?? m.pengajar ?? ''}</span>
+                      <span className="redup-2 kecil potong">{m.kitab ?? ''}</span>
                     </div>
                     <div className="baris" style={{ gap: 10 }}>
                       {m.namaArab && (

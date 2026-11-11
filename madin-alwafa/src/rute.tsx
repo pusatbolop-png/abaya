@@ -4,7 +4,7 @@ import { PRATINJAU } from './lib/pratinjau';
 import { SesiProvider, useSesi } from './lib/sesi';
 import { ToastProvider } from './lib/toast';
 import { KonfirmasiProvider, Memuat } from './ui/dasar';
-import { Masuk } from './halaman/umum/Masuk';
+import { Masuk, pintuTerakhir, type Pintu } from './halaman/umum/Masuk';
 import { TidakDitemukan } from './halaman/umum/TidakDitemukan';
 
 const Pasang = lazy(() => import('./halaman/umum/Pasang'));
@@ -18,6 +18,7 @@ const Kelas = lazy(() => import('./halaman/admin/Kelas'));
 const Absensi = lazy(() => import('./halaman/admin/Absensi'));
 const Nilai = lazy(() => import('./halaman/admin/Nilai'));
 const NilaiHarian = lazy(() => import('./halaman/admin/NilaiHarian'));
+const AbsenGuru = lazy(() => import('./halaman/admin/AbsenGuru'));
 const RaportKelas = lazy(() => import('./halaman/admin/Raport'));
 const RaportSantri = lazy(() => import('./halaman/admin/RaportSantri'));
 const CetakRaport = lazy(() => import('./halaman/admin/CetakRaport'));
@@ -57,9 +58,17 @@ function Beranda() {
   return <Masuk />;
 }
 
+/** Halaman masuk guru (/guru) dan pengurus (/pengurus); tidak ditautkan dari halaman wali. */
+function MasukStaf({ pintu }: { pintu: Pintu }) {
+  const { pengurus, wali } = useSesi();
+  if (pengurus) return <Navigate to="/admin" replace />;
+  if (wali) return <Navigate to="/wali" replace />;
+  return <Masuk pintu={pintu} />;
+}
+
 function KhususPengurus() {
   const { pengurus } = useSesi();
-  if (!pengurus) return <Navigate to="/" replace />;
+  if (!pengurus) return <Navigate to={pintuTerakhir()} replace />;
   return tunda(<KerangkaAdmin />);
 }
 function KhususAdmin({ children }: { children: ReactNode }) {
@@ -91,6 +100,8 @@ const router = (PRATINJAU ? createMemoryRouter : createBrowserRouter)([
     children: [
       { path: '/', element: <Beranda /> },
       { path: '/pasang', element: tunda(<Pasang />) },
+      { path: '/guru', element: <MasukStaf pintu="guru" /> },
+      { path: '/pengurus', element: <MasukStaf pintu="pengurus" /> },
       { path: '/verifikasi/:kode?', element: tunda(<Verifikasi />) },
       { path: '/daftar', element: tunda(<Daftar />) },
       { path: '/kartu/:kode', element: tunda(<PeriksaKartu />) },
@@ -106,6 +117,7 @@ const router = (PRATINJAU ? createMemoryRouter : createBrowserRouter)([
           { path: 'absensi', element: tunda(<Absensi />) },
           { path: 'nilai', element: tunda(<Nilai />) },
           { path: 'harian', element: tunda(<NilaiHarian />) },
+          { path: 'absen-guru', element: tunda(<AbsenGuru />) },
           { path: 'raport', element: tunda(<RaportKelas />) },
           { path: 'raport/:santriId/:periodeId', element: tunda(<RaportSantri />) },
           { path: 'hafalan', element: tunda(<Hafalan />) },

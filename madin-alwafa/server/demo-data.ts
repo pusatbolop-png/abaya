@@ -5,6 +5,7 @@ import { hashSandi } from './auth';
 import { simpanPengaturan, sekarang } from './util';
 import { terbitkan } from './domain/raport';
 import { hariKe, hitungUlangHarian } from './domain/harian';
+import { absenGuruHari, catatAbsenGuru } from './domain/absenGuru';
 import { hariIni } from '../shared/format';
 
 export const SANDI_DEMO = 'demo-wafa-2026';
@@ -429,6 +430,23 @@ export async function isiDemo(db: DB) {
     for (const k of dinilai) {
       const [santriId, mapelId] = k.split(':').map(Number);
       hitungUlangHarian(db, santriId, mapelId, periodeKini);
+    }
+  })();
+
+  // Absensi guru 30 hari terakhir (kebanyakan hadir, sesekali terlambat/izin). Hari ini baru sebagian guru yang absen.
+  db.transaction(() => {
+    const hariAbsen = [...hariKini.filter((t) => t >= tambahHari(hari, -30)), ...(hariIniBelajar ? [hari] : [])];
+    for (const t of hariAbsen) {
+      for (const g of absenGuruHari(db, t).filter((x) => x.wajib)) {
+        if (t === hari && g.id % 3 === 0) continue;
+        const x = acak();
+        const jamPertama = g.jamPertama ?? '17:45';
+        const [h, m] = jamPertama.split(':').map(Number);
+        const menit = h * 60 + m + (x < 0.12 ? antara(3, 15) : -antara(5, 25));
+        const jam = `${String(Math.floor(menit / 60)).padStart(2, '0')}:${String(menit % 60).padStart(2, '0')}`;
+        if (x > 0.96) catatAbsenGuru(db, { pengurusId: g.id, tanggal: t, status: 'I', jam: null, jamPertama, keterangan: 'Keperluan keluarga', oleh: g.nama });
+        else catatAbsenGuru(db, { pengurusId: g.id, tanggal: t, status: 'H', jam, jamPertama, keterangan: null, oleh: g.nama });
+      }
     }
   })();
 

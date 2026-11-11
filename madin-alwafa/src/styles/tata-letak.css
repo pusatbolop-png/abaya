@@ -742,3 +742,19 @@
   color: #2a1d05;
   background: linear-gradient(140deg, #fbe9b9, #c9a04c);
 }
+.sisi__ruang {
+  display: inline-block;
+  margin: 10px 0 0 8px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--emas-300);
+  border: 1px solid rgba(239, 220, 179, 0.35);
+}
+.sisi__ruang--guru {
+  color: #93f2e5;
+  border-color: rgba(147, 242, 229, 0.35);
+}

@@ -50,6 +50,7 @@ export function ruteAuth(db: DB) {
       ? {
           username: 'admin',
           sandi: 'demo-wafa-2026',
+          guru: 'ustadzah',
           nis: satu<{ nis: string }>(db, "SELECT s.nis FROM santri s JOIN kelas k ON k.id = s.kelas_id WHERE k.nama = 'Sayyidah Khodijah' ORDER BY s.id LIMIT 1")?.nis ?? '',
           sandiWali: 'wafa2026',
           daftarNis: contohDaftar?.nis ?? '',
@@ -96,12 +97,15 @@ export function ruteAuth(db: DB) {
   });
 
   r.post('/masuk-pengurus', async (c) => {
-    const isi = await bacaIsi(c, z.object({ username: teksWajib('Nama pengguna', 60), sandi: z.string().min(1, 'Sandi wajib diisi.').max(200) }));
+    const isi = await bacaIsi(
+      c,
+      z.object({ username: teksWajib('Nama pengguna', 60), sandi: z.string().min(1, 'Sandi wajib diisi.').max(200), pintu: z.enum(['guru', 'pengurus']).optional() }),
+    );
     const kunci = `p:${alamatIp(c)}:${isi.username.toLowerCase()}`;
     periksaBatas(kunci);
-    const p = satu<{ id: number; sandi: string; aktif: number; nama: string }>(
+    const p = satu<{ id: number; sandi: string; aktif: number; nama: string; peran: string }>(
       db,
-      'SELECT id, sandi, aktif, nama FROM pengurus WHERE username = ?',
+      'SELECT id, sandi, aktif, nama, peran FROM pengurus WHERE username = ?',
       isi.username.trim(),
     );
     const cocok = await cocokSandi(isi.sandi, p?.sandi ?? (await tiruan()));
@@ -109,6 +113,9 @@ export function ruteAuth(db: DB) {
       catatGagal(kunci);
       throw new GalatPengguna(401, p && cocok && !p.aktif ? 'Akun ini dinonaktifkan. Hubungi administrator.' : 'Nama pengguna atau sandi salah.');
     }
+    // Guru dan pengurus masuk lewat pintunya masing-masing.
+    if (isi.pintu === 'guru' && p.peran !== 'ustadz') throw new GalatPengguna(403, 'Akun ini akun pengurus. Masuk lewat halaman masuk pengurus.');
+    if (isi.pintu === 'pengurus' && p.peran !== 'admin') throw new GalatPengguna(403, 'Akun ini akun guru. Masuk lewat halaman masuk guru.');
     bersihkanBatas(kunci);
     db.prepare('UPDATE pengurus SET masuk_terakhir = ? WHERE id = ?').run(sekarang(), p.id);
     buatSesi(c, db, 'pengurus', p.id);
@@ -126,11 +133,11 @@ export function ruteAuth(db: DB) {
       // Wali yang baru mendaftar dan masih menunggu pemeriksaan diberi tahu statusnya, bukan sekadar "sandi salah".
       const tunggu = s && satu<{ sandi: string }>(db, "SELECT sandi FROM pendaftaran_wali WHERE santri_id = ? AND status = 'menunggu' ORDER BY id DESC LIMIT 1", s.id);
       if (tunggu && (await cocokSandi(isi.sandi.trim(), tunggu.sandi))) {
-        throw new GalatPengguna(403, 'Pendaftaran Anda sedang diperiksa pengurus madrasah. Anda akan dihubungi lewat WhatsApp setelah disetujui.');
+        throw new GalatPengguna(403, 'Pendaftaran Anda sedang diperiksa madrasah. Anda akan dihubungi lewat WhatsApp setelah disetujui.');
       }
-      throw new GalatPengguna(401, 'NIS atau sandi salah. Belum punya akun? Pilih Daftar, atau minta sandi kepada pengurus madrasah.');
+      throw new GalatPengguna(401, 'NIS atau sandi salah. Belum punya akun? Pilih Daftar, atau minta sandi kepada madrasah.');
     }
-    if (s.status === 'keluar') throw new GalatPengguna(403, 'Akun santri ini sudah tidak aktif. Hubungi pengurus madrasah.');
+    if (s.status === 'keluar') throw new GalatPengguna(403, 'Akun santri ini sudah tidak aktif. Hubungi madrasah.');
     bersihkanBatas(kunci);
     db.prepare('UPDATE santri SET masuk_terakhir = ? WHERE id = ?').run(sekarang(), s.id);
     buatSesi(c, db, 'wali', s.id);
@@ -160,10 +167,10 @@ export function ruteAuth(db: DB) {
     );
     if (!s || s.status === 'keluar') {
       catatGagal(kunci);
-      throw new GalatPengguna(404, 'NIS tidak ditemukan. Periksa kembali NIS di kartu atau raport ananda, atau hubungi pengurus madrasah.', { nis: 'NIS tidak ditemukan.' });
+      throw new GalatPengguna(404, 'NIS tidak ditemukan. Periksa kembali NIS di kartu atau raport ananda, atau hubungi madrasah.', { nis: 'NIS tidak ditemukan.' });
     }
     if (s.sandi_diganti) {
-      throw new GalatPengguna(409, 'NIS ini sudah memiliki akun wali yang aktif. Silakan masuk. Lupa sandi? Minta pengurus madrasah membuat sandi baru.', {
+      throw new GalatPengguna(409, 'NIS ini sudah memiliki akun wali yang aktif. Silakan masuk. Lupa sandi? Minta madrasah membuat sandi baru.', {
         nis: 'Sudah terdaftar.',
       });
     }

@@ -74,8 +74,7 @@ async function konteks(lebar = 1366, tinggi = 900) {
 }
 
 async function masuk(page, jenis, id, sandi) {
-  await page.goto(ASAL + '/');
-  await page.getByRole('tab', { name: jenis === 'wali' ? 'Wali santri' : 'Pengurus' }).click();
+  await page.goto(ASAL + (jenis === 'wali' ? '/' : `/${jenis}`));
   await page.getByLabel(jenis === 'wali' ? 'Nomor Induk Santri (NIS)' : 'Nama pengguna').fill(id);
   await page.getByLabel('Sandi', { exact: true }).fill(sandi);
   await page.getByRole('button', { name: 'Masuk', exact: true }).click();
@@ -156,11 +155,27 @@ try {
       harus(isolasi === 'isolate', 'body bukan konteks tumpukan: lapisan latar tertutup');
       await tag.evaluate((el) => el.remove());
     });
-    await cek('tab pengurus/wali mengganti label isian', async () => {
-      await page.getByRole('tab', { name: 'Pengurus' }).click();
-      await page.getByLabel('Nama pengguna').waitFor();
-      await page.getByRole('tab', { name: 'Wali santri' }).click();
+    await cek('halaman masuk wali tidak menyebut pengurus atau guru', async () => {
       await page.getByLabel('Nomor Induk Santri (NIS)').waitFor();
+      const teks = (await page.locator('main').innerText()).toLowerCase();
+      for (const kata of ['pengurus', 'guru', 'ustadz', 'pengajar', 'administrator']) harus(!teks.includes(kata), `halaman wali memuat kata "${kata}"`);
+      harus(!(await page.getByLabel('Nama pengguna').count()), 'isian nama pengguna tampil di halaman wali');
+    });
+    await cek('pintu guru dan pengurus terpisah', async () => {
+      await page.goto(ASAL + '/guru');
+      await page.getByRole('heading', { name: 'Ruang guru' }).waitFor();
+      await page.getByLabel('Nama pengguna').fill('admin');
+      await page.getByLabel('Sandi', { exact: true }).fill(SANDI);
+      await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+      await page.getByText('Akun ini akun pengurus').waitFor();
+      await page.goto(ASAL + '/pengurus');
+      await page.getByRole('heading', { name: 'Ruang pengurus' }).waitFor();
+      await page.getByLabel('Nama pengguna').fill('ustadzah');
+      await page.getByLabel('Sandi', { exact: true }).fill(SANDI);
+      await page.getByRole('button', { name: 'Masuk', exact: true }).click();
+      await page.getByText('Akun ini akun guru').waitFor();
+      await aksesibel(page, 'masuk pengurus');
+      await page.goto(ASAL + '/');
     });
     await cek('tombol mata menampilkan dan menyembunyikan sandi', async () => {
       const sandi = page.getByLabel('Sandi', { exact: true });
@@ -177,7 +192,7 @@ try {
       await page.getByText('NIS atau sandi salah').waitFor();
     });
     await cek('sandi pengurus salah memberi pesan jelas', async () => {
-      await page.getByRole('tab', { name: 'Pengurus' }).click();
+      await page.goto(ASAL + '/pengurus');
       await page.getByLabel('Nama pengguna').fill('admin');
       await page.getByLabel('Sandi', { exact: true }).fill('salah-sekali');
       await page.getByRole('button', { name: 'Masuk', exact: true }).click();
@@ -185,6 +200,7 @@ try {
     });
     await cek('aksesibilitas halaman masuk', () => aksesibel(page, 'masuk'));
     await cek('tautan verifikasi raport', async () => {
+      await page.goto(ASAL + '/');
       await page.getByRole('link', { name: 'Periksa keaslian raport' }).click();
       await page.waitForURL('**/verifikasi');
       await page.getByRole('heading', { name: 'Verifikasi raport' }).waitFor();
@@ -296,7 +312,8 @@ try {
     for (const [nama, alamat] of [
       ['Data santri', '/admin/santri'],
       ['Kelas & pelajaran', '/admin/kelas'],
-      ['Absensi', '/admin/absensi'],
+      ['Absensi guru', '/admin/absen-guru'],
+      ['Absensi santri', '/admin/absensi'],
       ['Nilai harian', '/admin/harian'],
       ['Nilai semester', '/admin/nilai'],
       ['Raport', '/admin/raport'],
@@ -792,6 +809,23 @@ try {
     await p.getByText('Menambah akun pengurus').first().waitFor();
   });
 
+  bagian = 'Admin › Absensi guru';
+  await cek('absensi guru: daftar harian, catat guru, rekap bulanan', async () => {
+    await p.goto(ASAL + '/admin/absen-guru');
+    await p.getByRole('heading', { name: 'Absensi guru' }).waitFor();
+    const tombol = p.getByRole('button', { name: /^Catat kehadiran/ }).first();
+    if (await tombol.count()) {
+      await tombol.click();
+      await dialog(p).getByRole('radio', { name: 'Izin' }).click();
+      await dialog(p).getByLabel('Keterangan').fill('Digantikan Ust. Hasan Basri');
+      await dialog(p).getByRole('button', { name: 'Simpan' }).click();
+      await toast(p, 'dicatat');
+    }
+    await p.getByRole('tab', { name: 'Rekap bulanan' }).click();
+    await p.getByRole('columnheader', { name: 'Terlambat' }).waitFor();
+    await aksesibel(p, 'absensi guru');
+  });
+
   bagian = 'Admin › Nilai harian';
   await cek('nilai harian: pilih pelajaran, isi yang kosong, simpan, dasbor ikut berubah', async () => {
     await p.goto(ASAL + '/admin/harian');
@@ -935,7 +969,7 @@ try {
   for (const lebar of [1440, 1024, 768, 390, 320]) {
     await cek(`semua halaman pengurus muat di ${lebar}px`, async () => {
       await p.setViewportSize({ width: lebar, height: 860 });
-      for (const alamat of ['/admin', '/admin/santri', '/admin/kelas', '/admin/absensi', '/admin/nilai', '/admin/raport', '/admin/hafalan', '/admin/syahriah', '/admin/pengumuman', '/admin/pesan', '/admin/harian', '/admin/pengaturan', '/admin/akun']) {
+      for (const alamat of ['/admin', '/admin/santri', '/admin/kelas', '/admin/absensi', '/admin/nilai', '/admin/raport', '/admin/hafalan', '/admin/syahriah', '/admin/pengumuman', '/admin/pesan', '/admin/harian', '/admin/absen-guru', '/admin/pengaturan', '/admin/akun']) {
         await p.goto(ASAL + alamat);
         await p.locator('.kepala-halaman h1').first().waitFor();
         await tunggu(150);
@@ -961,9 +995,9 @@ try {
     await p.setViewportSize({ width: 1366, height: 900 });
     await p.goto(ASAL + '/admin');
     await p.getByRole('button', { name: 'Keluar' }).click();
-    await p.waitForURL(ASAL + '/');
+    await p.waitForURL(ASAL + '/pengurus');
     await p.goto(ASAL + '/admin');
-    await p.waitForURL(ASAL + '/');
+    await p.waitForURL(ASAL + '/pengurus');
   });
   await ctxAdmin.close();
 
@@ -971,7 +1005,28 @@ try {
   bagian = 'Ustadz';
   {
     const { ctx, page } = await konteks(1366, 900);
-    await cek('masuk sebagai ustadzah', () => masuk(page, 'pengurus', 'ustadzah', SANDI));
+    await cek('masuk sebagai ustadzah lewat pintu guru', () => masuk(page, 'guru', 'ustadzah', SANDI));
+    await cek('ruang guru: menu khusus guru, absen hadir dari dasbor', async () => {
+      await page.locator('.sisi').getByText('Ruang guru').waitFor();
+      for (const tidak of ['Kelas & pelajaran', 'Pengaturan', 'Syahriah', 'Pesan otomatis']) {
+        harus(!(await page.locator('.sisi').getByRole('link', { name: tidak, exact: true }).count()), `menu ${tidak} tampil untuk guru`);
+      }
+      await page.getByRole('heading', { name: 'Kehadiran saya hari ini' }).waitFor();
+      const tombol = page.getByRole('button', { name: /Absen hadir/ });
+      if (await tombol.count()) {
+        await tombol.click();
+        await toast(page, 'Kehadiran tercatat');
+      }
+      await page.locator('.sisi').getByRole('link', { name: 'Kehadiran saya', exact: true }).click();
+      await page.waitForURL('**/admin/absen-guru');
+      await page.getByText(/Rekap /).first().waitFor();
+      await aksesibel(page, 'kehadiran guru');
+    });
+    await cek('guru melihat pelajarannya sendiri di nilai harian', async () => {
+      await page.goto(ASAL + '/admin/harian');
+      await page.getByRole('tab', { name: 'Pelajaran saya' }).waitFor();
+      harus((await page.getByRole('tab', { name: 'Pelajaran saya' }).getAttribute('aria-selected')) === 'true', 'bawaan guru bukan pelajaran saya');
+    });
     await cek('menu syahriah tidak tampil dan alamatnya ditolak', async () => {
       harus(!(await page.locator('.sisi').getByRole('link', { name: 'Syahriah', exact: true }).count()), 'menu syahriah tampil');
       await page.goto(ASAL + '/admin/syahriah');
@@ -985,11 +1040,11 @@ try {
       await page.locator('tbody tr').first().waitFor();
       harus(!(await page.getByRole('button', { name: /^Terbitkan/ }).count()), 'tombol terbitkan tampil');
     });
-    await cek('pengaturan hanya bisa dibaca', async () => {
-      await page.goto(ASAL + '/admin/pengaturan');
-      await page.getByText('Hanya administrator yang bisa mengubah pengaturan.').waitFor();
-      harus(!(await page.getByRole('button', { name: 'Simpan pengaturan' }).count()), 'tombol simpan tampil');
-      harus(!(await page.getByRole('tab', { name: 'Akun pengurus' }).count()), 'tab akun pengurus tampil');
+    await cek('keluar dari ruang guru kembali ke pintu guru', async () => {
+      await page.goto(ASAL + '/admin');
+      await page.getByRole('button', { name: 'Keluar' }).click();
+      await page.waitForURL(ASAL + '/guru');
+      await masuk(page, 'guru', 'ustadzah', SANDI);
     });
     await cek('bisa mengisi absensi', async () => {
       await page.goto(ASAL + '/admin/absensi');

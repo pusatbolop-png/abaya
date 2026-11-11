@@ -30,7 +30,7 @@ export interface Wali {
 
 export interface Saya {
   lembaga: Lembaga;
-  demo: { username: string; sandi: string; nis: string; sandiWali: string; daftarNis: string; daftarHp: string } | null;
+  demo: { username: string; sandi: string; nis: string; sandiWali: string; guru: string; daftarNis: string; daftarHp: string } | null;
   perluPasang: boolean;
   pengurus: Pengurus | null;
   wali: Wali | null;

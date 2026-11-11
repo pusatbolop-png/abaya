@@ -13,7 +13,7 @@ export default function HafalanWali() {
   data?.daftar.forEach((h) => perBulan.set(h.tanggal.slice(0, 7), [...(perBulan.get(h.tanggal.slice(0, 7)) ?? []), h]));
   return (
     <>
-      <KepalaHalaman kecil="المحفوظات" judul="Hafalan" sub="Setoran hafalan Al-Qur'an, nadzom, serta do'a dan hadits yang disimak ustadz/ustadzah." />
+      <KepalaHalaman kecil="المحفوظات" judul="Hafalan" sub="Setoran hafalan Al-Qur'an, nadzom, serta do'a dan hadits yang disimak di madrasah." />
       {galat ? (
         <GalatMuat galat={galat} ulang={muatUlang} />
       ) : !data ? (

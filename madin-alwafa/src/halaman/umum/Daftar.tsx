@@ -78,7 +78,7 @@ export default function Daftar() {
                 </span>
                 <h1 className="judul-hias">Pendaftaran terkirim</h1>
                 <p className="redup">
-                  Nomor WhatsApp yang Anda masukkan belum tercatat di madrasah, jadi pengurus akan memeriksanya lebih dulu. Anda akan dihubungi lewat WhatsApp setelah disetujui,
+                  Nomor WhatsApp yang Anda masukkan belum tercatat di madrasah, jadi madrasah akan memeriksanya lebih dulu. Anda akan dihubungi lewat WhatsApp setelah disetujui,
                   lalu bisa masuk dengan NIS ananda <b>{hasil.nama}</b> dan sandi yang baru Anda buat.
                 </p>
                 <Link to="/" className="tombol tombol--penuh">
@@ -180,7 +180,7 @@ export default function Daftar() {
               label="Nomor WhatsApp aktif"
               wajib
               galat={bidang.hp}
-              bantu="Pakai nomor yang dulu diberikan ke madrasah agar akun langsung aktif. Nomor lain akan diperiksa pengurus lebih dulu."
+              bantu="Pakai nomor yang dulu diberikan ke madrasah agar akun langsung aktif. Nomor lain akan diperiksa madrasah lebih dulu."
             >
               <div className="masukan-ikon">
                 <MessageCircle />

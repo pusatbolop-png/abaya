@@ -31,7 +31,7 @@ export default function AbsensiWali() {
 
   return (
     <>
-      <KepalaHalaman kecil="الحضور" judul="Kehadiran" sub="Kehadiran ananda di setiap pertemuan madrasah, dicatat oleh ustadz/ustadzah." />
+      <KepalaHalaman kecil="الحضور" judul="Kehadiran" sub="Kehadiran ananda di setiap pertemuan madrasah, dicatat oleh madrasah." />
       {galat ? (
         <GalatMuat galat={galat} ulang={muatUlang} />
       ) : (

@@ -13,6 +13,7 @@ import {
   jalankanTagihan,
   jamKirimPulang,
   jamWib,
+  belumAbsenGuru,
   kekuranganGuru,
   kirimAntrean,
   susunPulang,
@@ -60,9 +61,10 @@ export function rutePesan(db: DB) {
     const tunggakan = tunggakanSyahriah(db);
     const hari = hariIni();
     const pelajaran = pelajaranHari(db, hari);
+    const belumAbsen = belumAbsenGuru(db, hari);
     const belumInput = guru
-      .map((g) => ({ ...g, ...kekuranganGuru(pelajaran, g.nama) }))
-      .filter((g) => g.nilai.length || g.absensi.length)
+      .map((g) => ({ ...g, ...kekuranganGuru(pelajaran, g.nama, belumAbsen.has(g.id)) }))
+      .filter((g) => g.nilai.length || g.absensi.length || g.absenDiri)
       .map((g) => ({ nama: g.nama, punyaHp: !!g.hp?.trim(), nilai: g.nilai.length, absensi: g.absensi.length }));
     const terkirimHariIni = (jenis: string) =>
       satu<{ n: number }>(db, "SELECT COUNT(*) AS n FROM pesan_keluar WHERE jenis = ? AND kunci LIKE ?", jenis, `${jenis}:${hari}:%`)!.n;

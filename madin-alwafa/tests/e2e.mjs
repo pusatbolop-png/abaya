@@ -36,8 +36,7 @@ try {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => galat.push(`${page.url()} ${e.message}`));
     page.on('console', (m) => m.type() === 'error' && galat.push(`${page.url()} ${m.text()}`));
-    await page.goto(ASAL);
-    await page.getByRole('tab', { name: jenis === 'wali' ? 'Wali santri' : 'Pengurus' }).click();
+    await page.goto(ASAL + (jenis === 'wali' ? '/' : '/pengurus'));
     await page.getByRole('button', { name: 'Isi otomatis' }).click();
     await page.getByRole('button', { name: 'Masuk', exact: true }).click();
     await page.waitForURL(jenis === 'wali' ? '**/wali' : '**/admin');

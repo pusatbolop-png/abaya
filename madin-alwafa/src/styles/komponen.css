@@ -1262,3 +1262,8 @@ input[type='time'].masukan {
   height: 18px;
   color: #34d399;
 }
+.pita-demo a {
+  color: #f8eedb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

@@ -10,6 +10,7 @@ import { config } from '../config';
 import { ambilPengaturan, catatLog, lembaga, normalHp, rapikanHp, satu, semua, sekarang, simpanPengaturan, type Pengaturan } from '../util';
 import { bulanTahunAjaran, hariIni, namaBulan, rupiah, tanggalHari } from '../../shared/format';
 import { pelajaranHari, type PelajaranHari } from './harian';
+import { absenGuruHari } from './absenGuru';
 
 export type JenisPesan = 'laporan' | 'rekap' | 'pengingat' | 'tagihan' | 'pulang' | 'uji';
 
@@ -127,26 +128,33 @@ function guruBerhp(db: DB): Guru[] {
 const sama = (a: string | null | undefined, b: string) => !!a && a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /** Kekurangan input seorang guru pada satu tanggal: nilai pelajaran yang diajarnya dan absensi kelas walinya. */
-export function kekuranganGuru(pelajaran: PelajaranHari[], nama: string) {
+export function kekuranganGuru(pelajaran: PelajaranHari[], nama: string, belumAbsenDiri = false) {
   const nilai = pelajaran.filter((p) => sama(p.pengajar, nama) && !p.lengkap && p.wajib > 0);
   const absensi = [...new Map(pelajaran.filter((p) => sama(p.waliKelas, nama) && !p.absensiTerisi).map((p) => [p.kelasId, p.kelas])).values()];
-  return { nilai, absensi };
+  return { nilai, absensi, absenDiri: belumAbsenDiri };
+}
+
+/** Id guru yang wajib absen pada tanggal itu tetapi belum mengisi kehadirannya. */
+export function belumAbsenGuru(db: DB, tanggal: string) {
+  return new Set(absenGuruHari(db, tanggal).filter((g) => g.wajib && !g.status).map((g) => g.id));
 }
 
 export function susunPengingatGuru(db: DB, tanggal: string) {
   const p = ambilPengaturan(db);
   const lmb = lembaga(p);
   const pelajaran = pelajaranHari(db, tanggal);
+  const belumAbsen = belumAbsenGuru(db, tanggal);
   const hasil: { pengurusId: number; nama: string; hp: string; isi: string }[] = [];
   for (const g of guruBerhp(db)) {
-    const k = kekuranganGuru(pelajaran, g.nama);
-    if (!k.nilai.length && !k.absensi.length) continue;
+    const k = kekuranganGuru(pelajaran, g.nama, belumAbsen.has(g.id));
+    if (!k.nilai.length && !k.absensi.length && !k.absenDiri) continue;
     const sapa = panggilanGuru(g.nama);
     const baris = [
       SALAM,
       '',
       `${g.nama} yang kami hormati,`,
       `jazakumullahu khairan atas pengabdian ${sapa} hari ini. Dengan hormat kami mengingatkan, input harian berikut belum lengkap:`,
+      ...(k.absenDiri ? [`• Kehadiran ${sapa} hari ini (absensi guru)`] : []),
       ...k.absensi.map((kelas) => `• Absensi kelas ${kelas}`),
       ...k.nilai.map((x) => `• Nilai ${x.mapel} · ${x.kelas}: ${x.terisi} dari ${x.wajib} santri`),
       '',
@@ -212,7 +220,16 @@ export function susunRekap(db: DB, tanggal: string) {
     const lengkap = pelajaran.filter((x) => milik.includes(x.kelasId) && x.lengkap).length;
     const semuaPel = pelajaran.filter((x) => milik.includes(x.kelasId)).length;
     baris.push('', `Input nilai harian: *${lengkap} dari ${semuaPel}* pelajaran lengkap sampai pukul ${jamTeks(p.batas_input_jam)} WIB.`);
-    if (total) baris.push(`Kehadiran: *${Math.round((hadir / total) * 100)}%* dari ${total} santri yang diabsen.`);
+    if (total) baris.push(`Kehadiran santri: *${Math.round((hadir / total) * 100)}%* dari ${total} santri yang diabsen.`);
+    if (g.peran === 'admin') {
+      const guru = absenGuruHari(db, tanggal).filter((x) => x.wajib);
+      if (guru.length) {
+        const st = (s: string) => guru.filter((x) => x.status === s);
+        baris.push(`Kehadiran guru: hadir ${st('H').length}${st('H').filter((x) => x.terlambat).length ? ` (${st('H').filter((x) => x.terlambat).length} terlambat)` : ''}, izin ${st('I').length}, sakit ${st('S').length}, alpa ${st('A').length} dari ${guru.length} guru.`);
+        const belum = guru.filter((x) => !x.status);
+        if (belum.length) baris.push(`Belum absen: ${belum.map((x) => x.nama).join(', ')}.`);
+      }
+    }
     if (g.peran === 'admin') {
       const bayar = satu<{ n: number; jumlah: number | null }>(db, 'SELECT COUNT(*) AS n, SUM(nominal) AS jumlah FROM syahriah WHERE tanggal_bayar = ?', tanggal)!;
       const daftar = satu<{ n: number }>(db, "SELECT COUNT(*) AS n FROM pendaftaran_wali WHERE status = 'menunggu'")!.n;

@@ -52,7 +52,7 @@ export default function JadwalWali() {
                           </div>
                           <span className="redup-2 kecil angka">
                             {j.jamMulai}–{j.jamSelesai}
-                            {j.pengajar && ` · ${j.pengajar}`}
+                            
                           </span>
                         </div>
                       ))}
@@ -78,7 +78,7 @@ export default function JadwalWali() {
                         )}
                       </td>
                       <td className="redup">{m.kitab ?? '–'}</td>
-                      <td className="redup-2 kecil">{m.pengajar ?? '–'}</td>
+                      
                     </tr>
                   ))}
                 </tbody>

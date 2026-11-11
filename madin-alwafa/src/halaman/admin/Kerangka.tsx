@@ -13,6 +13,7 @@ import {
   School,
   ScrollText,
   Settings,
+  UserCheck,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -21,6 +22,7 @@ import { useSesi } from '../../lib/sesi';
 import { Avatar, Tombol } from '../../ui/dasar';
 import { Lambang } from '../../ui/Lambang';
 import { PitaDemo } from '../../ui/PitaDemo';
+import { pintuTerakhir } from '../umum/Masuk';
 import { PERAN_PENGURUS } from '../../../shared/konstanta';
 
 const MENU = [
@@ -29,13 +31,14 @@ const MENU = [
     kelompok: 'Santri',
     isi: [
       { ke: '/admin/santri', label: 'Data santri', ikon: Users },
-      { ke: '/admin/kelas', label: 'Kelas & pelajaran', ikon: School },
+      { ke: '/admin/kelas', label: 'Kelas & pelajaran', ikon: School, admin: true },
     ],
   },
   {
     kelompok: 'Kegiatan belajar',
     isi: [
-      { ke: '/admin/absensi', label: 'Absensi', ikon: CalendarCheck2 },
+      { ke: '/admin/absen-guru', label: 'Absensi guru', labelGuru: 'Kehadiran saya', ikon: UserCheck },
+      { ke: '/admin/absensi', label: 'Absensi santri', ikon: CalendarCheck2 },
       { ke: '/admin/harian', label: 'Nilai harian', ikon: ClipboardCheck },
       { ke: '/admin/nilai', label: 'Nilai semester', ikon: NotebookPen },
       { ke: '/admin/raport', label: 'Raport', ikon: ScrollText },
@@ -48,7 +51,7 @@ const MENU = [
       { ke: '/admin/syahriah', label: 'Syahriah', ikon: Wallet, admin: true },
       { ke: '/admin/pengumuman', label: 'Pengumuman', ikon: Megaphone },
       { ke: '/admin/pesan', label: 'Pesan otomatis', ikon: MessageCircle, admin: true },
-      { ke: '/admin/pengaturan', label: 'Pengaturan', ikon: Settings },
+      { ke: '/admin/pengaturan', label: 'Pengaturan', ikon: Settings, admin: true },
     ],
   },
 ];
@@ -85,7 +88,10 @@ export default function KerangkaAdmin() {
       <div className="kerangka-pengurus">
         {buka && <div className="sisi__tutupan" onClick={() => setBuka(false)} />}
         <aside className={`sisi ${buka ? 'sisi--buka' : ''}`} aria-label="Menu pengurus">
-          <div className="sisi__merek">{merek}</div>
+          <div className="sisi__merek">
+            {merek}
+            <span className={`sisi__ruang ${pengurus.peran === 'admin' ? '' : 'sisi__ruang--guru'}`}>{pengurus.peran === 'admin' ? 'Ruang pengurus' : 'Ruang guru'}</span>
+          </div>
           <nav className="sisi__nav">
             {MENU.map((g, i) => (
               <div key={i} style={{ display: 'grid', gap: 2 }}>
@@ -95,7 +101,7 @@ export default function KerangkaAdmin() {
                   .map((m) => (
                     <NavLink key={m.ke} to={m.ke} end={'ujung' in m && m.ujung} className="sisi__tautan">
                       <m.ikon />
-                      {m.label}
+                      {pengurus.peran !== 'admin' && 'labelGuru' in m ? m.labelGuru : m.label}
                       {!!lencana[m.ke] && (
                         <span className="sisi__lencana" aria-label={`${lencana[m.ke]} perlu tindakan`}>
                           {lencana[m.ke]}
@@ -124,7 +130,7 @@ export default function KerangkaAdmin() {
               title="Keluar"
               onClick={async () => {
                 await keluar();
-                navigasi('/', { replace: true });
+                navigasi(pintuTerakhir(), { replace: true });
               }}
             />
           </div>
