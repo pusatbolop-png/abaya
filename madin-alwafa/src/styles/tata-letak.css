@@ -39,12 +39,12 @@
 .kerangka-pengurus {
   display: grid;
   grid-template-columns: var(--lebar-sisi) minmax(0, 1fr);
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--pita));
 }
 .sisi {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
-  height: 100dvh;
+  top: calc(env(safe-area-inset-top, 0px) + var(--pita));
+  height: calc(100dvh - var(--pita) - env(safe-area-inset-top, 0px));
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -149,7 +149,7 @@
 }
 .bilah-atas {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
+  top: calc(env(safe-area-inset-top, 0px) + var(--pita));
   z-index: 15;
   display: none;
   align-items: center;
@@ -290,13 +290,13 @@
 
 /* ——— Kerangka wali ——— */
 .kerangka-wali {
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--pita));
   display: flex;
   flex-direction: column;
 }
 .atas-wali {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
+  top: calc(env(safe-area-inset-top, 0px) + var(--pita));
   z-index: 20;
   border-bottom: 1px solid var(--garis);
   background: rgba(3, 32, 34, 0.62);
@@ -456,7 +456,7 @@
 
 /* ——— Halaman masuk ——— */
 .masuk {
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--pita));
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   align-items: center;
@@ -507,6 +507,9 @@
   font-size: 12.5px;
   color: var(--teks-3);
   letter-spacing: 0.01em;
+}
+.masuk__tanda--bawah {
+  display: none;
 }
 .masuk__fitur {
   display: grid;
@@ -566,9 +569,35 @@
     text-align: center;
   }
   .masuk__logo {
-    width: min(320px, 86%);
+    width: min(300px, 82%);
   }
-  .masuk__fitur {
+  .masuk__fitur,
+  .masuk__slogan,
+  .masuk__hero .masuk__tanda {
     display: none;
+  }
+  .masuk__tanda--bawah {
+    display: block;
+    text-align: center;
+    margin-top: -8px;
+  }
+}
+@media (max-width: 520px) {
+  .masuk {
+    padding-top: 22px;
+    gap: 22px;
+  }
+  .masuk__hero {
+    gap: 12px;
+  }
+  .masuk__arab {
+    font-size: 24px;
+    line-height: 1.5;
+  }
+  .masuk__judul {
+    font-size: 28px;
+  }
+  .masuk__semboyan {
+    font-size: 11px;
   }
 }

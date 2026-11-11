@@ -285,7 +285,7 @@
   gap: 10px;
   flex-wrap: wrap;
   position: sticky;
-  top: 12px;
+  top: calc(12px + var(--pita));
   z-index: 10;
 }
 .bilah-massal .masukan {
@@ -642,7 +642,7 @@
 }
 .bilah-cetak {
   position: sticky;
-  top: 12px;
+  top: calc(12px + var(--pita));
   z-index: 5;
   display: flex;
   align-items: center;

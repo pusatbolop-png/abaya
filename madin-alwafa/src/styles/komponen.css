@@ -894,13 +894,17 @@ input[type='time'].masukan {
 
 /* ——— Pita demo ——— */
 .pita-demo {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 30;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px;
+  height: var(--pita);
+  padding: 0 16px;
+  white-space: nowrap;
+  overflow: hidden;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.01em;

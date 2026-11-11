@@ -7,7 +7,12 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scrollbar-gutter: stable;
+  background: var(--bg);
+  /* tinggi pita demo; 0 bila pita tidak tampil */
+  --pita: 0px;
+}
+html:has(.pita-demo) {
+  --pita: 32px;
 }
 
 body::before {
@@ -22,7 +27,7 @@ body::before {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--bg);
+  /* warna dasar ada di html agar lapisan .latar (z-index -1) tetap terlihat */
   color: var(--teks);
   font-family: var(--f-sans);
   font-size: 15px;

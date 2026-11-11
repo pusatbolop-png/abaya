@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Eye, EyeOff, KeyRound, LogIn, ShieldCheck, UserRound, Users } from 'lucide-react';
+import { Eye, EyeOff, IdCard, LockKeyhole, LogIn, ShieldCheck, UserRound, Users } from 'lucide-react';
 import { api, GalatApi } from '../../lib/api';
 import { useSesi } from '../../lib/sesi';
 import { Bidang, Pesan, Tombol, useIngat, useJudul } from '../../ui/dasar';
@@ -41,6 +41,8 @@ export function Masuk() {
     }
   };
 
+  const tanda = `© ${new Date().getFullYear()} ${lembaga.naungan || lembaga.nama}${lembaga.kota ? ` · ${lembaga.kota}` : ''}`;
+
   return (
     <>
       <PitaDemo />
@@ -53,10 +55,7 @@ export function Masuk() {
             {lembaga.slogan && <p className="masuk__semboyan">{lembaga.slogan}</p>}
             <p className="masuk__slogan">Raport, kehadiran, hafalan, dan syahriah ananda, bisa dilihat kapan saja dari ponsel.</p>
           </div>
-          <p className="masuk__tanda">
-            © {new Date().getFullYear()} {lembaga.naungan || lembaga.nama}
-            {lembaga.kota && <> · {lembaga.kota}</>}
-          </p>
+          <p className="masuk__tanda">{tanda}</p>
         </section>
 
         <section className="kaca kaca--emas kaca--kilau masuk__kartu" aria-labelledby="judul-masuk">
@@ -82,7 +81,7 @@ export function Masuk() {
           >
             <Bidang label={jenis === 'wali' ? 'Nomor Induk Santri (NIS)' : 'Nama pengguna'}>
               <div className="masukan-ikon">
-                {jenis === 'wali' ? <KeyRound /> : <UserRound />}
+                {jenis === 'wali' ? <IdCard /> : <UserRound />}
                 <input
                   className="masukan"
                   value={id}
@@ -98,7 +97,7 @@ export function Masuk() {
             </Bidang>
             <Bidang label="Sandi">
               <div className="masukan-ikon">
-                <KeyRound />
+                <LockKeyhole />
                 <input
                   className="masukan"
                   type={lihat ? 'text' : 'password'}
@@ -151,6 +150,7 @@ export function Masuk() {
             <Link to="/verifikasi">Periksa keaslian raport</Link>
           </p>
         </section>
+        <p className="masuk__tanda masuk__tanda--bawah">{tanda}</p>
       </main>
     </>
   );
