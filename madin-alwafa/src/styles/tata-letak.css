@@ -466,6 +466,8 @@
   padding: 40px var(--tepi);
 }
 .masuk__hero {
+  position: relative;
+  z-index: 1;
   display: grid;
   gap: 26px;
   align-content: center;
@@ -552,6 +554,248 @@
   font-size: 12.5px;
   color: var(--teks-3);
   text-align: center;
+}
+
+/* Tumpukan kartu masuk yang bisa digeser dan berputar */
+.masuk {
+  overflow-x: clip;
+}
+.dek-masuk {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  min-width: 0;
+}
+.dek {
+  --geser-dek: 40%;
+  position: relative;
+  display: grid;
+  width: min(440px, 100%);
+  /* Tiap kartu punya perspektif sendiri (tanpa preserve-3d) agar urutan tumpukan dan sasaran klik selalu mengikuti z-index. */
+  isolation: isolate;
+  touch-action: pan-y;
+}
+.dek--banyak {
+  cursor: grab;
+}
+.dek--diseret {
+  cursor: grabbing;
+  user-select: none;
+}
+.kartu-pintu {
+  --aksen: var(--tosca-400);
+  --aksen-latar: rgba(52, 220, 201, 0.14);
+  grid-area: 1 / 1;
+  position: relative;
+  border-radius: var(--r-xl);
+  padding: clamp(22px, 3vw, 32px);
+  background:
+    radial-gradient(120% 70% at 0% 0%, var(--aksen-latar), transparent 55%),
+    radial-gradient(90% 60% at 100% 100%, rgba(207, 171, 110, 0.1), transparent 60%),
+    linear-gradient(165deg, rgba(13, 78, 78, 0.97), rgba(6, 50, 52, 0.98) 55%, rgba(4, 38, 40, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: var(--bayang-2);
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+  transition:
+    transform 620ms cubic-bezier(0.22, 0.8, 0.2, 1),
+    opacity 520ms ease,
+    filter 520ms ease;
+  will-change: transform;
+  overflow: hidden;
+}
+.kartu-pintu::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(140deg, color-mix(in srgb, var(--aksen) 80%, transparent), transparent 34%, transparent 66%, rgba(239, 220, 179, 0.5));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.kartu-pintu::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--aksen), transparent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+.kartu-pintu--guru {
+  --aksen: #6ee7b7;
+  --aksen-latar: rgba(110, 231, 183, 0.14);
+}
+.kartu-pintu--pengurus {
+  --aksen: var(--emas-400);
+  --aksen-latar: rgba(226, 196, 140, 0.16);
+}
+.kartu-pintu:not(.kartu-pintu--aktif) {
+  cursor: pointer;
+  filter: saturate(0.8) brightness(0.85);
+}
+.dek--diseret .kartu-pintu {
+  transition: none;
+}
+.kartu-pintu__isi {
+  display: grid;
+  gap: 20px;
+  animation: kartu-muncul 420ms ease both;
+}
+@keyframes kartu-muncul {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.kartu-pintu__kepala {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.kartu-pintu__kepala h2 {
+  font-family: var(--f-display);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.05;
+}
+.kartu-pintu__lencana {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: var(--aksen);
+  background: var(--aksen-latar);
+  border: 1px solid color-mix(in srgb, var(--aksen) 40%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.kartu-pintu__lencana svg {
+  width: 23px;
+  height: 23px;
+}
+.kartu-pintu__label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--aksen);
+}
+.kartu-pintu__muka {
+  height: 100%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 20px 8px;
+}
+.kartu-pintu__muka .kartu-pintu__lencana {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+}
+.kartu-pintu__muka .kartu-pintu__lencana svg {
+  width: 34px;
+  height: 34px;
+}
+.kartu-pintu__muka b {
+  font-family: var(--f-display);
+  font-size: 32px;
+  font-weight: 600;
+}
+.kartu-pintu__muka .redup {
+  max-width: 260px;
+}
+.dek__nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+.dek__panah {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--garis);
+  background: var(--kaca-2);
+  color: var(--teks);
+  cursor: pointer;
+  transition: background var(--cepat), border-color var(--cepat);
+}
+.dek__panah:hover {
+  background: var(--kaca-3);
+  border-color: var(--garis-emas);
+}
+.dek__panah svg {
+  width: 18px;
+  height: 18px;
+}
+.dek__pilihan {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(3, 30, 32, 0.55);
+  border: 1px solid var(--garis);
+  min-width: 0;
+}
+.dek__pil {
+  border: 0;
+  background: none;
+  color: var(--teks-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--sedang), color var(--sedang);
+}
+.dek__pil:hover {
+  color: var(--teks);
+}
+.dek__pil[aria-selected='true'] {
+  background: linear-gradient(180deg, var(--emas-400), var(--emas-500));
+  color: #1b1405;
+  box-shadow: 0 6px 18px -8px rgba(207, 171, 110, 0.8);
+}
+.dek__petunjuk {
+  margin-top: -6px;
+  font-size: 12px;
+  color: var(--teks-3);
+}
+@media (max-width: 900px) {
+  .dek {
+    --geser-dek: 24%;
+  }
+}
+@media (max-width: 420px) {
+  .dek__pil {
+    padding: 8px 10px;
+    font-size: 12.5px;
+  }
+  .dek__panah {
+    width: 36px;
+    height: 36px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kartu-pintu,
+  .kartu-pintu__isi {
+    transition: opacity 200ms ease;
+    animation: none;
+  }
 }
 @media (max-width: 900px) {
   .masuk {

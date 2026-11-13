@@ -381,8 +381,8 @@ function isiTagihan(db: DB, s: ReturnType<typeof tunggakanSyahriah>[number]) {
 export async function jalankanTagihan(db: DB, tanggal = hariIni()) {
   const p = ambilPengaturan(db);
   const jeda = Math.min(Math.max(Number(p.tagihan_jeda) || 3, 1), 30);
-  const batas = new Date(`${tanggal}T00:00:00+07:00`);
-  batas.setUTCDate(batas.getUTCDate() - jeda + 1);
+  // Hari paling awal yang masih dihitung "baru saja ditagih", diukur dari tanggal jadwal (bukan jam server).
+  const batas = new Date(Date.parse(`${tanggal}T12:00:00Z`) - (jeda - 1) * 864e5).toISOString().slice(0, 10);
   let dilewati = 0;
   const tanpaNomor: string[] = [];
   const ids = db.transaction(() => {
@@ -392,12 +392,14 @@ export async function jalankanTagihan(db: DB, tanggal = hariIni()) {
         tanpaNomor.push(s.nama);
         continue;
       }
-      const terakhir = satu<{ dibuat: string }>(
+      const terakhir = satu<{ kunci: string | null; dibuat: string }>(
         db,
-        "SELECT dibuat FROM pesan_keluar WHERE jenis = 'tagihan' AND santri_id = ? AND status != 'gagal' ORDER BY dibuat DESC LIMIT 1",
+        "SELECT kunci, dibuat FROM pesan_keluar WHERE jenis = 'tagihan' AND santri_id = ? AND status != 'gagal' ORDER BY dibuat DESC, id DESC LIMIT 1",
         s.id,
       );
-      if (terakhir && new Date(terakhir.dibuat) >= batas) {
+      // Kunci berbentuk tagihan:YYYY-MM-DD:id; pesan lama tanpa kunci memakai tanggal pembuatannya.
+      const tglTerakhir = terakhir ? (terakhir.kunci?.split(':')[1] ?? terakhir.dibuat.slice(0, 10)) : null;
+      if (tglTerakhir && tglTerakhir >= batas && tglTerakhir <= tanggal) {
         dilewati++;
         continue;
       }

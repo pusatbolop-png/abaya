@@ -155,11 +155,40 @@ try {
       harus(isolasi === 'isolate', 'body bukan konteks tumpukan: lapisan latar tertutup');
       await tag.evaluate((el) => el.remove());
     });
-    await cek('halaman masuk wali tidak menyebut pengurus atau guru', async () => {
+    await cek('kartu masuk wali tidak menyebut pengurus atau guru', async () => {
       await page.getByLabel('Nomor Induk Santri (NIS)').waitFor();
-      const teks = (await page.locator('main').innerText()).toLowerCase();
+      // Mode demo menampilkan kartu guru dan pengurus di sampingnya; aplikasi sungguhan hanya punya kartu wali di halaman ini.
+      const teks = (await page.locator('.kartu-pintu--aktif').innerText()).toLowerCase();
       for (const kata of ['pengurus', 'guru', 'ustadz', 'pengajar', 'administrator']) harus(!teks.includes(kata), `halaman wali memuat kata "${kata}"`);
       harus(!(await page.getByLabel('Nama pengguna').count()), 'isian nama pengguna tampil di halaman wali');
+    });
+    await cek('kartu masuk bisa digeser, diklik, dan dipilih lewat tab', async () => {
+      const judul = () => page.locator('.kartu-pintu--aktif h2').innerText();
+      harus((await judul()) === 'Ahlan wa sahlan', 'kartu awal bukan kartu wali');
+      const k = await page.locator('.kartu-pintu--aktif .kartu-pintu__kepala').boundingBox();
+      await page.mouse.move(k.x + k.width / 2, k.y + 10);
+      await page.mouse.down();
+      for (let i = 1; i <= 12; i++) await page.mouse.move(k.x + k.width / 2 - i * 14, k.y + 10);
+      await page.mouse.up();
+      await page.waitForTimeout(700);
+      harus((await judul()) === 'Ruang guru', `geser ke kiri tidak membuka kartu guru: ${await judul()}`);
+      await page.getByRole('button', { name: 'Kartu berikutnya' }).click();
+      harus((await judul()) === 'Ruang pengurus', 'panah berikutnya tidak membuka kartu pengurus');
+      await page.getByRole('button', { name: 'Kartu berikutnya' }).click();
+      harus((await judul()) === 'Ahlan wa sahlan', 'kartu tidak berputar kembali ke wali');
+      await page.getByRole('tab', { name: 'Guru', exact: true }).click();
+      harus((await judul()) === 'Ruang guru', 'tab guru tidak membuka kartu guru');
+      await page.getByRole('tab', { name: 'Guru', exact: true }).press('ArrowRight');
+      harus((await judul()) === 'Ruang pengurus', 'panah keyboard tidak berpindah kartu');
+      await page.waitForTimeout(700); // tunggu animasi putar selesai
+      const samping = page.locator('.kartu-pintu:not(.kartu-pintu--aktif)').filter({ hasText: 'Ahlan wa sahlan' });
+      const kotak = await samping.boundingBox();
+      // Hanya tepi kartu samping yang terlihat di balik kartu aktif.
+      const depan = await page.locator('.kartu-pintu--aktif').boundingBox();
+      await page.mouse.click(kotak.x > depan.x ? depan.x + depan.width + 14 : depan.x - 14, kotak.y + kotak.height / 2);
+      await page.waitForTimeout(700);
+      harus((await judul()) === 'Ahlan wa sahlan', 'klik kartu samping tidak membukanya');
+      await lebarAman(page, 'kartu masuk');
     });
     await cek('pintu guru dan pengurus terpisah', async () => {
       await page.goto(ASAL + '/guru');

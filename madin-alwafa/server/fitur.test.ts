@@ -288,7 +288,7 @@ test('pesan otomatis: pengingat guru, rekap, jam pulang, tagihan santun, gateway
     db.prepare("INSERT INTO syahriah (santri_id, bulan, nominal, tanggal_bayar, metode, dibuat) VALUES (?, ?, 25000, ?, 'tunai', ?)").run(lunas.id, b, hariTagih, hariTagih);
   }
   const t3 = await jalankanTagihan(db, plus(hariTagih, 3));
-  assert.ok(t3.dibuat >= t1.dibuat - 1 && t3.dibuat <= t1.dibuat, 'tiga hari kemudian dikirim lagi, kecuali yang sudah lunas');
+  assert.ok(t3.dibuat >= t1.dibuat - 1 && t3.dibuat <= t1.dibuat, `tiga hari kemudian dikirim lagi, kecuali yang sudah lunas: ${t1.dibuat} -> ${t3.dibuat} (${hariTagih}) ${JSON.stringify(t3)}`);
   assert.equal(
     (db.prepare("SELECT COUNT(*) AS n FROM pesan_keluar WHERE jenis = 'tagihan' AND santri_id = ?").get(lunas.id) as { n: number }).n,
     1,
