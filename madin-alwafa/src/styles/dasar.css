@@ -147,54 +147,38 @@ p {
     radial-gradient(140% 110% at 50% 35%, transparent 58%, rgba(0, 12, 14, 0.42) 100%);
 }
 .latar__bola {
+  /* Gradien radial sudah lembut, jadi tidak perlu filter blur: jauh lebih ringan untuk ponsel. */
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
   opacity: 0.55;
-  will-change: transform;
+  /* Diam: animasi tanpa henti memaksa layar digambar ulang terus dan menguras baterai ponsel. */
 }
 .latar__bola--1 {
   width: 38vmax;
   height: 38vmax;
   left: -8vmax;
   top: 18vh;
-  background: radial-gradient(circle, rgba(64, 232, 214, 0.36), transparent 70%);
-  animation: melayang 26s ease-in-out infinite alternate;
+  background: radial-gradient(circle, rgba(64, 232, 214, 0.3), rgba(64, 232, 214, 0.12) 38%, transparent 70%);
 }
 .latar__bola--2 {
   width: 30vmax;
   height: 30vmax;
   right: -6vmax;
   top: 44vh;
-  background: radial-gradient(circle, rgba(207, 171, 110, 0.22), transparent 70%);
-  animation: melayang 32s ease-in-out -8s infinite alternate-reverse;
+  background: radial-gradient(circle, rgba(207, 171, 110, 0.18), rgba(207, 171, 110, 0.07) 38%, transparent 70%);
 }
 .latar__bola--3 {
   width: 26vmax;
   height: 26vmax;
   left: 40vw;
   top: -10vmax;
-  background: radial-gradient(circle, rgba(10, 186, 181, 0.32), transparent 70%);
-  animation: melayang 38s ease-in-out -14s infinite alternate;
+  background: radial-gradient(circle, rgba(10, 186, 181, 0.26), rgba(10, 186, 181, 0.1) 38%, transparent 70%);
 }
 .latar__butir {
   position: absolute;
   inset: 0;
-  opacity: 0.06;
+  opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: overlay;
-}
-
-@keyframes melayang {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(6vw, -4vh, 0) scale(1.08);
-  }
-  100% {
-    transform: translate3d(-3vw, 5vh, 0) scale(0.96);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -3,11 +3,12 @@
   position: relative;
   background:
     radial-gradient(120% 90% at 0% 0%, rgba(255, 255, 255, 0.075), transparent 46%),
-    linear-gradient(165deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025) 58%, rgba(52, 220, 201, 0.04));
+    linear-gradient(165deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025) 58%, rgba(52, 220, 201, 0.04)),
+    linear-gradient(rgba(4, 44, 46, 0.22), rgba(4, 44, 46, 0.22));
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--r-besar);
-  backdrop-filter: var(--kabur);
-  -webkit-backdrop-filter: var(--kabur);
+  /* Kartu biasa sengaja tanpa backdrop-filter: latarnya gradien halus, jadi hasilnya nyaris sama,
+     tetapi gulir jauh lebih ringan di ponsel. Efek kaca buram tetap dipakai pada lapisan melayang (modal, menu, toast, bilah). */
   box-shadow: var(--bayang-1);
   min-width: 0;
 }
