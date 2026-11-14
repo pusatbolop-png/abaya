@@ -49,6 +49,7 @@ export default function Daftar() {
       <>
         <PitaDemo />
         <main className="halaman-daftar">
+          <div className="masuk__latar" aria-hidden />
           <section className="kaca kaca--emas kaca--kilau halaman-daftar__kartu halaman-daftar__hasil" aria-live="polite">
             {hasil.status === 'aktif' ? (
               <>
@@ -96,6 +97,7 @@ export default function Daftar() {
     <>
       <PitaDemo />
       <main className="halaman-daftar">
+          <div className="masuk__latar" aria-hidden />
         <div className="halaman-daftar__kepala">
           <Link to="/" className="tautan-kembali">
             <ArrowLeft /> Halaman masuk

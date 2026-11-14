@@ -137,10 +137,11 @@ try {
   bagian = 'Umum';
   {
     const { ctx, page } = await konteks();
-    await cek('halaman masuk tampil dengan logo', async () => {
+    await cek('halaman masuk tampil dengan poster Al Wafa’', async () => {
       await page.goto(ASAL + '/');
-      await page.locator('.masuk__logo').waitFor();
-      const lebar = await page.locator('.masuk__logo').evaluate((img) => img.naturalWidth);
+      await page.locator('.masuk__poster img').waitFor();
+      await page.waitForFunction(() => document.querySelector('.masuk__poster img')?.complete);
+      const lebar = await page.locator('.masuk__poster img').evaluate((img) => img.naturalWidth);
       harus(lebar > 0, 'logo tidak termuat');
     });
     await cek('latar tosca tetap tampil walau halaman pembungkus memberi latar putih', async () => {

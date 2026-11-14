@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Eye, EyeOff, GraduationCap, IdCard, LockKeyh
 import { api, GalatApi } from '../../lib/api';
 import { useSesi } from '../../lib/sesi';
 import { Bidang, Pesan, Tombol, useJudul } from '../../ui/dasar';
-import { LogoLengkap } from '../../ui/Lambang';
+import poster from '../../aset/poster-alwafa.webp';
 import { PitaDemo } from '../../ui/PitaDemo';
 
 export type Pintu = 'wali' | 'guru' | 'pengurus';
@@ -109,17 +109,15 @@ export function Masuk({ pintu = 'wali' }: { pintu?: Pintu }) {
     <>
       <PitaDemo />
       <main className="masuk">
+        <div className="masuk__latar" aria-hidden />
         <section className="masuk__hero">
-          <LogoLengkap className="masuk__logo" />
-          <div className="tumpuk" style={{ gap: 10 }}>
-            {lembaga.namaArab && <div className="masuk__arab">{lembaga.namaArab}</div>}
-            <h1 className="masuk__judul">{lembaga.nama}</h1>
-            {lembaga.slogan && <p className="masuk__semboyan">{lembaga.slogan}</p>}
-            <p className="masuk__slogan" key={jenis}>
-              {SLOGAN[jenis]}
-            </p>
-          </div>
-          <p className="masuk__tanda">{tanda}</p>
+          <figure className="masuk__poster">
+            <img src={poster} alt={`${lembaga.naungan || lembaga.nama}${lembaga.kota ? `, ${lembaga.kota}` : ''}`} width={1024} height={1536} draggable={false} />
+          </figure>
+          <h1 className="sr-only">{lembaga.nama}</h1>
+          <p className="masuk__slogan" key={jenis}>
+            {SLOGAN[jenis]}
+          </p>
         </section>
 
         <section className="dek-masuk" aria-label="Masuk">

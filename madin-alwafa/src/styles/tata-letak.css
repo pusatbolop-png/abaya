@@ -454,56 +454,90 @@
   }
 }
 
-/* ——— Halaman masuk ——— */
+/* ——— Halaman masuk ———
+   Laptop: poster Al Wafa’ dalam bingkai emas di kiri, tumpukan kartu masuk di kanan.
+   Ponsel: poster menjadi sampul di atas, lalu kartu masuk naik menimpanya. Latar: poster yang sama, diburamkan dan digelapkan. */
 .masuk {
+  position: relative;
   min-height: calc(100dvh - var(--pita));
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, auto) minmax(0, 460px);
+  justify-content: center;
   align-items: center;
-  gap: clamp(24px, 5vw, 72px);
+  column-gap: clamp(32px, 6vw, 96px);
+  row-gap: 18px;
   max-width: 1240px;
   margin: 0 auto;
-  padding: 40px var(--tepi);
+  padding: 36px var(--tepi) 28px;
+  isolation: isolate;
+}
+.masuk__latar {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42vmax 34vmax at 30% 46%, rgba(239, 220, 179, 0.16), transparent 70%),
+    radial-gradient(60vmax 40vmax at 100% 0%, rgba(52, 220, 201, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(3, 32, 34, 0.74), rgba(3, 26, 28, 0.9) 70%, rgba(2, 20, 22, 0.96)),
+    url('../aset/poster-alwafa-kabur.webp') center / cover no-repeat,
+    #052b2d;
+}
+.masuk__latar::after {
+  /* pola geometris tipis agar latar tidak terasa kosong */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MiIgaGVpZ2h0PSI5MiIgdmlld0JveD0iMCAwIDkyIDkyIiBmaWxsPSJub25lIiBzdHJva2U9IiNmM2RkYTQiIHN0cm9rZS13aWR0aD0iMSI+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDYgNDYpIj4KICAgIDxyZWN0IHg9Ii0xNyIgeT0iLTE3IiB3aWR0aD0iMzQiIGhlaWdodD0iMzQiLz4KICAgIDxyZWN0IHg9Ii0xNyIgeT0iLTE3IiB3aWR0aD0iMzQiIGhlaWdodD0iMzQiIHRyYW5zZm9ybT0icm90YXRlKDQ1KSIvPgogICAgPGNpcmNsZSByPSI4Ii8+CiAgPC9nPgogIDxwYXRoIGQ9Ik0wIDBsMTIgMTJNOTIgMEw4MCAxMk0wIDkybDEyLTEyTTkyIDkyTDgwIDgwTTQ2IDB2MTBNNDYgOTJWODJNMCA0NmgxME05MiA0Nkg4MiIvPgo8L3N2Zz4=');
+  background-size: 92px 92px;
+  opacity: 0.045;
 }
 .masuk__hero {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 26px;
+  gap: 16px;
+  justify-items: center;
   align-content: center;
 }
-.masuk__logo {
-  width: min(460px, 100%);
-  height: auto;
-  filter: drop-shadow(0 18px 36px rgba(0, 40, 36, 0.45));
+.masuk__poster {
+  position: relative;
+  margin: 0;
+  height: min(calc(100dvh - var(--pita) - 140px), 780px);
+  min-height: 460px;
+  aspect-ratio: 2 / 3;
+  max-width: 100%;
+  border-radius: 28px;
+  padding: 7px;
+  background: linear-gradient(150deg, rgba(248, 238, 219, 0.9), rgba(207, 171, 110, 0.55) 30%, rgba(138, 106, 53, 0.5) 55%, rgba(239, 220, 179, 0.85));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 40px 90px -30px rgba(0, 10, 12, 0.9),
+    0 0 120px -20px rgba(52, 220, 201, 0.35);
 }
-.masuk__arab {
-  font-family: var(--f-arab);
-  font-size: clamp(28px, 3.6vw, 40px);
-  line-height: 1.6;
-  color: var(--emas-300);
-  direction: rtl;
-  text-align: left;
+.masuk__poster::after {
+  /* kilau halus di tepi atas bingkai */
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 22px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), inset 0 -60px 80px -60px rgba(3, 30, 32, 0.35);
+  pointer-events: none;
 }
-.masuk__judul {
-  text-wrap: balance;
-  font-family: var(--f-display);
-  font-weight: 600;
-  font-size: clamp(34px, 4.4vw, 54px);
-  line-height: 1.02;
-  letter-spacing: -0.01em;
-}
-.masuk__semboyan {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--emas-300);
+.masuk__poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 22px;
+  background: #e9f6f4;
 }
 .masuk__slogan {
-  font-size: clamp(15px, 1.4vw, 17px);
+  max-width: 420px;
+  text-align: center;
+  font-size: 14px;
   color: var(--teks-2);
-  max-width: 520px;
+  text-wrap: balance;
 }
 .masuk__tanda {
   font-size: 12.5px;
@@ -511,44 +545,60 @@
   letter-spacing: 0.01em;
 }
 .masuk__tanda--bawah {
-  display: none;
+  grid-column: 1 / -1;
+  text-align: center;
 }
-.masuk__fitur {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  max-width: 600px;
+@media (max-width: 900px) {
+  .masuk {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    padding-top: 0;
+    row-gap: 0;
+  }
+  .masuk__hero {
+    margin-inline: calc(-1 * var(--tepi));
+  }
+  .masuk__poster {
+    /* tinggi mengikuti lebar agar nama, Bangil–Pasuruan, dan semboyan selalu terlihat utuh di atas tab */
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 100 / 117;
+    padding: 0;
+    border-radius: 0 0 32px 32px;
+    background: none;
+    box-shadow: 0 30px 60px -30px rgba(0, 10, 12, 0.9);
+    overflow: hidden;
+  }
+  .masuk__poster::after {
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: none;
+    background: linear-gradient(180deg, transparent 62%, rgba(4, 36, 38, 0.55) 86%, rgba(4, 36, 38, 0.92));
+  }
+  .masuk__poster img {
+    border-radius: 0;
+    object-position: 50% 0%;
+  }
+  .masuk__slogan {
+    display: none;
+  }
+  .dek-masuk {
+    position: relative;
+    z-index: 2;
+    margin-top: -40px;
+  }
+  .masuk__tanda--bawah {
+    margin-top: 18px;
+  }
 }
-.masuk__fitur > div {
-  display: grid;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 18px;
-  background: var(--kaca-1);
-  border: 1px solid var(--garis);
-  font-size: 13px;
-  color: var(--teks-2);
-}
-.masuk__fitur svg {
-  width: 20px;
-  height: 20px;
-  color: var(--emas-300);
-}
-.masuk__fitur b {
-  color: var(--teks);
-  font-size: 14px;
-  font-weight: 650;
-}
-.masuk__kartu {
-  padding: clamp(22px, 3vw, 34px);
-  border-radius: var(--r-xl);
-  display: grid;
-  gap: 20px;
-}
-.masuk__kartu h2 {
-  font-family: var(--f-display);
-  font-size: 30px;
-  font-weight: 600;
+@media (min-width: 640px) and (max-width: 900px) {
+  /* tablet: sampul tidak terlalu melebar */
+  .masuk__poster {
+    width: min(560px, 100%);
+    margin-inline: auto;
+    border-radius: 0 0 36px 36px;
+  }
 }
 .masuk__kaki {
   font-size: 12.5px;
@@ -797,55 +847,6 @@
     animation: none;
   }
 }
-@media (max-width: 900px) {
-  .masuk {
-    grid-template-columns: minmax(0, 1fr);
-    align-content: start;
-    padding-top: 28px;
-    gap: 28px;
-  }
-  .masuk__hero {
-    gap: 16px;
-    text-align: center;
-    justify-items: center;
-  }
-  .masuk__arab {
-    text-align: center;
-  }
-  .masuk__logo {
-    width: min(300px, 82%);
-  }
-  .masuk__fitur,
-  .masuk__slogan,
-  .masuk__hero .masuk__tanda {
-    display: none;
-  }
-  .masuk__tanda--bawah {
-    display: block;
-    text-align: center;
-    margin-top: -8px;
-  }
-}
-@media (max-width: 520px) {
-  .masuk {
-    padding-top: 22px;
-    gap: 22px;
-  }
-  .masuk__hero {
-    gap: 12px;
-  }
-  .masuk__arab {
-    font-size: 24px;
-    line-height: 1.5;
-  }
-  .masuk__judul {
-    font-size: 28px;
-  }
-  .masuk__semboyan {
-    font-size: 11px;
-  }
-}
-
 /* ——— Halaman daftar akun wali ——— */
 .halaman-daftar {
   min-height: calc(100dvh - var(--pita));
