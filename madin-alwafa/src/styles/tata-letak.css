@@ -455,149 +455,112 @@
 }
 
 /* ——— Halaman masuk ———
-   Laptop: poster Al Wafa’ dalam bingkai emas di kiri, tumpukan kartu masuk di kanan.
-   Ponsel: poster menjadi sampul di atas, lalu kartu masuk naik menimpanya. Latar: poster yang sama, diburamkan dan digelapkan. */
+   Poster Al Wafa’ menjadi latar penuh dari atas sampai bawah (lapisan tetap), kartu kaca melayang di atasnya.
+   Ponsel/tablet: poster selebar layar di atas, kartu naik menimpa bagian bawah poster.
+   Laptop: poster setinggi layar di kiri, kartu di kanan; sisa layar diisi poster yang sama yang diburamkan. */
 .masuk {
   position: relative;
   min-height: calc(100dvh - var(--pita));
   display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, 460px);
+  grid-template-columns: var(--lebar-poster) minmax(0, var(--lebar-kartu));
   justify-content: center;
-  align-items: center;
-  column-gap: clamp(32px, 6vw, 96px);
-  row-gap: 18px;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 36px var(--tepi) 28px;
-  isolation: isolate;
+  align-content: center;
+  column-gap: var(--sela);
+  row-gap: 14px;
+  padding: 28px var(--tepi) 20px;
 }
-.masuk__latar {
+.masuk .dek-masuk {
+  grid-column: 2;
+}
+:root {
+  --sela: clamp(8px, 3.4vw, 64px);
+  --lebar-kartu: 460px;
+  --tinggi-poster: calc(100dvh - var(--pita));
+  --lebar-poster: calc(var(--tinggi-poster) * 2 / 3);
+}
+.latar-poster {
   position: fixed;
   inset: 0;
   z-index: -1;
+  overflow: hidden;
   pointer-events: none;
   background:
-    radial-gradient(42vmax 34vmax at 30% 46%, rgba(239, 220, 179, 0.16), transparent 70%),
-    radial-gradient(60vmax 40vmax at 100% 0%, rgba(52, 220, 201, 0.16), transparent 70%),
-    linear-gradient(180deg, rgba(3, 32, 34, 0.74), rgba(3, 26, 28, 0.9) 70%, rgba(2, 20, 22, 0.96)),
+    radial-gradient(50vmax 40vmax at 85% 15%, rgba(239, 220, 179, 0.14), transparent 70%),
+    linear-gradient(180deg, rgba(4, 58, 60, 0.36), rgba(3, 40, 42, 0.58)),
     url('../aset/poster-alwafa-kabur.webp') center / cover no-repeat,
-    #052b2d;
+    #0b5b5a;
 }
-.masuk__latar::after {
-  /* pola geometris tipis agar latar tidak terasa kosong */
+.latar-poster::before {
+  /* pola geometris Islami yang sangat tipis, menyambung motif di poster */
   content: '';
   position: absolute;
   inset: 0;
   background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5MiIgaGVpZ2h0PSI5MiIgdmlld0JveD0iMCAwIDkyIDkyIiBmaWxsPSJub25lIiBzdHJva2U9IiNmM2RkYTQiIHN0cm9rZS13aWR0aD0iMSI+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNDYgNDYpIj4KICAgIDxyZWN0IHg9Ii0xNyIgeT0iLTE3IiB3aWR0aD0iMzQiIGhlaWdodD0iMzQiLz4KICAgIDxyZWN0IHg9Ii0xNyIgeT0iLTE3IiB3aWR0aD0iMzQiIGhlaWdodD0iMzQiIHRyYW5zZm9ybT0icm90YXRlKDQ1KSIvPgogICAgPGNpcmNsZSByPSI4Ii8+CiAgPC9nPgogIDxwYXRoIGQ9Ik0wIDBsMTIgMTJNOTIgMEw4MCAxMk0wIDkybDEyLTEyTTkyIDkyTDgwIDgwTTQ2IDB2MTBNNDYgOTJWODJNMCA0NmgxME05MiA0Nkg4MiIvPgo8L3N2Zz4=');
   background-size: 92px 92px;
-  opacity: 0.045;
+  opacity: 0.07;
 }
-.masuk__hero {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 16px;
-  justify-items: center;
-  align-content: center;
+.latar-poster__gambar {
+  position: absolute;
+  top: var(--pita);
+  left: max(calc(50% - (var(--lebar-poster) + var(--sela) + var(--lebar-kartu)) / 2), calc(var(--lebar-poster) * -0.25));
+  width: var(--lebar-poster);
+  height: var(--tinggi-poster);
+  object-fit: cover;
+  object-position: 50% 0%;
+  /* tepi kiri-kanan memudar ke latar buram agar menyatu, tidak tampak ditempel */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
 }
-.masuk__poster {
-  position: relative;
-  margin: 0;
-  height: min(calc(100dvh - var(--pita) - 140px), 780px);
-  min-height: 460px;
-  aspect-ratio: 2 / 3;
-  max-width: 100%;
-  border-radius: 28px;
-  padding: 7px;
-  background: linear-gradient(150deg, rgba(248, 238, 219, 0.9), rgba(207, 171, 110, 0.55) 30%, rgba(138, 106, 53, 0.5) 55%, rgba(239, 220, 179, 0.85));
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 40px 90px -30px rgba(0, 10, 12, 0.9),
-    0 0 120px -20px rgba(52, 220, 201, 0.35);
-}
-.masuk__poster::after {
-  /* kilau halus di tepi atas bingkai */
+.latar-poster::after {
+  /* bayangan lembut di sisi kartu agar kartu kaca terbaca, tanpa menutup poster */
   content: '';
   position: absolute;
-  inset: 7px;
-  border-radius: 22px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), inset 0 -60px 80px -60px rgba(3, 30, 32, 0.35);
-  pointer-events: none;
-}
-.masuk__poster img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 22px;
-  background: #e9f6f4;
-}
-.masuk__slogan {
-  max-width: 420px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--teks-2);
-  text-wrap: balance;
-}
-.masuk__tanda {
-  font-size: 12.5px;
-  color: var(--teks-3);
-  letter-spacing: 0.01em;
-}
-.masuk__tanda--bawah {
-  grid-column: 1 / -1;
-  text-align: center;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0, transparent calc(50% - 40px), rgba(3, 32, 34, 0.42) calc(50% + 120px), rgba(2, 24, 26, 0.62) 100%),
+    radial-gradient(140% 100% at 30% 40%, transparent 55%, rgba(2, 20, 22, 0.45) 100%);
 }
 @media (max-width: 900px) {
+  :root {
+    /* Poster sebesar mungkin tanpa memotong tulisan "Al Wafa' Islamic Center" (lebar tampak ≥ 86% poster),
+       dan di layar tinggi-lebar (tablet) semboyan tetap di 62% atas layar agar kartu kelihatan. */
+    --tinggi-gambar: min(174vw, calc((100svh - var(--pita)) * 0.93));
+  }
   .masuk {
     grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-    padding-top: 0;
-    row-gap: 0;
+    align-content: start;
+    /* kartu mulai tepat di bawah semboyan "Logic – Ethic – Aesthetic" (66% tinggi poster) */
+    padding-top: calc(var(--tinggi-gambar) * 0.655);
   }
-  .masuk__hero {
-    margin-inline: calc(-1 * var(--tepi));
+  .masuk .dek-masuk {
+    grid-column: 1;
   }
-  .masuk__poster {
-    /* tinggi mengikuti lebar agar nama, Bangil–Pasuruan, dan semboyan selalu terlihat utuh di atas tab */
-    width: 100%;
-    height: auto;
-    min-height: 0;
-    aspect-ratio: 100 / 117;
-    padding: 0;
-    border-radius: 0 0 32px 32px;
-    background: none;
-    box-shadow: 0 30px 60px -30px rgba(0, 10, 12, 0.9);
-    overflow: hidden;
+  .latar-poster__gambar {
+    left: 50%;
+    width: calc(var(--tinggi-gambar) * 2 / 3);
+    height: var(--tinggi-gambar);
+    transform: translateX(-50%);
+    /* bawah poster memudar ke latar tosca berpola sehingga menyambung sampai bawah layar */
+    -webkit-mask-image: linear-gradient(180deg, #000 84%, transparent 100%), linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(180deg, #000 84%, transparent 100%), linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    mask-composite: intersect;
   }
-  .masuk__poster::after {
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: none;
-    background: linear-gradient(180deg, transparent 62%, rgba(4, 36, 38, 0.55) 86%, rgba(4, 36, 38, 0.92));
-  }
-  .masuk__poster img {
-    border-radius: 0;
-    object-position: 50% 0%;
-  }
-  .masuk__slogan {
-    display: none;
-  }
-  .dek-masuk {
-    position: relative;
-    z-index: 2;
-    margin-top: -40px;
-  }
-  .masuk__tanda--bawah {
-    margin-top: 18px;
+  .latar-poster::after {
+    /* gelap tipis hanya di bawah semboyan, agar poster tetap tembus di balik kartu kaca */
+    background: linear-gradient(
+      180deg,
+      transparent 0,
+      transparent calc(var(--pita) + var(--tinggi-gambar) * 0.62),
+      rgba(3, 32, 34, 0.3) calc(var(--pita) + var(--tinggi-gambar) * 0.8),
+      rgba(2, 24, 26, 0.55) 100%
+    );
   }
 }
-@media (min-width: 640px) and (max-width: 900px) {
-  /* tablet: sampul tidak terlalu melebar */
-  .masuk__poster {
-    width: min(560px, 100%);
-    margin-inline: auto;
-    border-radius: 0 0 36px 36px;
+@media (max-width: 900px) {
+  .masuk__tanda {
+    grid-column: 1;
+    margin-top: 8px;
   }
 }
 .masuk__kaki {
@@ -639,12 +602,18 @@
   position: relative;
   border-radius: var(--r-xl);
   padding: clamp(22px, 3vw, 32px);
+  /* kaca berasap: poster di belakang tetap terlihat samar, teks tetap terbaca */
   background:
     radial-gradient(120% 70% at 0% 0%, var(--aksen-latar), transparent 55%),
-    radial-gradient(90% 60% at 100% 100%, rgba(207, 171, 110, 0.1), transparent 60%),
-    linear-gradient(165deg, rgba(13, 78, 78, 0.97), rgba(6, 50, 52, 0.98) 55%, rgba(4, 38, 40, 0.98));
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: var(--bayang-2);
+    radial-gradient(90% 60% at 100% 100%, rgba(207, 171, 110, 0.12), transparent 60%),
+    linear-gradient(165deg, rgba(14, 84, 86, 0.42), rgba(6, 52, 54, 0.54) 55%, rgba(4, 38, 40, 0.64));
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 2px 6px rgba(0, 12, 14, 0.25),
+    0 40px 90px -30px rgba(0, 8, 10, 0.85);
   transform-origin: 50% 50%;
   backface-visibility: hidden;
   transition:
@@ -687,7 +656,10 @@
 }
 .kartu-pintu:not(.kartu-pintu--aktif) {
   cursor: pointer;
-  filter: saturate(0.8) brightness(0.85);
+}
+.kartu-pintu:not(.kartu-pintu--aktif) .kartu-pintu__muka {
+  /* kartu di belakang tampil sebagai panel kaca bersih; isinya muncul saat diputar ke depan */
+  opacity: 0;
 }
 .dek--diseret .kartu-pintu {
   transition: none;
@@ -776,8 +748,10 @@
   display: grid;
   place-items: center;
   border-radius: 999px;
-  border: 1px solid var(--garis);
-  background: var(--kaca-2);
+  border: 1px solid var(--garis-2);
+  background: rgba(3, 30, 32, 0.45);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
   color: var(--teks);
   cursor: pointer;
   transition: background var(--cepat), border-color var(--cepat);
@@ -795,7 +769,10 @@
   gap: 4px;
   padding: 4px;
   border-radius: 999px;
-  background: rgba(3, 30, 32, 0.55);
+  background: rgba(3, 30, 32, 0.5);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: 0 10px 30px -12px rgba(0, 10, 12, 0.7);
   border: 1px solid var(--garis);
   min-width: 0;
 }
@@ -821,9 +798,14 @@
   box-shadow: 0 6px 18px -8px rgba(207, 171, 110, 0.8);
 }
 .dek__petunjuk {
-  margin-top: -6px;
+  margin-top: -8px;
+  padding: 3px 12px;
+  border-radius: 999px;
   font-size: 12px;
-  color: var(--teks-3);
+  color: rgba(240, 250, 248, 0.9);
+  background: rgba(3, 30, 32, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 @media (max-width: 900px) {
   .dek {

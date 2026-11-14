@@ -32,12 +32,6 @@ const TEKS: Record<Pintu, { label: string; sapa: string; sub: string; muka: stri
   pengurus: { label: 'Pengurus', sapa: 'Ruang pengurus', sub: 'Khusus administrator madrasah.', muka: 'Santri, guru, raport, syahriah, dan pesan otomatis.', ikon: ShieldCheck },
 };
 
-const SLOGAN: Record<Pintu, string> = {
-  wali: 'Raport, kehadiran, hafalan, dan syahriah ananda, bisa dilihat kapan saja dari ponsel.',
-  guru: 'Absen kehadiran, nilai harian, dan absensi santri dalam satu tempat.',
-  pengurus: 'Kelola santri, guru, raport, syahriah, dan pesan otomatis madrasah.',
-};
-
 let kartuDipilih: { pintu: Pintu; kartu: Pintu } | null = null;
 
 /** Posisi kartu relatif terhadap kartu aktif; untuk tiga kartu atau lebih, susunannya melingkar. */
@@ -110,17 +104,16 @@ export function Masuk({ pintu = 'wali' }: { pintu?: Pintu }) {
   return (
     <>
       <PitaDemo />
+      {/* Poster Al Wafa’ menjadi latar penuh; kartu kaca melayang di atasnya. */}
+      <div className="latar-poster" aria-hidden>
+        <img className="latar-poster__gambar" src={poster} alt="" width={1024} height={1536} draggable={false} />
+      </div>
       <main className="masuk">
-        <div className="masuk__latar" aria-hidden />
-        <section className="masuk__hero">
-          <figure className="masuk__poster">
-            <img src={poster} alt={`${lembaga.naungan || lembaga.nama}${lembaga.kota ? `, ${lembaga.kota}` : ''}`} width={1024} height={1536} draggable={false} />
-          </figure>
-          <h1 className="sr-only">{lembaga.nama}</h1>
-          <p className="masuk__slogan" key={jenis}>
-            {SLOGAN[jenis]}
-          </p>
-        </section>
+        <h1 className="sr-only">
+          {lembaga.nama}
+          {lembaga.naungan ? ` · ${lembaga.naungan}` : ''}
+          {lembaga.kota ? `, ${lembaga.kota}` : ''}
+        </h1>
 
         <section className="dek-masuk" aria-label="Masuk">
           {n > 1 && (
@@ -182,7 +175,7 @@ export function Masuk({ pintu = 'wali' }: { pintu?: Pintu }) {
               const gaya: React.CSSProperties = {
                 transform: `perspective(1400px) translateX(calc(${pos} * var(--geser-dek) + ${seret * 0.9}px)) translateZ(${-jarak * 170}px) rotateY(${sudut}deg) scale(${depan ? 1 : 0.9})`,
                 zIndex: 10 - jarak,
-                opacity: jarak > 1 ? 0 : depan ? 1 : 0.5,
+                opacity: jarak > 1 ? 0 : depan ? 1 : 0.7,
               };
               const I = TEKS[p].ikon;
               return (
