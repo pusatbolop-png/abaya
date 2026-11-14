@@ -191,6 +191,32 @@ try {
       harus((await judul()) === 'Ahlan wa sahlan', 'klik kartu samping tidak membukanya');
       await lebarAman(page, 'kartu masuk');
     });
+    await cek('kartu masuk bisa digeser jari di ponsel, mulai dari kolom isian atau tombol', async () => {
+      const hp = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+      const h = await hp.newPage();
+      await h.goto(ASAL + '/');
+      await h.locator('.kartu-pintu--aktif input').first().waitFor();
+      const cdp = await hp.newCDPSession(h);
+      const judulHp = () => h.locator('.kartu-pintu--aktif h2').innerText();
+      const geserJari = async (sel, dx) => {
+        const el = h.locator(sel).first();
+        await el.scrollIntoViewIfNeeded();
+        const k = await el.boundingBox();
+        const x = k.x + k.width / 2, y = k.y + k.height / 2;
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+        for (let i = 1; i <= 10; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x + (dx * i) / 10, y: y + i }] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await h.waitForTimeout(700);
+      };
+      await geserJari('.kartu-pintu--aktif input', -200);
+      harus((await judulHp()) === 'Ruang guru', `geser dari kolom isian tidak berpindah: ${await judulHp()}`);
+      await geserJari('.kartu-pintu--aktif button[type=submit]', -200);
+      harus((await judulHp()) === 'Ruang pengurus', `geser dari tombol tidak berpindah: ${await judulHp()}`);
+      await geserJari('.kartu-pintu--aktif button[type=submit]', 200);
+      harus((await judulHp()) === 'Ruang guru', 'geser balik tidak berpindah');
+      harus(!h.url().includes('/admin'), 'geser di atas tombol Masuk ikut mengirim formulir');
+      await hp.close();
+    });
     await cek('pintu guru dan pengurus terpisah', async () => {
       await page.goto(ASAL + '/guru');
       await page.getByRole('heading', { name: 'Ruang guru' }).waitFor();

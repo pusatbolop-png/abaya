@@ -75,7 +75,9 @@ export function Masuk({ pintu = 'wali' }: { pintu?: Pintu }) {
   const barusanDiseret = useRef(false);
   const mulai = (e: React.PointerEvent) => {
     if (n < 2 || e.button !== 0) return;
-    if ((e.target as HTMLElement).closest('input, button, a, label, textarea, select')) return;
+    // Jari boleh mulai menggeser dari mana saja di kartu (di ponsel kartu hampir penuh isian dan tombol).
+    // Dengan tetikus, tarikan di dalam kolom isian dibiarkan untuk memilih teks.
+    if (e.pointerType === 'mouse' && (e.target as HTMLElement).closest('input, textarea, select')) return;
     awal.current = { x: e.clientX, y: e.clientY, id: e.pointerId, arah: null };
     barusanDiseret.current = false;
   };
@@ -162,6 +164,14 @@ export function Masuk({ pintu = 'wali' }: { pintu?: Pintu }) {
             onPointerMove={gerak}
             onPointerUp={lepas}
             onPointerCancel={lepas}
+            onClickCapture={(e) => {
+              // Setelah kartu diseret, jangan sampai lepasnya jari dianggap mengetuk tombol atau tautan.
+              if (barusanDiseret.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                barusanDiseret.current = false;
+              }
+            }}
           >
             {daftar.map((p, i) => {
               const pos = posisiKartu(i, aktif, n);
