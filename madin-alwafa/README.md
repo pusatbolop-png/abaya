@@ -119,52 +119,61 @@ npm run e2e          # uji peramban ujung ke ujung (perlu `npm run build`)
 npm run uji:menyeluruh  # tekan setiap tombol semua peran, 5 lebar layar, cek aksesibilitas (perlu `npm run build`)
 ```
 
-## Memasang di VPS (mis. port 3012)
+## Memasang di VPS
+
+Yang dibutuhkan: VPS Ubuntu 22.04/24.04 (1 vCPU, 1–2 GB RAM sudah cukup) dan, sebaiknya, sebuah domain atau subdomain
+(mis. `madin.alwafa.sch.id`) yang DNS-nya (rekaman A) diarahkan ke IP VPS.
 
 ```bash
-git clone <repo> && cd <repo>/madin-alwafa
-npm ci && npm run build
-PORT=3012 DATA_DIR=/var/lib/madin-alwafa npm start
+ssh root@IP-VPS
+git clone -b claude/madin-alwafa-app-u601t5 https://github.com/pusatbolop-png/abaya.git /opt/abaya
+cd /opt/abaya/madin-alwafa
+sudo bash deploy/pasang.sh madin.alwafa.sch.id email@anda.com   # dengan domain: HTTPS otomatis
+# atau tanpa domain (uji coba): sudo bash deploy/pasang.sh   →  http://IP-VPS:3012
 ```
 
-Jalankan perintah dari folder `madin-alwafa`, dan pastikan folder `DATA_DIR` bisa ditulisi pengguna yang menjalankan aplikasi.
-Agar tetap berjalan setelah VPS dinyalakan ulang, pakai PM2:
+`deploy/pasang.sh` memasang Node.js 22, membangun aplikasi, membuat layanan systemd `madin-alwafa` (hidup sendiri saat VPS
+menyala ulang), memasang Caddy dengan sertifikat HTTPS otomatis, menyetel zona waktu WIB, dan menjadwalkan cadangan harian.
+Skrip aman dijalankan ulang dan tidak pernah menghapus data. Bila repositori privat, `git clone` meminta nama pengguna GitHub dan
+*personal access token* (bukan sandi akun).
+
+Setelah selesai, buka alamatnya dan buat akun administrator di layar pemasangan pertama. Guru masuk di `/guru`,
+pengurus di `/pengurus`, wali santri di halaman utama.
+
+| Keperluan | Perintah |
+|---|---|
+| Perbarui ke versi terbaru (otomatis mencadangkan dulu) | `sudo bash deploy/perbarui.sh` |
+| Cadangkan sekarang | `sudo bash deploy/cadangan.sh` |
+| Lihat log | `journalctl -u madin-alwafa -f` |
+| Mulai ulang | `sudo systemctl restart madin-alwafa` |
+
+**Cadangan.** Semua data (termasuk foto santri) ada di satu berkas `/var/lib/madin-alwafa/madin.db`. Cadangan harian pukul 02.30 WIB
+disimpan di `/var/backups/madin-alwafa` (30 hari terakhir). Sesekali unduh juga ke komputer lain, misalnya
+`scp root@IP-VPS:/var/backups/madin-alwafa/*.tar.gz .`. Memulihkan cadangan:
 
 ```bash
-npm i -g pm2
-NODE_ENV=production PORT=3012 DATA_DIR=/var/lib/madin-alwafa pm2 start dist/server/index.js --name madin-alwafa
-pm2 save && pm2 startup
+sudo systemctl stop madin-alwafa
+tar -xzf /var/backups/madin-alwafa/madin-2026-11-14-0230.tar.gz -C /tmp
+sudo cp /tmp/madin-2026-11-14-0230/madin.db /var/lib/madin-alwafa/madin.db
+sudo rm -f /var/lib/madin-alwafa/madin.db-wal /var/lib/madin-alwafa/madin.db-shm
+sudo chown madin:madin /var/lib/madin-alwafa/madin.db
+sudo systemctl start madin-alwafa
 ```
 
-atau systemd (`/etc/systemd/system/madin-alwafa.service`):
+**WhatsApp otomatis.** Tanpa pengaturan apa pun, pesan menunggu di *Pesan → Kotak keluar* dan dikirim manual dengan sekali ketuk.
+Agar terkirim sendiri dari nomor madrasah, daftarkan nomor itu di [Fonnte](https://fonnte.com), lalu tempel tokennya di
+menu *Pesan → Pengaturan*.
 
-```ini
-[Unit]
-Description=Madin Al-Wafa
-After=network.target
-
-[Service]
-WorkingDirectory=/opt/madin-alwafa
-Environment=NODE_ENV=production PORT=3012 DATA_DIR=/var/lib/madin-alwafa
-ExecStart=/usr/bin/node dist/server/index.js
-Restart=always
-User=www-data
-
-[Install]
-WantedBy=multi-user.target
-```
-
-**Domain dan HTTPS (disarankan).** Pasang Nginx/Caddy di depan aplikasi, arahkan ke `http://127.0.0.1:3012`, dan isi `TRUST_PROXY=1`.
-Tanpa HTTPS, sandi wali dan pengurus terkirim tanpa enkripsi. Aplikasi tetap bisa dibuka lewat `http://IP:3012` untuk uji coba.
-
-**Cadangan.** Semua data ada di satu folder (`DATA_DIR`, berkas `madin.db`). Salin folder itu secara berkala, misalnya dengan
-`sqlite3 /var/lib/madin-alwafa/madin.db ".backup '/cadangan/madin-$(date +%F).db'"`.
+**Memasang manual** (tanpa skrip): `npm ci && npm run build`, lalu jalankan
+`NODE_ENV=production PORT=3012 DATA_DIR=/var/lib/madin-alwafa node dist/server/index.js` dengan PM2 atau systemd,
+dan pasang Nginx/Caddy di depannya dengan `TRUST_PROXY=1`. Tanpa HTTPS, sandi terkirim tanpa enkripsi.
 
 ## Variabel lingkungan
 
 | Nama | Bawaan | Keterangan |
 |---|---|---|
 | `PORT` | `8080` | Port server |
+| `HOST` | `0.0.0.0` | Alamat dengar; skrip pasang memakai `127.0.0.1` bila ada domain (hanya Caddy yang bisa mengakses) |
 | `DATA_DIR` | `./data` | Folder basis data SQLite; cadangkan folder ini |
 | `TRUST_PROXY` | kosong | Isi `1` bila berada di belakang Nginx/Caddy, agar alamat IP dan HTTPS terbaca benar |
 | `COOKIE_SECURE` | otomatis | Bawaan mengikuti protokol (HTTPS → cookie Secure). Isi `true`/`false` untuk memaksa |
