@@ -1,11 +1,10 @@
 // Data toko Dalwa Coffee.
-// ISI DULU SEBELUM DIPAKAI BERJUALAN:
-//   1. whatsapp : nomor admin format 62…, contoh '6281234567890'. Selama kosong, pembeli memilih kontak sendiri di WhatsApp.
-//   2. price    : harga tiap kemasan dalam rupiah, contoh 85000. Selama 0, situs menulis "Tanya harga".
+//   whatsapp : nomor admin format 62…
+//   price    : harga tiap kemasan dalam rupiah. SEMUA MASIH HARGA SEMENTARA Rp400.000; ganti dengan harga sebenarnya.
 // Rasa, tingkat sangrai, dan berat diambil dari tulisan di kemasan.
 
 window.DALWA = {
-  whatsapp: '',
+  whatsapp: '6287818181330',
   perusahaan: 'PT. Dalwa Anugrah Hasaniyyah',
 
   varieties: {
@@ -23,11 +22,11 @@ window.DALWA = {
 
   // scale = ukuran kemasan di panggung 3D dibanding kemasan 1 kg.
   products: [
-    { id: 'arabica-250g', variety: 'arabica', weight: '250 g', grams: 250,  scale: .8,  price: 0, back: 'arabica-belakang' },
-    { id: 'arabica-420g', variety: 'arabica', weight: '420 g', grams: 420,  scale: .9,  price: 0, back: 'arabica-belakang' },
-    { id: 'arabica-1kg',  variety: 'arabica', weight: '1 kg',  grams: 1000, scale: 1,   price: 0, back: 'arabica-belakang' },
-    { id: 'robusta-250g', variety: 'robusta', weight: '250 g', grams: 250,  scale: .8,  price: 0, back: 'robusta-250g-belakang' },
-    { id: 'robusta-1kg',  variety: 'robusta', weight: '1 kg',  grams: 1000, scale: 1,   price: 0, back: 'robusta-1kg-belakang' },
+    { id: 'arabica-250g', variety: 'arabica', weight: '250 g', grams: 250,  scale: .8,  price: 400000, back: 'arabica-belakang' },
+    { id: 'arabica-420g', variety: 'arabica', weight: '420 g', grams: 420,  scale: .9,  price: 400000, back: 'arabica-belakang' },
+    { id: 'arabica-1kg',  variety: 'arabica', weight: '1 kg',  grams: 1000, scale: 1,   price: 400000, back: 'arabica-belakang' },
+    { id: 'robusta-250g', variety: 'robusta', weight: '250 g', grams: 250,  scale: .8,  price: 400000, back: 'robusta-250g-belakang' },
+    { id: 'robusta-1kg',  variety: 'robusta', weight: '1 kg',  grams: 1000, scale: 1,   price: 400000, back: 'robusta-1kg-belakang' },
   ],
 
   // Takaran umum untuk kopi bubuk; sesuaikan dengan selera.

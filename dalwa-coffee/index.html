@@ -5,120 +5,122 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="claude:viewport-fit-sides" content="cover">
   <title>Dalwa Coffee Roast</title>
-  <meta name="description" content="Kopi bubuk Dalwa: 100% Arabica dan 100% Robusta. Putar kemasannya, pilih ukuran, pesan lewat WhatsApp.">
-  <meta name="theme-color" content="#120b08">
+  <meta name="description" content="Kopi bubuk Dalwa: 100% Arabica dan 100% Robusta. Ikuti perjalanan biji sampai cangkir, lalu pesan lewat WhatsApp.">
+  <meta name="theme-color" content="#efe3d0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Rammetto+One&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body data-variety="arabica">
+<body>
   <canvas id="gl" aria-hidden="true"></canvas>
 
-  <div class="announce">Roasted with care · Brewed with purpose</div>
-
-  <header class="site-header">
-    <nav class="nav-left" aria-label="Menu">
-      <a href="#panggung">Pilih Kopi</a>
-      <a href="#koleksi">Koleksi</a>
-      <a href="#seduh">Cara Seduh</a>
-    </nav>
-    <a class="wordmark" href="#panggung" aria-label="Dalwa Coffee">Dalwa <b>Coffee</b></a>
-    <nav class="nav-right">
+  <header class="top">
+    <a class="wordmark" href="#grind" aria-label="Dalwa Coffee"><b>DALWA</b> / COFFEE</a>
+    <nav class="top-nav" aria-label="Menu">
+      <a class="plain" href="#seduh">Cara seduh</a>
+      <a class="pill" href="#koleksi">Pesan</a>
       <button class="icon-btn" id="cartBtn" aria-label="Keranjang"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg><span class="cart-count" id="cartCount">0</span></button>
     </nav>
   </header>
 
   <main>
-    <!-- PANGGUNG 3D -->
-    <section id="panggung" class="runway" data-state="idle">
-      <div class="glow glow-arabica"></div>
-      <div class="glow glow-robusta"></div>
+    <!-- BABAK 1: GRIND -->
+    <div class="act" id="grind">
+      <div class="rail"><div class="spot" id="grinderSpot"></div></div>
 
-      <div class="runway-head">
-        <p class="eyebrow">Kopi bubuk siap seduh</p>
-        <h1>Dalwa<span>Coffee Roast</span></h1>
-        <p class="tagline">Pilih <em>Arabica</em> atau <em>Robusta</em>-mu.</p>
-        <p class="hint" id="runwayHint">Geser untuk memutar, ketuk kemasan untuk melihat detailnya.</p>
+      <section class="hero">
+        <h1 class="hero-title back"><span>Grind</span><span class="t">Dalwa</span></h1>
+        <div class="hero-copy front">
+          <p class="crumb">Beranda <i>›</i> Kopi bubuk</p>
+          <p class="lead">Biji pilihan, disangrai dengan teliti, lalu digiling halus. Tinggal seduh di rumah.</p>
+          <div class="cta">
+            <a class="pill" href="#koleksi">Pesan sekarang</a>
+            <a class="round" href="#koleksi" aria-label="Lihat koleksi">→</a>
+          </div>
+        </div>
+        <p class="hero-side front" aria-hidden="true"><span>→</span><i></i><span>Gulir ke bawah</span></p>
+      </section>
+
+      <section class="flavour">
+        <p class="giant back" aria-hidden="true"><span class="t">Fl</span>avo<span class="t">ur</span></p>
+        <div class="note front">
+          <p class="eyebrow">Langkah 1 · Giling</p>
+          <p>Gilingan halus membuka aroma. Karena itu Dalwa dikemas rapat begitu selesai digiling.</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- BABAK 2: POUR -->
+    <div class="act" id="pour">
+      <div class="rail">
+        <div class="stick">
+          <div class="pour-title front">
+            <p class="eyebrow">Langkah 2</p>
+            <h2>Pour</h2>
+            <svg class="arrow" viewBox="0 0 120 14" aria-hidden="true"><path d="M0 9 C40 2 70 12 112 6"/><path d="M104 1l9 5-8 6"/></svg>
+          </div>
+          <p class="giant back t" aria-hidden="true">Pourover</p>
+        </div>
+        <div class="spot" id="dripperSpot"></div>
       </div>
 
-      <div class="stage" id="stage"></div>
+      <section class="pour-a"></section>
+      <section class="pour-b">
+        <div class="note front">
+          <p class="eyebrow">Takaran V60</p>
+          <p><b>15 g</b> bubuk, <b>225 ml</b> air <b>90–93 °C</b>. Basahi 30 detik, lalu tuang berputar perlahan sampai 2:30–3:00.</p>
+        </div>
+      </section>
+    </div>
 
-      <div class="stage-nav" id="stageNav">
-        <button class="arrow" id="prevBtn" aria-label="Kemasan sebelumnya">‹</button>
-        <button class="now" id="nowBtn"><span id="nowName"></span><small>Lihat detail</small></button>
-        <button class="arrow" id="nextBtn" aria-label="Kemasan berikutnya">›</button>
+    <!-- BABAK 3: SIP -->
+    <section class="sip" id="sip">
+      <div class="sip-top front">
+        <p class="eyebrow">Langkah 3</p>
+        <h2>Sip</h2>
       </div>
-      <p class="spin-hint" id="spinHint">Seret kemasan untuk memutarnya</p>
-
-      <aside class="look-panel" id="lookPanel" aria-hidden="true">
-        <div class="panel-top">
-          <div>
-            <p class="eyebrow" id="panelEyebrow"></p>
-            <h2 id="panelTitle"></h2>
-          </div>
-          <button class="close-btn" id="closeLook" aria-label="Tutup">✕</button>
+      <div id="poolSpot"></div>
+      <div class="sip-dark">
+        <div class="sip-inner front">
+          <h2 aria-hidden="true">Sip</h2>
+          <p>Arabica terasa cerah, lembut, dan seimbang. Robusta tegas, kental, dan gurih kacang. Pilih yang cocok dengan pagimu.</p>
         </div>
-        <div class="panel-body">
-          <p class="panel-note" id="panelNote"></p>
-          <ul class="notes" id="panelNotes"></ul>
-          <p class="label">Ukuran kemasan</p>
-          <div class="sizes" id="panelSizes"></div>
-          <dl class="specs" id="panelSpecs"></dl>
-          <img class="panel-photo" id="panelPhoto" alt="" loading="lazy">
-        </div>
-        <div class="panel-foot">
-          <div class="total-row">
-            <div class="qty" id="panelQty"><button data-q="-1" aria-label="Kurangi">−</button><span id="panelQtyN">1</span><button data-q="1" aria-label="Tambah">+</button></div>
-            <span class="total" id="lookTotal"></span>
-          </div>
-          <button class="btn-primary" id="buyNow">Beli sekarang</button>
-          <button class="btn-ghost" id="addLook">Tambah ke keranjang</button>
-        </div>
-      </aside>
+      </div>
     </section>
 
-    <!-- KOLEKSI -->
-    <section id="koleksi" class="collection band">
-      <div class="wrap">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Dua karakter</p>
-            <h2>Koleksi Dalwa</h2>
-          </div>
-          <p class="section-sub">Kami memilih biji kopi terbaik dari daerah penghasil kopi pilihan, lalu memanggangnya dengan presisi untuk memunculkan aroma yang kaya, rasa yang khas, dan keseimbangan di setiap cangkir.</p>
-        </div>
-        <div id="grid"></div>
+    <!-- BABAK 4: FIND YOUR CUP -->
+    <section class="cup" id="koleksi">
+      <div class="cup-head front">
+        <h2><span>Find</span><span>your <svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0c1 7 5 11 12 12-7 1-11 5-12 12-1-7-5-11-12-12 7-1 11-5 12-12z"/></svg></span><span>cup</span></h2>
+        <a class="pill" href="#cards">Pesan sekarang</a>
       </div>
+      <div class="cup-stage">
+        <div class="cards front" id="cards"></div>
+        <div class="mug-spot" id="mugSpot" aria-hidden="true"></div>
+      </div>
+      <div class="dots front" id="dots" aria-hidden="true"></div>
     </section>
 
     <!-- CARA SEDUH -->
-    <section id="seduh" class="brew">
-      <div class="wrap brew-wrap">
-        <div class="brew-text">
-          <p class="eyebrow">Takaran seduh</p>
-          <h2>Dari bubuk <em>ke cangkir</em></h2>
-          <p class="section-sub">Takaran awal untuk satu cangkir. Tambah bubuk bila ingin lebih pekat.</p>
-          <div class="brew-tabs" id="brewTabs" role="tablist"></div>
-          <dl class="brew-card" id="brewCard"></dl>
-        </div>
-        <div class="cup-spot" id="cupSpot" aria-hidden="true"></div>
-      </div>
-    </section>
-
-    <section class="values band">
-      <div class="wrap values-grid">
-        <div><h3>100% satu jenis biji</h3><p>Arabica saja atau Robusta saja, sesuai tulisan di kemasan. Tanpa campuran.</p></div>
-        <div><h3>Sangrai presisi</h3><p>Medium untuk Arabica, medium dark untuk Robusta, agar karakter tiap biji keluar.</p></div>
-        <div><h3>Tiga ukuran</h3><p>250 g untuk mencoba, 420 g untuk di rumah, 1 kg untuk warung dan kantor.</p></div>
+    <section id="seduh" class="brew solid">
+      <div class="wrap">
+        <p class="eyebrow">Takaran seduh</p>
+        <h2>Dari bubuk ke cangkir</h2>
+        <p class="sub">Takaran awal untuk satu cangkir. Tambah bubuk bila ingin lebih pekat.</p>
+        <div class="brew-tabs" id="brewTabs" role="tablist"></div>
+        <dl class="brew-card" id="brewCard"></dl>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer band">
-    <div class="wordmark">Dalwa <b>Coffee</b></div>
-    <p>© 2026 PT. Dalwa Anugrah Hasaniyyah</p>
+  <footer class="foot solid">
+    <div class="wordmark"><b>DALWA</b> / COFFEE</div>
+    <p>Roasted with care, brewed with purpose.</p>
+    <p>© 2026 PT. Dalwa Anugrah Hasaniyyah · WhatsApp <span id="waNumber"></span></p>
   </footer>
+
+  <a class="chat" id="chatBtn" target="_blank" rel="noopener" aria-label="Chat WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></a>
 
   <!-- KERANJANG -->
   <div class="scrim" id="scrim"></div>
@@ -183,7 +185,7 @@
         </div>
       </div>
       <div class="order-body" id="orderDone" hidden>
-        <p class="done-lead">Pesanan sudah disusun. Kirim pesan ini ke admin untuk konfirmasi harga dan ongkir.</p>
+        <p class="done-lead">Pesanan sudah disusun. Kirim pesan ini ke admin untuk konfirmasi ongkir.</p>
         <textarea id="waText" readonly rows="12" aria-label="Isi pesan pesanan"></textarea>
       </div>
       <div class="panel-foot" id="footForm">
@@ -194,7 +196,7 @@
       <div class="panel-foot" id="footDone" hidden>
         <a class="btn-primary" id="waLink" target="_blank" rel="noopener">Kirim lewat WhatsApp</a>
         <button type="button" class="btn-ghost" id="copyWa">Salin pesan</button>
-        <p class="fine" id="waNote"></p>
+        <p class="fine">WhatsApp terbuka di tab baru dengan pesan yang sudah terisi.</p>
       </div>
     </form>
     <datalist id="provList"></datalist>

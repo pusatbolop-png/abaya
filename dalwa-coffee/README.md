@@ -1,15 +1,17 @@
 # Dalwa Coffee Roast — toko kopi bubuk
 
-Situs toko statis (tanpa server) dengan susunan yang sama seperti situs Salaf Boutique of Abaya:
-panggung pilih produk, koleksi, keranjang, dan formulir pesanan yang menyusun pesan WhatsApp.
-Bedanya, panggungnya 3D: kemasan bisa diputar depan-belakang, biji kopi melayang di seluruh halaman, dan ada cangkir beruap di bagian Cara Seduh.
+Situs toko statis (tanpa server) berbentuk cerita gulir empat babak di atas latar krem:
+
+1. **Grind**: biji jatuh ke penggiling, lalu penggiling terurai dan bubuk berjatuhan.
+2. **Pour**: bubuk masuk dripper V60, teko leher angsa menuang, kopi menetes ke server.
+3. **Sip**: aliran kopi jatuh ke genangan yang beriak.
+4. **Find your cup**: cangkir beruap diapit kartu produk (bisa dibalik untuk melihat sisi belakang kemasan).
+
+Di bawahnya ada takaran seduh, keranjang, dan formulir pesanan yang menyusun pesan WhatsApp.
 
 ## Sebelum dipakai berjualan
 
-Buka `data.js`, lalu isi:
-
-- `whatsapp`: nomor admin format `62…`.
-- `price` tiap kemasan dalam rupiah. Selama `0`, situs menulis "Tanya harga".
+Buka `data.js`. Semua `price` masih harga sementara Rp400.000; ganti dengan harga sebenarnya. Nomor admin ada di `whatsapp`.
 
 ## Menjalankan
 
@@ -19,6 +21,6 @@ Buka lewat server statis apa pun, misalnya `python3 -m http.server` di folder in
 
 - `index.html`, `styles.css`: halaman dan tampilan.
 - `data.js`: produk, harga, nomor WhatsApp, takaran seduh.
-- `scene.js`: adegan 3D (Three.js r128 dari cdnjs). Tanpa WebGL, kemasan tampil sebagai gambar biasa.
-- `app.js`: panggung, keranjang, formulir pesanan.
+- `scene.js`: adegan 3D (Three.js r128 dari cdnjs); semua benda dibuat dengan kode, tanpa berkas model. Tanpa WebGL, foto produk menggantikannya.
+- `app.js`: kartu produk, keranjang, formulir pesanan.
 - `assets/`: tekstur depan/belakang kemasan (diluruskan dari foto produk) dan foto suasana.
