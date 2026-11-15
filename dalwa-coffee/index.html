@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="claude:viewport-fit-sides" content="cover">
+  <title>Dalwa Coffee Roast</title>
+  <meta name="description" content="Kopi bubuk Dalwa: 100% Arabica dan 100% Robusta. Putar kemasannya, pilih ukuran, pesan lewat WhatsApp.">
+  <meta name="theme-color" content="#120b08">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-variety="arabica">
+  <canvas id="gl" aria-hidden="true"></canvas>
+
+  <div class="announce">Roasted with care · Brewed with purpose</div>
+
+  <header class="site-header">
+    <nav class="nav-left" aria-label="Menu">
+      <a href="#panggung">Pilih Kopi</a>
+      <a href="#koleksi">Koleksi</a>
+      <a href="#seduh">Cara Seduh</a>
+    </nav>
+    <a class="wordmark" href="#panggung" aria-label="Dalwa Coffee">Dalwa <b>Coffee</b></a>
+    <nav class="nav-right">
+      <button class="icon-btn" id="cartBtn" aria-label="Keranjang"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12H6.2z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg><span class="cart-count" id="cartCount">0</span></button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- PANGGUNG 3D -->
+    <section id="panggung" class="runway" data-state="idle">
+      <div class="glow glow-arabica"></div>
+      <div class="glow glow-robusta"></div>
+
+      <div class="runway-head">
+        <p class="eyebrow">Kopi bubuk siap seduh</p>
+        <h1>Dalwa<span>Coffee Roast</span></h1>
+        <p class="tagline">Pilih <em>Arabica</em> atau <em>Robusta</em>-mu.</p>
+        <p class="hint" id="runwayHint">Geser untuk memutar, ketuk kemasan untuk melihat detailnya.</p>
+      </div>
+
+      <div class="stage" id="stage"></div>
+
+      <div class="stage-nav" id="stageNav">
+        <button class="arrow" id="prevBtn" aria-label="Kemasan sebelumnya">‹</button>
+        <button class="now" id="nowBtn"><span id="nowName"></span><small>Lihat detail</small></button>
+        <button class="arrow" id="nextBtn" aria-label="Kemasan berikutnya">›</button>
+      </div>
+      <p class="spin-hint" id="spinHint">Seret kemasan untuk memutarnya</p>
+
+      <aside class="look-panel" id="lookPanel" aria-hidden="true">
+        <div class="panel-top">
+          <div>
+            <p class="eyebrow" id="panelEyebrow"></p>
+            <h2 id="panelTitle"></h2>
+          </div>
+          <button class="close-btn" id="closeLook" aria-label="Tutup">✕</button>
+        </div>
+        <div class="panel-body">
+          <p class="panel-note" id="panelNote"></p>
+          <ul class="notes" id="panelNotes"></ul>
+          <p class="label">Ukuran kemasan</p>
+          <div class="sizes" id="panelSizes"></div>
+          <dl class="specs" id="panelSpecs"></dl>
+          <img class="panel-photo" id="panelPhoto" alt="" loading="lazy">
+        </div>
+        <div class="panel-foot">
+          <div class="total-row">
+            <div class="qty" id="panelQty"><button data-q="-1" aria-label="Kurangi">−</button><span id="panelQtyN">1</span><button data-q="1" aria-label="Tambah">+</button></div>
+            <span class="total" id="lookTotal"></span>
+          </div>
+          <button class="btn-primary" id="buyNow">Beli sekarang</button>
+          <button class="btn-ghost" id="addLook">Tambah ke keranjang</button>
+        </div>
+      </aside>
+    </section>
+
+    <!-- KOLEKSI -->
+    <section id="koleksi" class="collection band">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Dua karakter</p>
+            <h2>Koleksi Dalwa</h2>
+          </div>
+          <p class="section-sub">Kami memilih biji kopi terbaik dari daerah penghasil kopi pilihan, lalu memanggangnya dengan presisi untuk memunculkan aroma yang kaya, rasa yang khas, dan keseimbangan di setiap cangkir.</p>
+        </div>
+        <div id="grid"></div>
+      </div>
+    </section>
+
+    <!-- CARA SEDUH -->
+    <section id="seduh" class="brew">
+      <div class="wrap brew-wrap">
+        <div class="brew-text">
+          <p class="eyebrow">Takaran seduh</p>
+          <h2>Dari bubuk <em>ke cangkir</em></h2>
+          <p class="section-sub">Takaran awal untuk satu cangkir. Tambah bubuk bila ingin lebih pekat.</p>
+          <div class="brew-tabs" id="brewTabs" role="tablist"></div>
+          <dl class="brew-card" id="brewCard"></dl>
+        </div>
+        <div class="cup-spot" id="cupSpot" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="values band">
+      <div class="wrap values-grid">
+        <div><h3>100% satu jenis biji</h3><p>Arabica saja atau Robusta saja, sesuai tulisan di kemasan. Tanpa campuran.</p></div>
+        <div><h3>Sangrai presisi</h3><p>Medium untuk Arabica, medium dark untuk Robusta, agar karakter tiap biji keluar.</p></div>
+        <div><h3>Tiga ukuran</h3><p>250 g untuk mencoba, 420 g untuk di rumah, 1 kg untuk warung dan kantor.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer band">
+    <div class="wordmark">Dalwa <b>Coffee</b></div>
+    <p>© 2026 PT. Dalwa Anugrah Hasaniyyah</p>
+  </footer>
+
+  <!-- KERANJANG -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="cart" id="cart" aria-hidden="true">
+    <div class="panel-top">
+      <h2>Keranjang</h2>
+      <button class="close-btn" id="closeCart" aria-label="Tutup">✕</button>
+    </div>
+    <ul class="cart-items" id="cartItems"></ul>
+    <div class="panel-foot">
+      <div class="total-row"><span>Subtotal</span><span class="total" id="cartTotal"></span></div>
+      <button class="btn-primary" id="checkout">Checkout</button>
+    </div>
+  </aside>
+
+  <!-- FORMULIR PESANAN -->
+  <div class="order" id="order" aria-hidden="true">
+    <form class="order-card" id="orderForm" novalidate>
+      <div class="panel-top">
+        <div><p class="eyebrow">Checkout</p><h2 id="orderTitle">Data Pengiriman</h2></div>
+        <button type="button" class="close-btn" id="closeOrder" aria-label="Tutup">✕</button>
+      </div>
+      <div class="order-body" id="orderBody">
+        <fieldset>
+          <legend>Penerima</legend>
+          <div class="row2">
+            <label>Nama lengkap<input id="f-nama" name="nama" required autocomplete="name" placeholder="Nama penerima paket"></label>
+            <label>No. WhatsApp<input id="f-hp" name="hp" required inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx"></label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Alamat lengkap</legend>
+          <div class="row2">
+            <label>Provinsi<input id="f-provinsi" name="provinsi" required list="provList" autocomplete="address-level1" placeholder="Jawa Timur"></label>
+            <label>Kota / Kabupaten<input id="f-kota" name="kota" required autocomplete="address-level2" placeholder="Kab. Pasuruan"></label>
+          </div>
+          <div class="row2">
+            <label>Kecamatan<input id="f-kecamatan" name="kecamatan" required placeholder="Bangil"></label>
+            <label>Kelurahan / Desa<input id="f-kelurahan" name="kelurahan" required placeholder="Raci"></label>
+          </div>
+          <label>Nama jalan / gedung / perumahan<input id="f-jalan" name="jalan" required autocomplete="address-line1" placeholder="Jl. Raya Raci, Perum Griya Asri Blok C"></label>
+          <div class="row4">
+            <label>No. rumah<input id="f-no" name="no" required placeholder="12A"></label>
+            <label>RT<input id="f-rt" name="rt" required inputmode="numeric" maxlength="3" placeholder="003"></label>
+            <label>RW<input id="f-rw" name="rw" required inputmode="numeric" maxlength="3" placeholder="007"></label>
+            <label>Kode pos<input id="f-kodepos" name="kodepos" required inputmode="numeric" maxlength="5" autocomplete="postal-code" placeholder="67153"></label>
+          </div>
+          <label>Patokan <i>(opsional)</i><input id="f-patokan" name="patokan" placeholder="Pagar hitam, sebelah masjid"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Pembayaran</legend>
+          <div class="pay">
+            <label class="pay-opt"><input id="f-cod" type="radio" name="bayar" value="COD (bayar di tempat)" checked><span><b>COD</b><small>Bayar tunai ke kurir saat paket sampai</small></span></label>
+            <label class="pay-opt"><input id="f-tf" type="radio" name="bayar" value="Transfer bank / QRIS"><span><b>Transfer / QRIS</b><small>Rekening dikirim admin setelah pesanan dibuat</small></span></label>
+          </div>
+          <label>Catatan pesanan <i>(opsional)</i><input id="f-catatan" name="catatan" placeholder="Contoh: kirim sore hari"></label>
+        </fieldset>
+        <div class="order-sum">
+          <ul id="orderItems"></ul>
+          <div class="sum-row"><span>Subtotal</span><span id="orderSub"></span></div>
+          <div class="sum-row"><span>Ongkos kirim</span><span class="muted">Dikonfirmasi admin</span></div>
+        </div>
+      </div>
+      <div class="order-body" id="orderDone" hidden>
+        <p class="done-lead">Pesanan sudah disusun. Kirim pesan ini ke admin untuk konfirmasi harga dan ongkir.</p>
+        <textarea id="waText" readonly rows="12" aria-label="Isi pesan pesanan"></textarea>
+      </div>
+      <div class="panel-foot" id="footForm">
+        <p class="order-err" id="orderErr" role="alert"></p>
+        <button class="btn-primary" type="submit">Buat pesanan</button>
+        <p class="fine">Pesanan dikirim ke WhatsApp admin untuk konfirmasi ongkir.</p>
+      </div>
+      <div class="panel-foot" id="footDone" hidden>
+        <a class="btn-primary" id="waLink" target="_blank" rel="noopener">Kirim lewat WhatsApp</a>
+        <button type="button" class="btn-ghost" id="copyWa">Salin pesan</button>
+        <p class="fine" id="waNote"></p>
+      </div>
+    </form>
+    <datalist id="provList"></datalist>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="data.js"></script>
+  <script src="scene.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
