@@ -172,7 +172,7 @@
     $('#panelNotes').innerHTML = v.notes.map(x => `<li>${x}</li>`).join('');
     $('#panelSizes').innerHTML = products.map((q, i) => q.variety === p.variety
       ? `<button class="size ${q === p ? 'on' : ''}" data-i="${i}" aria-pressed="${q === p}">${q.weight}</button>` : '').join('');
-    $('#panelSpecs').innerHTML = [['Jenis', 'Kopi bubuk (ground coffee)'], ['Sangrai', v.roast], ['Isi bersih', p.weight], ['Produsen', perusahaan]]
+    $('#panelSpecs').innerHTML = [['Jenis', 'Kopi bubuk (ground coffee)'], ['Sangrai', v.roast], ['Isi bersih', p.weight], ['Sertifikat halal', 'ID35210080995210926'], ['Produsen', perusahaan]]
       .map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('');
     const ph = $('#panelPhoto'); ph.src = `assets/${v.back}.webp`; ph.alt = `Sisi belakang kemasan ${v.name}`;
     renderTotal();
