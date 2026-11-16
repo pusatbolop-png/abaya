@@ -66,13 +66,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .model.enter { transition: none; }
 /* dinding studio di video sudah sewarna halaman; tepi bingkai dipudarkan tipis saja agar tidak terlihat kotak.
    Bagian atas hampir tidak dipudarkan supaya biji kopi yang jatuh dari atas tetap terlihat. */
-.model img, .model video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none;
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 1.5%, #000 96%, transparent);
+.model img, .model .clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 1.5%, #000 96%, transparent);
   -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 1.5%, #000 96%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 1.5%, #000 96%, transparent);
   mask-composite: intersect; }
 .model img { z-index: 1; transition: opacity .4s; }
 .model.playing img { opacity: 0; }
+.feed { position: fixed; left: 0; top: 0; width: 2px; height: 2px; opacity: 0; pointer-events: none; }
 
 .stage-nav { position: absolute; z-index: 6; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; transition: left .9s var(--ease); }
 .arrow { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--ink); font-size: 22px; line-height: 1; background: transparent; }

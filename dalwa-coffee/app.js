@@ -20,30 +20,78 @@
   const models = products.map((p, i) => {
     const el = document.createElement('div');
     el.className = 'model enter';
-    el.innerHTML = `<img src="assets/video/${p.id}.webp" alt="${nama(p)}" draggable="false">
-      <video src="assets/video/${p.id}.mp4" muted playsinline preload="none" aria-hidden="true"></video>`;
-    const video = el.querySelector('video');
-    video.addEventListener('playing', () => el.classList.add('playing'));
-    video.addEventListener('ended', () => {
-      if (state.mode === 'idle' && !drag && !document.hidden && !busy()) goTo(state.cur + 1);
-      else { video.currentTime = 0; video.play().catch(() => {}); }
-    });
+    el.innerHTML = `<img src="assets/video/${p.id}.webp" alt="${nama(p)}" draggable="false">`;
     el.addEventListener('click', () => (i === state.cur || !isMobile() || state.mode === 'focus' ? focus(i) : goTo(i)));
     stage.appendChild(el);
-    return { el, video, p };
+    return { el, p };
   });
   const busy = () => document.body.classList.contains('cart-open') || document.body.classList.contains('order-open');
   const mod = i => ((i % n) + n) % n;
 
+  // Satu pemutar dipakai bergantian. Ponsel sering memutar warna video sedikit berbeda dari warna halaman,
+  // sehingga tepi bingkainya terlihat sebagai garis kotak. Karena itu tiap bingkai digambar lewat kanvas:
+  // warna dinding dibaca dari sudut-sudut bingkai itu sendiri, lalu seluruh gambar digeser agar dinding
+  // tepat sama dengan warna halaman. Isi gambarnya tidak diubah.
+  const PAGE = [216 / 255, 209 / 255, 198 / 255]; // --bg
+  const video = document.createElement('video');
+  video.muted = true; video.playsInline = true; video.setAttribute('playsinline', ''); video.preload = 'auto';
+  video.setAttribute('aria-hidden', 'true');
+  const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1920; canvas.className = 'clip';
+  const gl = (() => {
+    try {
+      const g = canvas.getContext('webgl', { alpha: false, antialias: false });
+      if (!g) return null;
+      const sh = (type, src) => { const s = g.createShader(type); g.shaderSource(s, src); g.compileShader(s); return s; };
+      const prog = g.createProgram();
+      g.attachShader(prog, sh(g.VERTEX_SHADER, 'attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x * .5 + .5, .5 - p.y * .5); gl_Position = vec4(p, 0., 1.); }'));
+      g.attachShader(prog, sh(g.FRAGMENT_SHADER, 'precision mediump float; uniform sampler2D t; uniform vec3 page; varying vec2 uv;' +
+        'vec3 s(float x, float y){ return texture2D(t, vec2(x, y)).rgb; }' +
+        'void main(){ vec3 wall = (s(.03,.5) + s(.97,.5) + s(.03,.75) + s(.97,.75) + s(.03,.3) + s(.97,.3)) / 6.;' +
+        ' vec3 c = texture2D(t, uv).rgb; gl_FragColor = vec4(clamp(c * (page / max(wall, vec3(.2))), 0., 1.), 1.); }'));
+      g.linkProgram(prog);
+      if (!g.getProgramParameter(prog, g.LINK_STATUS)) return null;
+      g.useProgram(prog);
+      g.uniform3fv(g.getUniformLocation(prog, 'page'), PAGE);
+      g.bindBuffer(g.ARRAY_BUFFER, g.createBuffer());
+      g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), g.STATIC_DRAW);
+      const loc = g.getAttribLocation(prog, 'p'); g.enableVertexAttribArray(loc); g.vertexAttribPointer(loc, 2, g.FLOAT, false, 0, 0);
+      g.bindTexture(g.TEXTURE_2D, g.createTexture());
+      [g.TEXTURE_WRAP_S, g.TEXTURE_WRAP_T].forEach(k => g.texParameteri(g.TEXTURE_2D, k, g.CLAMP_TO_EDGE));
+      g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR);
+      g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.LINEAR);
+      return g;
+    } catch (err) { return null; }
+  })();
+  const screen = gl ? canvas : video;   // tanpa WebGL, videonya sendiri yang ditampilkan
+  if (!gl) video.className = 'clip'; else { video.className = 'feed'; document.body.appendChild(video); }
+
+  let host = null, lastT = -1, raf = 0, ready = false;
+  video.addEventListener('playing', () => { ready = true; if (!gl && host) host.classList.add('playing'); });
+  video.addEventListener('ended', () => {
+    if (state.mode === 'idle' && !drag && !document.hidden && !busy()) goTo(state.cur + 1);
+    else { video.currentTime = 0; video.play().catch(() => {}); }
+  });
+  function draw() {
+    raf = requestAnimationFrame(draw);
+    if (!ready || video.readyState < 2 || video.currentTime === lastT) return;
+    lastT = video.currentTime;
+    try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video); } catch (err) { return; }
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (host) host.classList.add('playing');
+  }
   function play() {
-    models.forEach((m, i) => {
-      if (i === state.cur && !calm && !document.hidden) { m.video.currentTime = 0; m.video.play().catch(() => {}); }
-      else { m.video.pause(); m.el.classList.remove('playing'); }
-    });
+    cancelAnimationFrame(raf);
+    if (host) host.classList.remove('playing');
+    if (calm || document.hidden) { video.pause(); return; }
+    const m = models[state.cur], src = `assets/video/${m.p.id}.mp4`;
+    host = m.el; host.appendChild(screen); lastT = -1; ready = false;
+    if (!video.src.endsWith(src)) video.src = src; else video.currentTime = 0;
+    video.play().catch(() => {});
+    if (gl) draw();
   }
   document.addEventListener('visibilitychange', play);
   // bila peramban menahan putar otomatis, sentuhan pertama pengunjung memulai videonya
-  addEventListener('pointerdown', () => { const v = models[state.cur].video; if (v.paused && !calm) v.play().catch(() => {}); }, { once: true });
+  addEventListener('pointerdown', () => { if (video.paused && !calm) video.play().catch(() => {}); }, { once: true });
 
   function layout() {
     const W = stage.clientWidth, H = stage.clientHeight, R = runway.clientHeight, mob = isMobile();
