@@ -30,7 +30,7 @@
 
   // Satu pemutar dipakai bergantian. Ponsel sering memutar warna video sedikit berbeda dari warna halaman,
   // sehingga tepi bingkainya terlihat sebagai garis kotak. Karena itu tiap bingkai digambar lewat kanvas:
-  // warna dinding dibaca dari sudut-sudut bingkai itu sendiri, lalu seluruh gambar digeser agar dinding
+  // warna dinding dibaca dari tepi bingkai itu sendiri, lalu seluruh gambar digeser agar dinding
   // tepat sama dengan warna halaman. Isi gambarnya tidak diubah.
   const PAGE = [216 / 255, 209 / 255, 198 / 255]; // --bg
   const video = document.createElement('video');
@@ -44,14 +44,12 @@
       const sh = (type, src) => { const s = g.createShader(type); g.shaderSource(s, src); g.compileShader(s); return s; };
       const prog = g.createProgram();
       g.attachShader(prog, sh(g.VERTEX_SHADER, 'attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x * .5 + .5, .5 - p.y * .5); gl_Position = vec4(p, 0., 1.); }'));
-      g.attachShader(prog, sh(g.FRAGMENT_SHADER, 'precision mediump float; uniform sampler2D t; uniform vec3 page; varying vec2 uv;' +
-        'vec3 s(float x, float y){ return texture2D(t, vec2(x, y)).rgb; }' +
-        'void main(){ vec3 wall = (s(.03,.5) + s(.97,.5) + s(.03,.75) + s(.97,.75) + s(.03,.3) + s(.97,.3)) / 6.;' +
-        ' vec3 c = texture2D(t, uv).rgb; gl_FragColor = vec4(clamp(c * (page / max(wall, vec3(.2))), 0., 1.), 1.); }'));
+      g.attachShader(prog, sh(g.FRAGMENT_SHADER, 'precision mediump float; uniform sampler2D t; uniform vec3 k; varying vec2 uv;' +
+        'void main(){ gl_FragColor = vec4(clamp(texture2D(t, uv).rgb * k, 0., 1.), 1.); }'));
       g.linkProgram(prog);
       if (!g.getProgramParameter(prog, g.LINK_STATUS)) return null;
       g.useProgram(prog);
-      g.uniform3fv(g.getUniformLocation(prog, 'page'), PAGE);
+      g.kLoc = g.getUniformLocation(prog, 'k'); g.uniform3fv(g.kLoc, [1, 1, 1]);
       g.bindBuffer(g.ARRAY_BUFFER, g.createBuffer());
       g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), g.STATIC_DRAW);
       const loc = g.getAttribLocation(prog, 'p'); g.enableVertexAttribArray(loc); g.vertexAttribPointer(loc, 2, g.FLOAT, false, 0, 0);
@@ -66,6 +64,24 @@
   if (!gl) video.className = 'clip'; else { video.className = 'feed'; document.body.appendChild(video); }
 
   let host = null, lastT = -1, raf = 0, ready = false;
+  // Warna dinding = median piksel tepi (kolom kiri-kanan di 60% bagian atas, dan baris atas di luar sepertiga tengah).
+  // Median dipakai agar biji, uap, atau bayangan yang lewat di tepi tidak ikut terbaca sebagai dinding.
+  const probe = document.createElement('canvas'); probe.width = 36; probe.height = 64;
+  const pctx = probe.getContext('2d', { willReadFrequently: true });
+  let wall = null;
+  function readWall() {
+    try {
+      pctx.drawImage(video, 0, 0, 36, 64);
+      const d = pctx.getImageData(0, 0, 36, 64).data, ch = [[], [], []];
+      const take = (x, y) => { const o = (y * 36 + x) * 4; ch[0].push(d[o]); ch[1].push(d[o + 1]); ch[2].push(d[o + 2]); };
+      for (let y = 0; y < 38; y++) { take(0, y); take(1, y); take(34, y); take(35, y); }
+      for (let x = 0; x < 12; x++) { take(x, 0); take(x, 1); take(35 - x, 0); take(35 - x, 1); }
+      const med = ch.map(c => { c.sort((p, q) => p - q); return c[c.length >> 1] / 255; });
+      if (med.some(v => v < .5)) return;                       // bukan dinding terang: abaikan bingkai ini
+      wall = wall ? wall.map((v, i) => v * .7 + med[i] * .3) : med;
+      gl.uniform3fv(gl.kLoc, wall.map((v, i) => Math.min(1.25, Math.max(.8, PAGE[i] / v))));
+    } catch (err) { /* kanvas tidak bisa dibaca: gambar tampil tanpa penyesuaian */ }
+  }
   video.addEventListener('playing', () => { ready = true; if (!gl && host) host.classList.add('playing'); });
   video.addEventListener('ended', () => {
     if (state.mode === 'idle' && !drag && !document.hidden && !busy()) goTo(state.cur + 1);
@@ -75,6 +91,7 @@
     raf = requestAnimationFrame(draw);
     if (!ready || video.readyState < 2 || video.currentTime === lastT) return;
     lastT = video.currentTime;
+    readWall();
     try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video); } catch (err) { return; }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     if (host) host.classList.add('playing');
@@ -84,7 +101,7 @@
     if (host) host.classList.remove('playing');
     if (calm || document.hidden) { video.pause(); return; }
     const m = models[state.cur], src = `assets/video/${m.p.id}.mp4`;
-    host = m.el; host.appendChild(screen); lastT = -1; ready = false;
+    host = m.el; host.appendChild(screen); lastT = -1; ready = false; wall = null;
     if (!video.src.endsWith(src)) video.src = src; else video.currentTime = 0;
     video.play().catch(() => {});
     if (gl) draw();
