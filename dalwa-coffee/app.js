@@ -55,10 +55,11 @@
     video.muted = true; video.playsInline = true; video.setAttribute('playsinline', ''); video.preload = 'auto'; video.className = 'feed';
     video.setAttribute('aria-hidden', 'true');
     document.body.appendChild(video);
-    let host = null, lastT = -1, raf = 0;
+    let host = null, lastT = -1, raf = 0, ready = false;
+    video.addEventListener('playing', () => { ready = true; });
     function draw() {
       raf = requestAnimationFrame(draw);
-      if (video.readyState < 2 || video.currentTime === lastT) return;
+      if (!ready || video.readyState < 2 || video.currentTime === lastT) return; // tunggu video baru benar-benar jalan
       lastT = video.currentTime;
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
       gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -71,7 +72,7 @@
     return {
       show(m) {
         if (host) host.classList.remove('playing');
-        host = m.el; host.appendChild(canvas); lastT = -1;
+        host = m.el; host.appendChild(canvas); lastT = -1; ready = false;
         gl.clear(gl.COLOR_BUFFER_BIT);
         const src = `assets/video/${m.p.id}.mp4`;
         if (!video.src.endsWith(src)) video.src = src; else video.currentTime = 0;
@@ -91,14 +92,14 @@
   function layout() {
     const W = stage.clientWidth, H = stage.clientHeight, R = runway.clientHeight, mob = isMobile();
     const focusOn = state.mode === 'focus', panelW = mob ? 0 : panel.offsetWidth;
-    const h = Math.min(H * (mob ? .7 : .8), (mob ? W * .62 : W * .23) * 16 / 9), w = h * 9 / 16;
+    const h = Math.min(H * (mob ? 1 : .8), (mob ? W * 1.02 : W * .23) * 16 / 9), w = h * 9 / 16;
     const Rx = Math.min(W * .4, 620);
     models.forEach((m, i) => {
       let d = mod(i - state.pos); if (d > n / 2) d -= n;
       const ad = Math.abs(d);
       let x, y = 0, s, z, op = 1, blur = 0, dim = ad > .5;
       if (!focusOn) {
-        if (mob) { x = W / 2 + d * W * .66; s = 1 - .22 * Math.min(1, ad); z = 10 - Math.round(ad); if (ad > 1.5) op = 0; }
+        if (mob) { x = W / 2 + d * W * .82; s = 1 - .22 * Math.min(1, ad); z = 10 - Math.round(ad); if (ad > 1.5) op = 0; }
         else {
           const th = d * 2 * Math.PI / n, t = (Math.cos(th) + 1) / 2;
           x = W / 2 + Rx * Math.sin(th); s = .5 + .5 * Math.pow(t, 1.4); y = -H * .07 * (1 - t);
@@ -168,7 +169,7 @@
   stage.addEventListener('dragstart', e => e.preventDefault());
   stage.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const per = isMobile() ? stage.clientWidth * .66 : Math.min(stage.clientWidth * .4, 620) * Math.sin(2 * Math.PI / n);
+    const per = isMobile() ? stage.clientWidth * .82 : Math.min(stage.clientWidth * .4, 620) * Math.sin(2 * Math.PI / n);
     drag = { x: e.clientX, pos: state.pos, per: Math.max(per, 80) }; dragged = false;
   });
   addEventListener('pointermove', e => {

@@ -54,7 +54,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* ---------- panggung ---------- */
 .runway { position: relative; height: calc(100svh - 62px); min-height: 600px; max-height: 940px; overflow: hidden; }
 .runway-head { position: absolute; top: 28px; left: var(--gut-l); right: var(--gut-r); z-index: 5; pointer-events: none; transition: opacity .6s var(--ease), transform .6s var(--ease); }
-.runway-head h1 { font-family: var(--display); font-size: clamp(52px, 6.4vw, 104px); line-height: .86; text-transform: uppercase; margin-top: 8px; }
+.runway-head h1 { font-family: var(--display); font-size: clamp(30px, 3.4vw, 52px); line-height: .86; text-transform: uppercase; margin-top: 8px; }
 .runway-head h1 em { font-family: var(--serif); font-style: italic; font-weight: 400; text-transform: none; font-size: .78em; color: var(--arabica); }
 .runway[data-state="focus"] .runway-head { opacity: 0; transform: translateY(-12px); }
 
@@ -214,9 +214,11 @@ body.focus .chat { display: none; }
 @media (max-width: 820px) {
   .top-nav { gap: 12px; }
   .top-nav .plain { font-size: 11px; letter-spacing: .06em; }
-  .runway { min-height: 640px; }
+  .runway { min-height: 500px; }
   .chat { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
-  .runway-head { top: 18px; }
+  .runway-head { top: 12px; }
+  .runway-head h1 { margin-top: 2px; }
+  .stage { bottom: 78px; }
   .look-panel { top: auto; left: 0; width: 100%; max-height: 60%; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(100%); }
   .look-panel .panel-top { padding: 16px var(--gut-r) 8px var(--gut-l); }
   .look-panel .panel-top h2 { font-size: 32px; }
