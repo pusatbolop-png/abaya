@@ -42,11 +42,13 @@
     });
   }
   document.addEventListener('visibilitychange', play);
+  // bila peramban menahan putar otomatis, sentuhan pertama pengunjung memulai videonya
+  addEventListener('pointerdown', () => { const v = models[state.cur].video; if (v.paused && !calm) v.play().catch(() => {}); }, { once: true });
 
   function layout() {
     const W = stage.clientWidth, H = stage.clientHeight, R = runway.clientHeight, mob = isMobile();
     const focusOn = state.mode === 'focus', panelW = mob ? 0 : panel.offsetWidth;
-    const h = Math.min(H * (mob ? 1 : .8), (mob ? W * 1.02 : W * .23) * 16 / 9), w = h * 9 / 16;
+    const h = Math.min(H * (mob ? 1 : .86), (mob ? W * .9 : W * .23) * 16 / 9), w = h * 9 / 16;
     const Rx = Math.min(W * .4, 620);
     models.forEach((m, i) => {
       let d = mod(i - state.pos); if (d > n / 2) d -= n;
@@ -63,7 +65,7 @@
         const areaW = W - panelW, cx = areaW / 2;
         if (mob) {
           const sheet = Math.min(.8, panel.offsetHeight / R) || .58, avail = R * (1 - sheet) - 20;
-          s = ad < .5 ? Math.min(1, avail / h) : .4; y = -(H - R * (1 - sheet)) - 6; x = cx + d * W * .7;
+          s = ad < .5 ? Math.min(1, avail / h) : .4; y = -(stage.offsetTop + H - R * (1 - sheet)) - 10; x = cx + d * W * .7;
         } else { s = ad < .5 ? Math.min(1.12, H * .94 / h) : .6; x = cx + d * Math.max(areaW * .42, w * 1.1); }
         z = ad < .5 ? 10 : 5 - Math.round(ad); if (ad > 1.5) op = 0;
       }
