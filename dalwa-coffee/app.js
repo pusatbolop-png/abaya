@@ -102,7 +102,7 @@
         else {
           const th = d * 2 * Math.PI / n, t = (Math.cos(th) + 1) / 2;
           x = W / 2 + Rx * Math.sin(th); s = .5 + .5 * Math.pow(t, 1.4); y = -H * .07 * (1 - t);
-          blur = t > .8 ? 0 : (.8 - t) * 5; op = t > .5 ? 1 : .35 + .65 * t / .5; z = Math.round(t * 100);
+          op = t > .5 ? 1 : 0; z = Math.round(t * 100); // barisan belakang disembunyikan: letaknya persis di belakang kemasan samping
         }
       } else {
         const areaW = W - panelW, cx = areaW / 2;

@@ -56,7 +56,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .runway-head { position: absolute; top: 28px; left: var(--gut-l); right: var(--gut-r); z-index: 5; pointer-events: none; transition: opacity .6s var(--ease), transform .6s var(--ease); }
 .runway-head h1 { font-family: var(--display); font-size: clamp(52px, 6.4vw, 104px); line-height: .86; text-transform: uppercase; margin-top: 8px; }
 .runway-head h1 em { font-family: var(--serif); font-style: italic; font-weight: 400; text-transform: none; font-size: .78em; color: var(--arabica); }
-.hint { margin-top: 12px; font-size: 13px; color: var(--muted); max-width: 250px; }
 .runway[data-state="focus"] .runway-head { opacity: 0; transform: translateY(-12px); }
 
 .stage { position: absolute; inset: 0 0 86px 0; user-select: none; -webkit-user-select: none; touch-action: pan-y; cursor: grab; }
