@@ -27,6 +27,9 @@ Proyek harus tersambung ke GitHub (bukan unggah zip), karena folder `functions/`
 4. **Kata sandi admin**: Settings → Variables and Secrets → Add → jenis Secret, nama `ADMIN_PASSWORD`, isi kata sandi Anda.
 5. Deployments → deployment terbaru → Retry deployment, agar pengaturan di atas terpakai.
 
+Selama langkah di atas belum selesai, toko tetap bisa menerima pesanan: bila server pesanan belum terpasang,
+tombol pesan beralih otomatis ke WhatsApp admin dengan rincian pesanan yang sudah terisi.
+
 Tabel dibuat otomatis saat situs pertama kali dibuka. Harga awal semua kemasan Rp400.000; ubah di dasbor → Produk.
 
 ## Mengganti atau menambah video

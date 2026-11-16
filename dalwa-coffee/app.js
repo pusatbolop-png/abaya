@@ -355,20 +355,49 @@
       alamat: Object.fromEntries(['provinsi', 'kota', 'kecamatan', 'kelurahan', 'jalan', 'no', 'rt', 'rw', 'kodepos', 'patokan'].map(k => [k, f(k)])),
       bayar: form.bayar.value, catatan: f('catatan'), situs: form.situs ? form.situs.value : '',
     };
+    // Pesanan disimpan di server (dasbor admin). Bila server pesanan belum dipasang di hosting,
+    // pesanan tidak hilang: pembeli diarahkan mengirimnya lewat WhatsApp admin.
+    const belumTerpasang = st => st === 404 || st === 405 || st === 501 || st === 503;
+    const kirimWa = () => {
+      const isi = cart.map(c => { const p = byId(c.pid); return { nama: nama(p), jumlah: c.qty, harga: p.price || 0 }; });
+      const sub = isi.reduce((t, x) => t + x.harga * x.jumlah, 0);
+      const teks = ["Assalamu'alaikum, saya mau pesan Dalwa Coffee:", ...isi.map(x => `• ${x.nama} (bubuk) x${x.jumlah} — ${rp(x.harga * x.jumlah)}`),
+        `Subtotal: ${rp(sub)} (belum termasuk ongkir)`, '', '*Penerima*', `${f('nama')} — ${f('hp')}`, '', '*Alamat*',
+        `${f('jalan')} No. ${f('no')}, RT ${f('rt').padStart(3, '0')}/RW ${f('rw').padStart(3, '0')}`, `Kel. ${f('kelurahan')}, Kec. ${f('kecamatan')}`,
+        `${f('kota')}, ${f('provinsi')} ${f('kodepos')}`, f('patokan') ? `Patokan: ${f('patokan')}` : null, '', `*Pembayaran:* ${data.bayar}`,
+        f('catatan') ? `*Catatan:* ${f('catatan')}` : null].filter(l => l !== null).join('\n');
+      $('#doneLabel').textContent = 'Satu langkah lagi';
+      $('#doneCode').textContent = 'Kirim ke admin';
+      $('#doneLead').textContent = 'Pesanan sudah disusun. Tekan tombol di bawah untuk mengirimnya ke WhatsApp admin, lalu admin akan mengonfirmasi ongkos kirim dan pembayaran.';
+      $('#doneItems').innerHTML = isi.map(x => `<li><span>${x.nama} × ${x.jumlah}</span><span>${rp(x.harga * x.jumlah)}</span></li>`).join('');
+      $('#doneSub').textContent = rp(sub); $('#donePay').textContent = data.bayar;
+      $('#doneFine').hidden = true;
+      const wa = $('#doneWa'); wa.hidden = false; wa.href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(teks)}`;
+      $('#doneClose').className = 'btn-ghost';
+      showStep(true);
+    };
     fetch('/api/pesanan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) })
-      .then(r => r.json().catch(() => ({})).then(isi => ({ ok: r.ok, isi })))
-      .then(({ ok, isi }) => {
+      .then(r => r.json().catch(() => ({})).then(isi => ({ ok: r.ok, st: r.status, isi })))
+      .then(({ ok, st, isi }) => {
+        if (!ok && belumTerpasang(st)) return kirimWa();
         if (!ok || !isi.kode) throw new Error(isi.galat || 'Pesanan belum terkirim. Periksa sambungan internet lalu coba lagi.');
+        $('#doneLabel').textContent = 'Nomor pesanan';
         $('#doneCode').textContent = isi.kode;
+        $('#doneLead').textContent = 'Terima kasih. Pesanan Anda sudah kami terima. Admin akan menghubungi lewat WhatsApp untuk konfirmasi ongkos kirim dan pembayaran.';
         $('#doneItems').innerHTML = (isi.items || []).map(x => `<li><span>${x.nama} × ${x.jumlah}</span><span>${rp(x.harga * x.jumlah)}</span></li>`).join('');
         $('#doneSub').textContent = rp(isi.subtotal || 0);
         $('#donePay').textContent = data.bayar;
+        $('#doneFine').hidden = false; $('#doneWa').hidden = true; $('#doneClose').className = 'btn-primary';
         cart = []; saveCart(); renderCart();
         showStep(true);
       })
-      .catch(err => { $('#orderErr').textContent = err.message === 'Failed to fetch' ? 'Pesanan belum terkirim. Periksa sambungan internet lalu coba lagi.' : err.message; })
+      .catch(err => {
+        if (err instanceof TypeError && navigator.onLine !== false) return kirimWa();   // server tidak terjangkau sama sekali
+        $('#orderErr').textContent = navigator.onLine === false ? 'Tidak ada sambungan internet. Coba lagi setelah tersambung.' : err.message;
+      })
       .finally(() => { kirim.disabled = false; kirim.textContent = 'Buat pesanan'; });
   });
+  $('#doneWa').addEventListener('click', () => { cart = []; saveCart(); renderCart(); });
   $('#doneClose').addEventListener('click', closeOrder);
 
   // harga, stok, dan nomor WhatsApp terbaru diatur dari dasbor admin; data.js hanya cadangan

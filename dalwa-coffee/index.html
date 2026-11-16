@@ -175,9 +175,9 @@
       </div>
       <div class="order-body" id="orderDone" hidden>
         <div class="done">
-          <p class="eyebrow">Nomor pesanan</p>
+          <p class="eyebrow" id="doneLabel">Nomor pesanan</p>
           <p class="done-code" id="doneCode"></p>
-          <p class="done-lead">Terima kasih. Pesanan Anda sudah kami terima. Admin akan menghubungi lewat WhatsApp untuk konfirmasi ongkos kirim dan pembayaran.</p>
+          <p class="done-lead" id="doneLead">Terima kasih. Pesanan Anda sudah kami terima. Admin akan menghubungi lewat WhatsApp untuk konfirmasi ongkos kirim dan pembayaran.</p>
         </div>
         <div class="order-sum">
           <ul id="doneItems"></ul>
@@ -185,7 +185,7 @@
           <div class="sum-row"><span>Ongkos kirim</span><span class="muted">Dikonfirmasi admin</span></div>
           <div class="sum-row"><span>Pembayaran</span><span id="donePay"></span></div>
         </div>
-        <p class="fine">Simpan nomor pesanan ini untuk menanyakan status pesanan.</p>
+        <p class="fine" id="doneFine">Simpan nomor pesanan ini untuk menanyakan status pesanan.</p>
       </div>
       <div class="panel-foot" id="footForm">
         <p class="order-err" id="orderErr" role="alert"></p>
@@ -193,6 +193,7 @@
         <p class="fine">Pesanan langsung tercatat. Admin akan menghubungi untuk konfirmasi ongkir.</p>
       </div>
       <div class="panel-foot" id="footDone" hidden>
+        <a class="btn-primary" id="doneWa" target="_blank" rel="noopener" hidden>Kirim lewat WhatsApp</a>
         <button type="button" class="btn-primary" id="doneClose">Selesai</button>
       </div>
       <label class="trap" aria-hidden="true">Situs web<input name="situs" tabindex="-1" autocomplete="off"></label>
