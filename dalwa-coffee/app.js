@@ -48,7 +48,7 @@
   function layout() {
     const W = stage.clientWidth, H = stage.clientHeight, R = runway.clientHeight, mob = isMobile();
     const focusOn = state.mode === 'focus', panelW = mob ? 0 : panel.offsetWidth;
-    const h = Math.min(H * (mob ? 1 : .86), (mob ? W * .9 : W * .23) * 16 / 9), w = h * 9 / 16;
+    const h = Math.min(H * (mob ? 1 : .86), (mob ? W * 1.02 : W * .23) * 16 / 9), w = h * 9 / 16;
     const Rx = Math.min(W * .4, 620);
     models.forEach((m, i) => {
       let d = mod(i - state.pos); if (d > n / 2) d -= n;

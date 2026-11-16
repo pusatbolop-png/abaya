@@ -11,9 +11,10 @@ Buka `data.js`. Semua `price` masih harga sementara Rp400.000; ganti dengan harg
 
 ## Mengganti atau menambah video
 
-Video di panggung adalah berkas asli tanpa perubahan gambar (hanya suaranya dilepas), ditampilkan sebagai kartu tegak 9:16.
-Simpan sebagai `assets/video/<id>.mp4` dan satu gambar diamnya sebagai `assets/video/<id>.webp`,
-dengan `<id>` sama seperti di daftar `products` pada `data.js`.
+Video di panggung adalah MP4 biasa pada resolusi asli (1080 × 1920, tanpa suara). Isinya sama dengan video asli;
+hanya dinding studionya yang disamakan dengan warna halaman (`--bg`, `#D8D1C6`), sehingga kemasan, biji, uap, bayangan,
+dan tulisan tampil utuh langsung di atas halaman. `assets/video/<id>.webp` adalah gambar diamnya.
+Kalau warna halaman diganti, video perlu diproses ulang dengan warna itu.
 
 ## Menjalankan
 
