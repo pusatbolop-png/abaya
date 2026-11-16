@@ -39,7 +39,7 @@
   const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1920; canvas.className = 'clip';
   const gl = (() => {
     try {
-      const g = canvas.getContext('webgl', { alpha: false, antialias: false });
+      const g = canvas.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: true }); // gambar terakhir tetap ada bila belum digambar ulang
       if (!g) return null;
       const sh = (type, src) => { const s = g.createShader(type); g.shaderSource(s, src); g.compileShader(s); return s; };
       const prog = g.createProgram();
@@ -57,6 +57,7 @@
       [g.TEXTURE_WRAP_S, g.TEXTURE_WRAP_T].forEach(k => g.texParameteri(g.TEXTURE_2D, k, g.CLAMP_TO_EDGE));
       g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR);
       g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.LINEAR);
+      g.clearColor(PAGE[0], PAGE[1], PAGE[2], 1); g.clear(g.COLOR_BUFFER_BIT);   // kanvas kosong sewarna halaman, bukan hitam
       return g;
     } catch (err) { return null; }
   })();
@@ -97,11 +98,14 @@
     if (host) host.classList.add('playing');
   }
   function play() {
+    const m = models[state.cur], src = `assets/video/${m.p.id}.mp4`;
+    // kemasan yang sama dan videonya sedang jalan (misalnya saat detailnya dibuka): biarkan, jangan diulang dari awal
+    if (host === m.el && video.src.endsWith(src) && !video.paused && !video.ended && !calm && !document.hidden) return;
     cancelAnimationFrame(raf);
     if (host) host.classList.remove('playing');
     if (calm || document.hidden) { video.pause(); return; }
-    const m = models[state.cur], src = `assets/video/${m.p.id}.mp4`;
     host = m.el; host.appendChild(screen); lastT = -1; ready = false; wall = null;
+    if (gl) gl.clear(gl.COLOR_BUFFER_BIT);
     if (!video.src.endsWith(src)) video.src = src; else video.currentTime = 0;
     video.play().catch(() => {});
     if (gl) draw();
