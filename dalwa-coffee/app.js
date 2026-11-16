@@ -219,7 +219,7 @@
   $('#grid').innerHTML = products.map((p, i) => `
     <article class="card" data-v="${p.variety}">
       <button class="card-img" data-look="${i}" aria-label="Putar video ${nama(p)}">
-        <img src="assets/video/${p.id}.webp" alt="Kemasan ${nama(p)}" loading="lazy" width="540" height="960">
+        <img src="assets/kemasan/${p.id}.webp" alt="Kemasan ${nama(p)}" loading="lazy">
         <span class="stl">Putar video</span>
       </button>
       <div class="card-row">
@@ -268,7 +268,7 @@
     $('#cartItems').innerHTML = cart.length ? cart.map((c, i) => {
       const p = byId(c.pid);
       return `<li class="li" data-k="${i}">
-        <div class="thumb"><img src="assets/video/${p.id}.webp" alt=""></div>
+        <div class="thumb"><img src="assets/kemasan/${p.id}.webp" alt=""></div>
         <div>
           <div class="li-name">${nama(p)}</div>
           <div class="price">${harga(p)} · kopi bubuk</div>
