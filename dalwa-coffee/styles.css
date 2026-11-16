@@ -62,13 +62,16 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .stage { position: absolute; inset: 0 0 86px 0; user-select: none; -webkit-user-select: none; touch-action: pan-y; cursor: grab; }
 .stage.dragging { cursor: grabbing; }
 .stage.dragging .model { transition: none; }
-.model { position: absolute; left: 0; bottom: 0; transform-origin: 50% 100%; border-radius: 18px; overflow: hidden; cursor: pointer; background: var(--raise);
-  box-shadow: 0 24px 50px rgba(27, 34, 51, .22); will-change: transform, opacity;
+.model { position: absolute; left: 0; bottom: 0; transform-origin: 50% 100%; cursor: pointer; will-change: transform, opacity;
   transition: transform 1s var(--ease), opacity .8s var(--ease), filter .8s var(--ease); }
+/* bayangan lantai di bawah kemasan; letaknya mengikuti alas kemasan di video (sekitar 8% dari bawah) */
+.model::before { content: ""; position: absolute; left: 24%; right: 24%; bottom: 5.5%; height: 4.5%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(27, 20, 14, .38), transparent); }
 .model.enter { transition: none; }
-.model img, .model video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
-.model img { z-index: 1; transition: opacity .5s; }
+.model img, .model .clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
+.model img { transition: opacity .4s; }
 .model.playing img { opacity: 0; }
+.feed { position: fixed; left: 0; top: 0; width: 2px; height: 2px; opacity: 0; pointer-events: none; }
 .model.dim { filter: saturate(.5) brightness(.9); }
 
 .stage-nav { position: absolute; z-index: 6; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; transition: left .9s var(--ease); }
@@ -104,8 +107,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .section-head h2 { font-family: var(--display); font-size: clamp(44px, 5.4vw, 76px); line-height: .9; text-transform: uppercase; margin-top: 6px; }
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 20px; }
 .card { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.card-img { position: relative; display: block; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 12px; background: var(--raise); }
-.card-img img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; transition: transform .8s var(--ease); }
+.card-img { position: relative; display: block; width: 100%; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 12px; background: radial-gradient(70% 55% at 50% 72%, var(--cream), var(--raise)); }
+.card-img img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 92%; transition: transform .8s var(--ease); }
 .card-img:hover img { transform: scale(1.05); }
 .stl { position: absolute; left: 10px; bottom: 10px; padding: 7px 12px; border-radius: 99px; background: color-mix(in srgb, var(--cream) 85%, transparent); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 500; }
 .card-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
@@ -162,7 +165,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .cart-open .cart { transform: none; visibility: visible; transition: transform .5s var(--ease); }
 .cart-items { flex: 1; overflow-y: auto; padding: 0 24px; }
 .li { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.thumb { width: 56px; aspect-ratio: 560 / 1080; border-radius: 4px; overflow: hidden; background: var(--raise); }
+.thumb { width: 56px; aspect-ratio: 9 / 16; border-radius: 4px; overflow: hidden; background: var(--raise); }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
 .li-name { font-weight: 500; }
 .li .qty { margin-top: 8px; }

@@ -11,8 +11,12 @@ Buka `data.js`. Semua `price` masih harga sementara Rp400.000; ganti dengan harg
 
 ## Mengganti atau menambah video
 
-Simpan video tegak 9:16 sebagai `assets/video/<id>.mp4` dan satu gambar diamnya sebagai `assets/video/<id>.jpg`,
-dengan `<id>` sama seperti di daftar `products` pada `data.js`. Video tanpa suara, sekitar 720 × 1280, di bawah 500 KB.
+Video di panggung berlatar bening. Tiap berkas `assets/video/<id>.mp4` berisi gambar berwarna di separuh atas dan
+peta transparansinya (putih = terlihat) di separuh bawah, 540 × 1920. Halaman menggabungkan keduanya lewat WebGL,
+jadi satu berkas MP4 ini jalan di Android maupun iPhone. `assets/video/<id>.webp` adalah gambar diamnya, juga bening.
+
+Video baru dari studio berlatar polos bisa diubah dengan skrip pemisah latar yang dipakai di proyek ini
+(berbasis warna latar krem keabu-abuan; uap putih ikut hilang karena warnanya sama dengan latar).
 
 ## Menjalankan
 
