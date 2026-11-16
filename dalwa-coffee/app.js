@@ -13,79 +13,33 @@
   $('#waNumber').textContent = '+' + whatsapp.replace(/^(62)(\d{3})(\d{4})(\d+)$/, '$1 $2-$3-$4');
 
   // ---------- panggung video ----------
-  // Tiap kemasan adalah kartu video. Hanya kartu terdepan yang diputar; yang lain menampilkan gambar diamnya.
+  // Tiap kemasan adalah satu video yang latarnya sudah disamakan dengan warna halaman.
+  // Hanya yang terdepan diputar; yang lain menampilkan gambar diamnya.
   const runway = $('#panggung'), stage = $('#stage'), panel = $('#lookPanel');
   const state = { mode: 'idle', cur: 0, pos: 0, qty: 1 };
   const models = products.map((p, i) => {
     const el = document.createElement('div');
     el.className = 'model enter';
-    el.innerHTML = `<img src="assets/video/${p.id}.webp" alt="${nama(p)}" draggable="false">`;
-    el.addEventListener('click', () => (i === state.cur || !isMobile() || state.mode === 'focus' ? focus(i) : goTo(i)));
-    stage.appendChild(el);
-    return { el, p };
-  });
-  const busy = () => document.body.classList.contains('cart-open') || document.body.classList.contains('order-open');
-  const mod = i => ((i % n) + n) % n;
-
-  // Video berlatar bening: tiap berkas berisi gambar berwarna di separuh atas dan peta transparansinya di separuh bawah.
-  // Satu pemutar dipakai bergantian; kanvasnya pindah ke kemasan terdepan dan menggabungkan keduanya lewat WebGL.
-  const player = (() => {
-    const canvas = document.createElement('canvas'); canvas.width = 540; canvas.height = 960; canvas.className = 'clip';
-    const gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false });
-    if (!gl) return null;
-    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
-    const prog = gl.createProgram();
-    gl.attachShader(prog, sh(gl.VERTEX_SHADER, 'attribute vec2 p; varying vec2 uv; void main(){ uv = vec2(p.x * .5 + .5, .5 - p.y * .5); gl_Position = vec4(p, 0., 1.); }'));
-    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, 'precision mediump float; uniform sampler2D t; varying vec2 uv;' +
-      'void main(){ vec3 c = texture2D(t, vec2(uv.x, uv.y * .5)).rgb; float a = texture2D(t, vec2(uv.x, .5 + uv.y * .5)).g;' +
-      ' a = clamp((a - .05) / .9, 0., 1.); gl_FragColor = vec4(c * a, a); }'));
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
-    gl.useProgram(prog);
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-    const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
-    [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T].forEach(k => gl.texParameteri(gl.TEXTURE_2D, k, gl.CLAMP_TO_EDGE));
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.clearColor(0, 0, 0, 0);
-
-    const video = document.createElement('video');
-    video.muted = true; video.playsInline = true; video.setAttribute('playsinline', ''); video.preload = 'auto'; video.className = 'feed';
-    video.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(video);
-    let host = null, lastT = -1, raf = 0, ready = false;
-    video.addEventListener('playing', () => { ready = true; });
-    function draw() {
-      raf = requestAnimationFrame(draw);
-      if (!ready || video.readyState < 2 || video.currentTime === lastT) return; // tunggu video baru benar-benar jalan
-      lastT = video.currentTime;
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
-      gl.clear(gl.COLOR_BUFFER_BIT); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      if (host) host.classList.add('playing');
-    }
+    el.innerHTML = `<img src="assets/video/${p.id}.webp" alt="${nama(p)}" draggable="false">
+      <video src="assets/video/${p.id}.mp4" muted playsinline preload="none" aria-hidden="true"></video>`;
+    const video = el.querySelector('video');
+    video.addEventListener('playing', () => el.classList.add('playing'));
     video.addEventListener('ended', () => {
       if (state.mode === 'idle' && !drag && !document.hidden && !busy()) goTo(state.cur + 1);
       else { video.currentTime = 0; video.play().catch(() => {}); }
     });
-    return {
-      show(m) {
-        if (host) host.classList.remove('playing');
-        host = m.el; host.appendChild(canvas); lastT = -1; ready = false;
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        const src = `assets/video/${m.p.id}.mp4`;
-        if (!video.src.endsWith(src)) video.src = src; else video.currentTime = 0;
-        video.play().catch(() => {});
-        cancelAnimationFrame(raf); draw();
-      },
-      stop() { video.pause(); cancelAnimationFrame(raf); if (host) host.classList.remove('playing'); },
-    };
-  })();
+    el.addEventListener('click', () => (i === state.cur || !isMobile() || state.mode === 'focus' ? focus(i) : goTo(i)));
+    stage.appendChild(el);
+    return { el, video, p };
+  });
+  const busy = () => document.body.classList.contains('cart-open') || document.body.classList.contains('order-open');
+  const mod = i => ((i % n) + n) % n;
 
   function play() {
-    if (!player) return;
-    if (calm || document.hidden) player.stop(); else player.show(models[state.cur]);
+    models.forEach((m, i) => {
+      if (i === state.cur && !calm && !document.hidden) { m.video.currentTime = 0; m.video.play().catch(() => {}); }
+      else { m.video.pause(); m.el.classList.remove('playing'); }
+    });
   }
   document.addEventListener('visibilitychange', play);
 

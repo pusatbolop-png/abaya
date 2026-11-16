@@ -11,12 +11,9 @@ Buka `data.js`. Semua `price` masih harga sementara Rp400.000; ganti dengan harg
 
 ## Mengganti atau menambah video
 
-Video di panggung berlatar bening. Tiap berkas `assets/video/<id>.mp4` berisi gambar berwarna di separuh atas dan
-peta transparansinya (putih = terlihat) di separuh bawah, 540 × 1920. Halaman menggabungkan keduanya lewat WebGL,
-jadi satu berkas MP4 ini jalan di Android maupun iPhone. `assets/video/<id>.webp` adalah gambar diamnya, juga bening.
-
-Video baru dari studio berlatar polos bisa diubah dengan skrip pemisah latar yang dipakai di proyek ini
-(berbasis warna latar krem keabu-abuan; uap putih ikut hilang karena warnanya sama dengan latar).
+Video di panggung adalah MP4 biasa (720 × 1280, tanpa suara) yang dinding studionya sudah disamakan dengan warna
+halaman (`--bg`, `#D8D1C6`), jadi kemasan, uap, bayangan, dan tulisan tampil utuh langsung di atas halaman.
+`assets/video/<id>.webp` adalah gambar diamnya. Kalau warna halaman diganti, video perlu diproses ulang dengan warna itu.
 
 ## Menjalankan
 

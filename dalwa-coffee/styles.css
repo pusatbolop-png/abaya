@@ -53,7 +53,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 /* ---------- panggung ---------- */
 .runway { position: relative; height: calc(100svh - 62px); min-height: 600px; max-height: 940px; overflow: hidden; }
-.runway-head { position: absolute; top: 28px; left: var(--gut-l); right: var(--gut-r); z-index: 5; pointer-events: none; transition: opacity .6s var(--ease), transform .6s var(--ease); }
+.runway-head { position: absolute; top: 28px; left: var(--gut-l); right: var(--gut-r); z-index: 120; pointer-events: none; transition: opacity .6s var(--ease), transform .6s var(--ease); }
 .runway-head h1 { font-family: var(--display); font-size: clamp(30px, 3.4vw, 52px); line-height: .86; text-transform: uppercase; margin-top: 8px; }
 .runway-head h1 em { font-family: var(--serif); font-style: italic; font-weight: 400; text-transform: none; font-size: .78em; color: var(--arabica); }
 .runway[data-state="focus"] .runway-head { opacity: 0; transform: translateY(-12px); }
@@ -63,15 +63,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .stage.dragging .model { transition: none; }
 .model { position: absolute; left: 0; bottom: 0; transform-origin: 50% 100%; cursor: pointer; will-change: transform, opacity;
   transition: transform 1s var(--ease), opacity .8s var(--ease), filter .8s var(--ease); }
-/* bayangan lantai di bawah kemasan; letaknya mengikuti alas kemasan di video (sekitar 8% dari bawah) */
-.model::before { content: ""; position: absolute; left: 24%; right: 24%; bottom: 5.5%; height: 4.5%; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(27, 20, 14, .38), transparent); }
 .model.enter { transition: none; }
-.model img, .model .clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
-.model img { transition: opacity .4s; }
+/* tepi video dipudarkan ke warna halaman, supaya selisih warna sekecil apa pun di pinggir bingkai tidak terlihat */
+.model img, .model video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 93%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 93%, transparent);
+  mask-composite: intersect; }
+.model img { z-index: 1; transition: opacity .4s; }
 .model.playing img { opacity: 0; }
-.feed { position: fixed; left: 0; top: 0; width: 2px; height: 2px; opacity: 0; pointer-events: none; }
-.model.dim { filter: saturate(.5) brightness(.9); }
 
 .stage-nav { position: absolute; z-index: 6; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; transition: left .9s var(--ease); }
 .arrow { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--ink); font-size: 22px; line-height: 1; background: transparent; }
