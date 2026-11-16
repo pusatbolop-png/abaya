@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Dalwa Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- MASUK -->
+  <main class="login" id="login" hidden>
+    <form class="login-card" id="loginForm">
+      <p class="mark"><b>DALWA</b> / ADMIN</p>
+      <h1>Masuk</h1>
+      <label for="sandi">Kata sandi</label>
+      <input id="sandi" name="sandi" type="password" autocomplete="current-password" required>
+      <p class="err" id="loginErr" role="alert"></p>
+      <button class="btn" type="submit">Masuk</button>
+    </form>
+  </main>
+
+  <!-- DASBOR -->
+  <div class="app" id="app" hidden>
+    <header class="bar">
+      <p class="mark"><b>DALWA</b> / ADMIN</p>
+      <nav class="tabs" aria-label="Menu admin">
+        <a href="#ringkasan" data-tab="ringkasan">Ringkasan</a>
+        <a href="#pesanan" data-tab="pesanan">Pesanan <span class="count" id="badgeBaru" hidden></span></a>
+        <a href="#produk" data-tab="produk">Produk</a>
+        <a href="#pengaturan" data-tab="pengaturan">Pengaturan</a>
+      </nav>
+      <button class="link" id="keluar">Keluar</button>
+    </header>
+
+    <section class="view" id="v-ringkasan">
+      <div class="tiles">
+        <div class="tile attn"><p>Menunggu konfirmasi</p><b id="tBaru">–</b></div>
+        <div class="tile"><p>Pesanan hari ini</p><b id="tHari">–</b></div>
+        <div class="tile"><p>Pesanan bulan ini</p><b id="tBulan">–</b></div>
+        <div class="tile"><p>Omzet bulan ini</p><b id="tOmzet">–</b><small>pesanan yang sudah dikonfirmasi, tanpa ongkir</small></div>
+      </div>
+      <div class="cols">
+        <div class="box">
+          <h2>Pesanan terbaru</h2>
+          <ul class="list" id="terbaru"></ul>
+          <a class="more" href="#pesanan">Lihat semua pesanan →</a>
+        </div>
+        <div class="box">
+          <h2>Terlaris bulan ini</h2>
+          <ul class="list" id="laris"></ul>
+          <h2 class="mt">Per status</h2>
+          <ul class="status-sum" id="perStatus"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-pesanan" hidden>
+      <div class="toolbar">
+        <div class="chips" id="filterStatus" role="tablist"></div>
+        <div class="tools">
+          <input id="cari" type="search" placeholder="Cari kode, nama, atau no. WA" aria-label="Cari pesanan">
+          <a class="btn ghost" id="ekspor" href="/api/admin/ekspor">Unduh CSV</a>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="orders">
+          <thead><tr><th>Kode</th><th>Masuk</th><th>Pembeli</th><th>Isi</th><th class="num">Total</th><th>Status</th></tr></thead>
+          <tbody id="baris"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="kosong" hidden>Belum ada pesanan di sini.</p>
+      <div class="pager"><button class="btn ghost sm" id="prev">‹ Sebelumnya</button><span id="hal"></span><button class="btn ghost sm" id="next">Berikutnya ›</button></div>
+    </section>
+
+    <section class="view" id="v-produk" hidden>
+      <p class="hint">Harga dan stok di sini langsung dipakai toko. Pesanan dihitung dengan harga saat pesanan dibuat.</p>
+      <div class="prod" id="produk"></div>
+    </section>
+
+    <section class="view" id="v-pengaturan" hidden>
+      <form class="box narrow" id="setForm">
+        <h2>Nomor WhatsApp toko</h2>
+        <p class="hint">Dipakai tombol chat di toko dan di kaki halaman.</p>
+        <label for="setWa">Nomor (format 62…)</label>
+        <input id="setWa" inputmode="tel" placeholder="6281234567890">
+        <p class="err" id="setErr" role="alert"></p>
+        <button class="btn" type="submit">Simpan</button>
+      </form>
+      <div class="box narrow">
+        <h2>Kata sandi admin</h2>
+        <p class="hint">Diatur di Cloudflare: Workers &amp; Pages → proyek toko → Settings → Variables and Secrets → <code>ADMIN_PASSWORD</code>. Setelah diganti, semua sesi admin otomatis keluar.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- DETAIL PESANAN -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-top">
+      <div><p class="eyebrow" id="dTgl"></p><h2 id="dKode"></h2></div>
+      <button class="x" id="tutup" aria-label="Tutup">✕</button>
+    </div>
+    <div class="drawer-body">
+      <ul class="items" id="dItems"></ul>
+      <dl class="sum">
+        <div><dt>Subtotal</dt><dd id="dSub"></dd></div>
+        <div><dt>Ongkos kirim</dt><dd id="dOngkirTampil"></dd></div>
+        <div class="total"><dt>Total</dt><dd id="dTotal"></dd></div>
+        <div><dt>Pembayaran</dt><dd id="dBayar"></dd></div>
+      </dl>
+      <div class="who">
+        <p class="eyebrow">Penerima</p>
+        <p><b id="dNama"></b> · <span id="dHp"></span></p>
+        <p id="dAlamat"></p>
+        <p class="note" id="dCatatan"></p>
+        <div class="row-btns">
+          <a class="btn ghost sm" id="dChat" target="_blank" rel="noopener">Chat pembeli</a>
+          <button class="btn ghost sm" id="dSalin" type="button">Salin alamat</button>
+        </div>
+      </div>
+      <form class="edit" id="dForm">
+        <p class="eyebrow">Proses pesanan</p>
+        <label for="dStatus">Status</label>
+        <select id="dStatus"></select>
+        <div class="two">
+          <div><label for="dOngkir">Ongkos kirim (Rp)</label><input id="dOngkir" inputmode="numeric" placeholder="contoh 18000"></div>
+          <div><label for="dKurir">Kurir</label><input id="dKurir" placeholder="JNE REG"></div>
+        </div>
+        <label for="dResi">No. resi</label>
+        <input id="dResi" placeholder="Isi setelah paket dikirim">
+        <label for="dCatAdmin">Catatan admin</label>
+        <textarea id="dCatAdmin" rows="3" placeholder="Hanya terlihat di dasbor"></textarea>
+        <p class="err" id="dErr" role="alert"></p>
+        <button class="btn" type="submit">Simpan perubahan</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="admin.js"></script>
+</body>
+</html>

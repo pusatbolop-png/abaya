@@ -162,19 +162,28 @@
         </div>
       </div>
       <div class="order-body" id="orderDone" hidden>
-        <p class="done-lead">Pesanan sudah disusun. Kirim pesan ini ke admin untuk konfirmasi ongkir.</p>
-        <textarea id="waText" readonly rows="12" aria-label="Isi pesan pesanan"></textarea>
+        <div class="done">
+          <p class="eyebrow">Nomor pesanan</p>
+          <p class="done-code" id="doneCode"></p>
+          <p class="done-lead">Terima kasih. Pesanan Anda sudah kami terima. Admin akan menghubungi lewat WhatsApp untuk konfirmasi ongkos kirim dan pembayaran.</p>
+        </div>
+        <div class="order-sum">
+          <ul id="doneItems"></ul>
+          <div class="sum-row"><span>Subtotal</span><span id="doneSub"></span></div>
+          <div class="sum-row"><span>Ongkos kirim</span><span class="muted">Dikonfirmasi admin</span></div>
+          <div class="sum-row"><span>Pembayaran</span><span id="donePay"></span></div>
+        </div>
+        <p class="fine">Simpan nomor pesanan ini untuk menanyakan status pesanan.</p>
       </div>
       <div class="panel-foot" id="footForm">
         <p class="order-err" id="orderErr" role="alert"></p>
         <button class="btn-primary" type="submit">Buat pesanan</button>
-        <p class="fine">Pesanan dikirim ke WhatsApp admin untuk konfirmasi ongkir.</p>
+        <p class="fine">Pesanan langsung tercatat. Admin akan menghubungi untuk konfirmasi ongkir.</p>
       </div>
       <div class="panel-foot" id="footDone" hidden>
-        <a class="btn-primary" id="waLink" target="_blank" rel="noopener">Kirim lewat WhatsApp</a>
-        <button type="button" class="btn-ghost" id="copyWa">Salin pesan</button>
-        <p class="fine">WhatsApp terbuka di tab baru dengan pesan yang sudah terisi.</p>
+        <button type="button" class="btn-primary" id="doneClose">Selesai</button>
       </div>
+      <label class="trap" aria-hidden="true">Situs web<input name="situs" tabindex="-1" autocomplete="off"></label>
     </form>
     <datalist id="provList"></datalist>
   </div>

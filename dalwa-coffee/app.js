@@ -1,16 +1,21 @@
 (() => {
-  const { products, varieties: V, brews, whatsapp, perusahaan } = window.DALWA;
+  const { products, varieties: V, brews, perusahaan } = window.DALWA;
+  let whatsapp = window.DALWA.whatsapp;
   const $ = (s, el = document) => el.querySelector(s);
   const rp = n => 'Rp' + Math.round(n).toLocaleString('id-ID');
-  const harga = p => p.price ? rp(p.price) : 'Tanya harga';
+  const harga = p => p.habis ? 'Stok habis' : p.price ? rp(p.price) : 'Tanya harga';
   const nama = p => `${V[p.variety].name} ${p.weight}`;
   const byId = id => products.find(p => p.id === id);
   const n = products.length;
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isMobile = () => innerWidth <= 820;
 
-  $('#chatBtn').href = `https://wa.me/${whatsapp}`;
-  $('#waNumber').textContent = '+' + whatsapp.replace(/^(62)(\d{3})(\d{4})(\d+)$/, '$1 $2-$3-$4');
+  function setWhatsapp(nomor) {
+    whatsapp = nomor;
+    $('#chatBtn').href = `https://wa.me/${whatsapp}`;
+    $('#waNumber').textContent = '+' + whatsapp.replace(/^(62)(\d{3})(\d{4})(\d+)$/, '$1 $2-$3-$4');
+  }
+  setWhatsapp(whatsapp);
 
   // ---------- panggung video ----------
   // Tiap kemasan adalah satu video yang latarnya sudah disamakan dengan warna halaman.
@@ -175,7 +180,8 @@
   function renderTotal() {
     const p = products[state.cur];
     $('#panelQtyN').textContent = state.qty;
-    $('#lookTotal').textContent = p.price ? rp(p.price * state.qty) : 'Tanya harga';
+    $('#lookTotal').textContent = p.habis ? 'Stok habis' : p.price ? rp(p.price * state.qty) : 'Tanya harga';
+    $('#buyNow').disabled = $('#addLook').disabled = !!p.habis;
   }
   $('#panelSizes').addEventListener('click', e => { if (e.target.dataset.i) focus(+e.target.dataset.i); });
   $('#panelQty').addEventListener('click', e => {
@@ -216,7 +222,7 @@
   let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(layout, 80); });
 
   // ---------- koleksi ----------
-  $('#grid').innerHTML = products.map((p, i) => `
+  const renderGrid = () => $('#grid').innerHTML = products.map((p, i) => `
     <article class="card" data-v="${p.variety}">
       <button class="card-img" data-look="${i}" aria-label="Putar video ${nama(p)}">
         <img src="assets/kemasan/${p.id}.webp" alt="Kemasan ${nama(p)}" loading="lazy">
@@ -224,9 +230,10 @@
       </button>
       <div class="card-row">
         <div><p class="tag">${V[p.variety].roast}</p><h3>${nama(p)}</h3><p class="price">${harga(p)}</p></div>
-        <button class="add" data-add="${p.id}" aria-label="Tambah ${nama(p)} ke keranjang">+</button>
+        <button class="add" data-add="${p.id}" aria-label="Tambah ${nama(p)} ke keranjang" ${p.habis ? 'disabled' : ''}>+</button>
       </div>
     </article>`).join('');
+  renderGrid();
   $('#grid').addEventListener('click', e => {
     const add = e.target.closest('[data-add]'), look = e.target.closest('[data-look]');
     if (add) { addToCart(add.dataset.add, 1); toast(`${nama(byId(add.dataset.add))} masuk keranjang`); }
@@ -256,6 +263,7 @@
   try { cart = JSON.parse(localStorage.getItem('dalwa-cart') || '[]').filter(c => byId(c.pid) && c.qty > 0); } catch { cart = []; }
   const saveCart = () => { try { localStorage.setItem('dalwa-cart', JSON.stringify(cart)); } catch {} };
   function addToCart(pid, qty) {
+    if (byId(pid).habis) { toast('Maaf, kemasan ini sedang habis'); return; }
     const ex = cart.find(c => c.pid === pid);
     ex ? (ex.qty += qty) : cart.push({ pid, qty });
     saveCart(); renderCart();
@@ -303,7 +311,7 @@
   function showStep(done) {
     $('#orderBody').hidden = $('#footForm').hidden = done;
     $('#orderDone').hidden = $('#footDone').hidden = !done;
-    $('#orderTitle').textContent = done ? 'Kirim Pesanan' : 'Data Pengiriman';
+    $('#orderTitle').textContent = done ? 'Pesanan Diterima' : 'Data Pengiriman';
   }
   function openOrder() {
     try { const a = JSON.parse(localStorage.getItem('dalwa-addr') || '{}'); ADDR.forEach(k => { if (a[k] && !form[k].value) form[k].value = a[k]; }); } catch {}
@@ -339,29 +347,38 @@
     if (first) { $('#orderErr').textContent = msg; first.focus(); return; }
     const f = k => form[k].value;
     try { localStorage.setItem('dalwa-addr', JSON.stringify(Object.fromEntries(ADDR.map(k => [k, f(k)])))); } catch {}
-    const text = [
-      "Assalamu'alaikum, saya mau pesan Dalwa Coffee:",
-      ...cart.map(c => { const p = byId(c.pid); return `• ${nama(p)} (bubuk) x${c.qty}${p.price ? ' — ' + rp(p.price * c.qty) : ''}`; }),
-      `Subtotal: ${subtotal()} (belum termasuk ongkir)`,
-      '', '*Penerima*', `${f('nama')} — ${f('hp')}`,
-      '', '*Alamat*',
-      `${f('jalan')} No. ${f('no')}, RT ${f('rt').padStart(3, '0')}/RW ${f('rw').padStart(3, '0')}`,
-      `Kel. ${f('kelurahan')}, Kec. ${f('kecamatan')}`,
-      `${f('kota')}, ${f('provinsi')} ${f('kodepos')}`,
-      f('patokan') ? `Patokan: ${f('patokan')}` : null,
-      '', `*Pembayaran:* ${form.bayar.value}`,
-      f('catatan') ? `*Catatan:* ${f('catatan')}` : null,
-    ].filter(l => l !== null).join('\n');
-    $('#waText').value = text;
-    $('#waLink').href = `https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`;
-    showStep(true);
+    const kirim = $('#orderForm button[type="submit"]');
+    kirim.disabled = true; kirim.textContent = 'Mengirim pesanan…'; $('#orderErr').textContent = '';
+    const data = {
+      items: cart.map(c => ({ id: c.pid, qty: c.qty })),
+      penerima: { nama: f('nama'), hp: f('hp') },
+      alamat: Object.fromEntries(['provinsi', 'kota', 'kecamatan', 'kelurahan', 'jalan', 'no', 'rt', 'rw', 'kodepos', 'patokan'].map(k => [k, f(k)])),
+      bayar: form.bayar.value, catatan: f('catatan'), situs: form.situs ? form.situs.value : '',
+    };
+    fetch('/api/pesanan', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) })
+      .then(r => r.json().catch(() => ({})).then(isi => ({ ok: r.ok, isi })))
+      .then(({ ok, isi }) => {
+        if (!ok || !isi.kode) throw new Error(isi.galat || 'Pesanan belum terkirim. Periksa sambungan internet lalu coba lagi.');
+        $('#doneCode').textContent = isi.kode;
+        $('#doneItems').innerHTML = (isi.items || []).map(x => `<li><span>${x.nama} × ${x.jumlah}</span><span>${rp(x.harga * x.jumlah)}</span></li>`).join('');
+        $('#doneSub').textContent = rp(isi.subtotal || 0);
+        $('#donePay').textContent = data.bayar;
+        cart = []; saveCart(); renderCart();
+        showStep(true);
+      })
+      .catch(err => { $('#orderErr').textContent = err.message === 'Failed to fetch' ? 'Pesanan belum terkirim. Periksa sambungan internet lalu coba lagi.' : err.message; })
+      .finally(() => { kirim.disabled = false; kirim.textContent = 'Buat pesanan'; });
   });
-  $('#waLink').addEventListener('click', () => { cart = []; saveCart(); renderCart(); toast('Lanjutkan pesanan di WhatsApp'); });
-  $('#copyWa').addEventListener('click', () => {
-    const ta = $('#waText'), ok = () => toast('Pesan disalin');
-    const manual = () => { ta.focus(); ta.select(); toast('Pesan dipilih. Tekan salin di papan ketik.'); };
-    try { navigator.clipboard.writeText(ta.value).then(ok, manual); } catch { manual(); }
-  });
+  $('#doneClose').addEventListener('click', closeOrder);
+
+  // harga, stok, dan nomor WhatsApp terbaru diatur dari dasbor admin; data.js hanya cadangan
+  fetch('/api/toko').then(r => r.ok ? r.json() : null).then(t => {
+    if (!t || !Array.isArray(t.produk)) return;
+    t.produk.forEach(x => { const p = byId(x.id); if (p) { p.price = x.harga; p.habis = !x.aktif; } });
+    if (t.whatsapp) setWhatsapp(t.whatsapp);
+    renderGrid(); renderCart(); renderTotal();
+    if (state.mode === 'focus') renderPanel();
+  }).catch(() => {});
 
   let tt; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400); }
 
