@@ -1,65 +1,164 @@
 (() => {
-  const { products, varieties: V, brews, whatsapp } = window.DALWA;
+  const { products, varieties: V, brews, whatsapp, perusahaan } = window.DALWA;
   const $ = (s, el = document) => el.querySelector(s);
   const rp = n => 'Rp' + Math.round(n).toLocaleString('id-ID');
   const harga = p => p.price ? rp(p.price) : 'Tanya harga';
   const nama = p => `${V[p.variety].name} ${p.weight}`;
   const byId = id => products.find(p => p.id === id);
-
-  const scene = window.Scene3D && window.Scene3D({
-    canvas: $('#gl'),
-    els: { grindAct: $('#grind'), grinder: $('#grinderSpot'), pourAct: $('#pour'), dripper: $('#dripperSpot'), pool: $('#poolSpot'), mug: $('#mugSpot') },
-  });
-  // Tanpa WebGL: foto produk menggantikan benda 3D.
-  if (!scene) {
-    document.body.classList.add('no3d');
-    $('#grinderSpot').innerHTML = `<img src="assets/arabica-1kg-foto.webp" alt="Kemasan Dalwa Coffee Arabica">`;
-    $('#dripperSpot').innerHTML = `<img src="assets/robusta-1kg-foto.webp" alt="Kemasan Dalwa Coffee Robusta">`;
-  }
+  const n = products.length;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = () => innerWidth <= 820;
 
   $('#chatBtn').href = `https://wa.me/${whatsapp}`;
   $('#waNumber').textContent = '+' + whatsapp.replace(/^(62)(\d{3})(\d{4})(\d+)$/, '$1 $2-$3-$4');
 
-  // ---------- kartu produk ----------
-  // Kartu bisa dibalik untuk melihat sisi belakang kemasan.
-  const card = p => {
-    const v = V[p.variety];
-    return `<article class="card" data-v="${p.variety}">
-      <p class="card-label">${v.name}<span>${v.roast}</span></p>
-      <button class="bag" data-flip aria-label="Balik kemasan ${nama(p)}" style="--s:${p.scale}">
-        <span class="bag-in">
-          <img src="assets/${p.id}-depan.webp" alt="Kemasan ${nama(p)} tampak depan" loading="lazy" width="560" height="1080">
-          <img class="bk" src="assets/${p.back}.webp" alt="" loading="lazy" width="560" height="1080">
-        </span>
-      </button>
-      <h3>${nama(p)}</h3>
-      <p class="card-notes">${v.notes.join(' · ')}</p>
-      <p class="price">${harga(p)}</p>
-      <div class="card-btns">
-        <button class="pill sm" data-buy="${p.id}">Beli</button>
-        <button class="pill sm ghost" data-add="${p.id}" aria-label="Tambah ${nama(p)} ke keranjang">+ Keranjang</button>
-      </div>
-    </article>`;
-  };
-  const side = v => `<div class="side side-${v}">${products.filter(p => p.variety === v).map(card).join('')}</div>`;
-  const cards = $('#cards');
-  cards.innerHTML = side('arabica') + side('robusta');
-  cards.addEventListener('click', e => {
-    const flip = e.target.closest('[data-flip]'), buy = e.target.closest('[data-buy]'), add = e.target.closest('[data-add]');
-    if (flip) flip.classList.toggle('flipped');
-    if (buy) { addToCart(buy.dataset.buy, 1); openOrder(); }
-    if (add) { addToCart(add.dataset.add, 1); toast(`${nama(byId(add.dataset.add))} masuk keranjang`); }
+  // ---------- panggung video ----------
+  // Tiap kemasan adalah kartu video. Hanya kartu terdepan yang diputar; yang lain menampilkan gambar diamnya.
+  const runway = $('#panggung'), stage = $('#stage'), panel = $('#lookPanel');
+  const state = { mode: 'idle', cur: 0, pos: 0, qty: 1 };
+  const models = products.map((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'model enter';
+    el.innerHTML = `<img src="assets/video/${p.id}.jpg" alt="${nama(p)}" draggable="false">
+      <video src="assets/video/${p.id}.mp4" muted playsinline preload="none" aria-hidden="true"></video>`;
+    const video = el.querySelector('video');
+    video.addEventListener('playing', () => el.classList.add('playing'));
+    video.addEventListener('ended', () => {
+      if (state.mode === 'idle' && !drag && !document.hidden && !busy()) goTo(state.cur + 1);
+      else { video.currentTime = 0; video.play().catch(() => {}); }
+    });
+    el.addEventListener('click', () => (i === state.cur || !isMobile() || state.mode === 'focus' ? focus(i) : goTo(i)));
+    stage.appendChild(el);
+    return { el, video, p };
   });
-  // titik penanda saat kartu digeser menyamping di layar sempit
-  const all = [...cards.querySelectorAll('.card')];
-  $('#dots').innerHTML = all.map(() => '<i></i>').join('');
-  function markDot() {
-    const mid = cards.getBoundingClientRect().left + cards.clientWidth / 2;
-    let best = 0, bd = 1e9;
-    all.forEach((c, i) => { const r = c.getBoundingClientRect(), d = Math.abs(r.left + r.width / 2 - mid); if (d < bd) { bd = d; best = i; } });
-    [...$('#dots').children].forEach((d, i) => d.classList.toggle('on', i === best));
+  const busy = () => document.body.classList.contains('cart-open') || document.body.classList.contains('order-open');
+  const mod = i => ((i % n) + n) % n;
+
+  function play() {
+    models.forEach((m, i) => {
+      if (i === state.cur && !calm) { m.video.currentTime = 0; m.video.play().catch(() => {}); }
+      else { m.video.pause(); m.el.classList.remove('playing'); }
+    });
   }
-  cards.addEventListener('scroll', markDot, { passive: true }); markDot();
+
+  function layout() {
+    const W = stage.clientWidth, H = stage.clientHeight, R = runway.clientHeight, mob = isMobile();
+    const focusOn = state.mode === 'focus', panelW = mob ? 0 : panel.offsetWidth;
+    const h = Math.min(H * (mob ? .7 : .8), (mob ? W * .62 : W * .23) * 16 / 9), w = h * 9 / 16;
+    const Rx = Math.min(W * .4, 620);
+    models.forEach((m, i) => {
+      let d = mod(i - state.pos); if (d > n / 2) d -= n;
+      const ad = Math.abs(d);
+      let x, y = 0, s, z, op = 1, blur = 0, dim = ad > .5;
+      if (!focusOn) {
+        if (mob) { x = W / 2 + d * W * .66; s = 1 - .22 * Math.min(1, ad); z = 10 - Math.round(ad); if (ad > 1.5) op = 0; }
+        else {
+          const th = d * 2 * Math.PI / n, t = (Math.cos(th) + 1) / 2;
+          x = W / 2 + Rx * Math.sin(th); s = .5 + .5 * Math.pow(t, 1.4); y = -H * .07 * (1 - t);
+          blur = t > .8 ? 0 : (.8 - t) * 5; op = t > .5 ? 1 : .35 + .65 * t / .5; z = Math.round(t * 100);
+        }
+      } else {
+        const areaW = W - panelW, cx = areaW / 2;
+        if (mob) {
+          const sheet = Math.min(.8, panel.offsetHeight / R) || .58, avail = R * (1 - sheet) - 20;
+          s = ad < .5 ? Math.min(1, avail / h) : .4; y = -(H - R * (1 - sheet)) - 6; x = cx + d * W * .7;
+        } else { s = ad < .5 ? Math.min(1.12, H * .94 / h) : .6; x = cx + d * Math.max(areaW * .42, w * 1.1); }
+        z = ad < .5 ? 10 : 5 - Math.round(ad); if (ad > 1.5) op = 0;
+      }
+      m.el.style.width = w + 'px'; m.el.style.height = h + 'px';
+      m.el.style.transform = `translate(${x - w / 2}px, ${y}px) scale(${s})`;
+      m.el.style.zIndex = z; m.el.style.opacity = op;
+      m.el.style.filter = blur ? `blur(${blur.toFixed(1)}px)` : '';
+      m.el.classList.toggle('dim', dim);
+    });
+  }
+
+  function sync() { $('#nowName').textContent = nama(products[state.cur]); play(); layout(); }
+  function goTo(i) { state.cur = state.pos = mod(i); sync(); }
+  function focus(i) {
+    const same = state.mode === 'focus' && mod(i) === state.cur;
+    state.cur = state.pos = mod(i); state.mode = 'focus'; runway.dataset.state = 'focus'; document.body.classList.add('focus');
+    if (!same) state.qty = 1;
+    panel.setAttribute('aria-hidden', 'false');
+    renderPanel(); sync();
+    if (isMobile()) { requestAnimationFrame(layout); runway.scrollIntoView({ block: 'end', behavior: 'smooth' }); }
+  }
+  function unfocus() { state.mode = 'idle'; runway.dataset.state = 'idle'; document.body.classList.remove('focus'); panel.setAttribute('aria-hidden', 'true'); layout(); }
+  const step = d => (state.mode === 'idle' ? goTo(state.cur + d) : focus(state.cur + d));
+
+  function renderPanel() {
+    const p = products[state.cur], v = V[p.variety];
+    $('#panelEyebrow').textContent = `100% ${v.name}`;
+    $('#panelTitle').textContent = nama(p);
+    $('#panelNote').textContent = v.desc;
+    $('#panelNotes').innerHTML = v.notes.map(x => `<li>${x}</li>`).join('');
+    $('#panelSizes').innerHTML = products.map((q, i) => q.variety === p.variety
+      ? `<button class="size ${q === p ? 'on' : ''}" data-i="${i}" aria-pressed="${q === p}">${q.weight}</button>` : '').join('');
+    $('#panelSpecs').innerHTML = [['Jenis', 'Kopi bubuk (ground coffee)'], ['Sangrai', v.roast], ['Isi bersih', p.weight], ['Produsen', perusahaan]]
+      .map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('');
+    const ph = $('#panelPhoto'); ph.src = `assets/${v.back}.webp`; ph.alt = `Sisi belakang kemasan ${v.name}`;
+    renderTotal();
+  }
+  function renderTotal() {
+    const p = products[state.cur];
+    $('#panelQtyN').textContent = state.qty;
+    $('#lookTotal').textContent = p.price ? rp(p.price * state.qty) : 'Tanya harga';
+  }
+  $('#panelSizes').addEventListener('click', e => { if (e.target.dataset.i) focus(+e.target.dataset.i); });
+  $('#panelQty').addEventListener('click', e => {
+    if (!e.target.dataset.q) return;
+    state.qty = Math.max(1, Math.min(99, state.qty + +e.target.dataset.q)); renderTotal();
+  });
+  $('#closeLook').addEventListener('click', unfocus);
+  $('#prevBtn').addEventListener('click', () => step(-1));
+  $('#nextBtn').addEventListener('click', () => step(1));
+  $('#nowBtn').addEventListener('click', () => focus(state.cur));
+  $('#addLook').addEventListener('click', () => { addToCart(products[state.cur].id, state.qty); toast(`${nama(products[state.cur])} masuk keranjang`); });
+  $('#buyNow').addEventListener('click', () => { addToCart(products[state.cur].id, state.qty); openOrder(); });
+
+  // geser: cincin mengikuti jari, lalu berhenti di kemasan terdekat
+  let drag = null, dragged = false;
+  stage.addEventListener('dragstart', e => e.preventDefault());
+  stage.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const per = isMobile() ? stage.clientWidth * .66 : Math.min(stage.clientWidth * .4, 620) * Math.sin(2 * Math.PI / n);
+    drag = { x: e.clientX, pos: state.pos, per: Math.max(per, 80) }; dragged = false;
+  });
+  addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    if (!dragged && Math.abs(dx) > 8) { dragged = true; stage.classList.add('dragging'); }
+    if (dragged && state.mode === 'idle') { state.pos = drag.pos - dx / drag.per; layout(); }
+  });
+  const endDrag = e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x; drag = null; stage.classList.remove('dragging');
+    if (!dragged) return;
+    if (state.mode === 'idle') goTo(Math.round(state.pos));
+    else if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
+  };
+  addEventListener('pointerup', endDrag);
+  addEventListener('pointercancel', endDrag);
+  stage.addEventListener('click', e => { if (dragged) { e.stopPropagation(); dragged = false; } }, true);
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(layout, 80); });
+
+  // ---------- koleksi ----------
+  $('#grid').innerHTML = products.map((p, i) => `
+    <article class="card" data-v="${p.variety}">
+      <button class="card-img" data-look="${i}" aria-label="Putar video ${nama(p)}">
+        <img src="assets/video/${p.id}.jpg" alt="Kemasan ${nama(p)}" loading="lazy" width="540" height="960">
+        <span class="stl">Putar video</span>
+      </button>
+      <div class="card-row">
+        <div><p class="tag">${V[p.variety].roast}</p><h3>${nama(p)}</h3><p class="price">${harga(p)}</p></div>
+        <button class="add" data-add="${p.id}" aria-label="Tambah ${nama(p)} ke keranjang">+</button>
+      </div>
+    </article>`).join('');
+  $('#grid').addEventListener('click', e => {
+    const add = e.target.closest('[data-add]'), look = e.target.closest('[data-look]');
+    if (add) { addToCart(add.dataset.add, 1); toast(`${nama(byId(add.dataset.add))} masuk keranjang`); }
+    else if (look) { runway.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => focus(+look.dataset.look), 450); }
+  });
 
   // ---------- cara seduh ----------
   let brew = 0;
@@ -76,6 +175,7 @@
     if (e.key !== 'Escape') return;
     if (document.body.classList.contains('order-open')) closeOrder();
     else if (document.body.classList.contains('cart-open')) closeCart();
+    else if (state.mode === 'focus') unfocus();
   });
 
   // ---------- keranjang ----------
@@ -95,7 +195,7 @@
     $('#cartItems').innerHTML = cart.length ? cart.map((c, i) => {
       const p = byId(c.pid);
       return `<li class="li" data-k="${i}">
-        <div class="thumb"><img src="assets/${p.id}-depan.webp" alt=""></div>
+        <div class="thumb"><img src="assets/video/${p.id}.jpg" alt=""></div>
         <div>
           <div class="li-name">${nama(p)}</div>
           <div class="price">${harga(p)} · kopi bubuk</div>
@@ -193,4 +293,13 @@
   let tt; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400); }
 
   renderCart();
+  // masuk dari kanan, lalu video terdepan mulai diputar
+  requestAnimationFrame(() => {
+    const W = stage.clientWidth;
+    models.forEach(m => { m.el.style.transform = `translate(${W + 200}px, 0) scale(.6)`; });
+    stage.offsetHeight;
+    models.forEach((m, i) => { m.el.classList.remove('enter'); m.el.style.transitionDelay = (i * 90) + 'ms'; });
+    sync();
+    setTimeout(() => models.forEach(m => (m.el.style.transitionDelay = '')), 1600);
+  });
 })();

@@ -11,22 +11,23 @@ window.DALWA = {
     arabica: {
       name: 'Arabica', roast: 'Medium Roast', notes: ['Bright', 'Smooth', 'Balanced'],
       desc: 'Rasa cerah dan lembut dengan keseimbangan yang enak diminum tanpa gula.',
-      accent: '#d2452a', side: '#3a1810',
+      back: 'arabica-belakang',
     },
     robusta: {
       name: 'Robusta', roast: 'Medium Dark Roast', notes: ['Bold', 'Thick', 'Nutty'],
       desc: 'Seduhan tegas dan kental dengan gurih kacang, cocok untuk kopi susu dan tubruk.',
-      accent: '#3f66f0', side: '#131a48',
+      back: 'robusta-250g-belakang',
     },
   },
 
-  // scale = ukuran kemasan di panggung 3D dibanding kemasan 1 kg.
+  // Satu kemasan = satu video di panggung (assets/video/<id>.mp4 dan .jpg sebagai gambar diamnya).
   products: [
-    { id: 'arabica-250g', variety: 'arabica', weight: '250 g', grams: 250,  scale: .8,  price: 400000, back: 'arabica-belakang' },
-    { id: 'arabica-420g', variety: 'arabica', weight: '420 g', grams: 420,  scale: .9,  price: 400000, back: 'arabica-belakang' },
-    { id: 'arabica-1kg',  variety: 'arabica', weight: '1 kg',  grams: 1000, scale: 1,   price: 400000, back: 'arabica-belakang' },
-    { id: 'robusta-250g', variety: 'robusta', weight: '250 g', grams: 250,  scale: .8,  price: 400000, back: 'robusta-250g-belakang' },
-    { id: 'robusta-1kg',  variety: 'robusta', weight: '1 kg',  grams: 1000, scale: 1,   price: 400000, back: 'robusta-1kg-belakang' },
+    { id: 'arabica-250g', variety: 'arabica', weight: '250 g', price: 400000 },
+    { id: 'arabica-420g', variety: 'arabica', weight: '420 g', price: 400000 },
+    { id: 'arabica-1kg',  variety: 'arabica', weight: '1 kg',  price: 400000 },
+    { id: 'robusta-250g', variety: 'robusta', weight: '250 g', price: 400000 },
+    { id: 'robusta-420g', variety: 'robusta', weight: '420 g', price: 400000 },
+    { id: 'robusta-1kg',  variety: 'robusta', weight: '1 kg',  price: 400000 },
   ],
 
   // Takaran umum untuk kopi bubuk; sesuaikan dengan selera.
